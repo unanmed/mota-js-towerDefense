@@ -57,7 +57,6 @@ function editor() {
         showMovable: document.getElementById('showMovable'),
         gameInject: document.getElementById('gameInject'),
         undoFloor: document.getElementById('undoFloor'),
-        selectFloorBtn: document.getElementById('selectFloorBtn'),
         editorTheme: document.getElementById('editorTheme'),
         bigmapBtn : document.getElementById('bigmapBtn'),
         mapRowMark: document.getElementById('mapRowMark'),
@@ -207,7 +206,6 @@ editor.prototype.init = function (callback) {
                 editor_file_wrapper(editor);
                 editor_table_wrapper(editor);
                 editor_ui_wrapper(editor);
-                editor_uievent_wrapper(editor);
                 editor_mappanel_wrapper(editor);
                 editor_datapanel_wrapper(editor);
                 editor_materialpanel_wrapper(editor);
@@ -398,40 +396,20 @@ editor.prototype.drawEventBlock = function () {
                 var directions = (movableArray[x]||{})[y];
                 if (directions == null) continue;
                 if (!directions.includes('left') && x != 0) {
-                    var ndirections = (movableArray[x-1]||{})[y];
-                    if (ndirections != null && !ndirections.includes('right')) {
-                        core.drawLine(fg, 32 * i + 1, 32 * j + 6, 32 * i + 1, 32 * j + 26, '#FF0000', 2);
-                    } else {
-                        core.drawLine(fg, 32 * i + 1, 32 * j + 10, 32 * i + 1, 32 * j + 22, '#FF0000', 2);
-                        core.fillPolygon(fg, [[32 * i + 9, 32 * j + 12], [32 * i + 1, 32 * j + 16], [32 * i + 9, 32 * j + 20]], '#FF0000');
-                    }
+                    core.drawLine(fg, 32 * i + 1, 32 * j + 10, 32 * i + 1, 32 * j + 22, '#FF0000', 2);
+                    core.fillPolygon(fg, [[32 * i + 9, 32 * j + 12], [32 * i + 1, 32 * j + 16], [32 * i + 9, 32 * j + 20]], '#FF0000');
                 }
                 if (!directions.includes('right') && x != editor.currentFloorData.width - 1) {
-                    var ndirections = (movableArray[x+1]||{})[y];
-                    if (ndirections != null && !ndirections.includes('left')) {
-                        core.drawLine(fg, 32 * i + 31, 32 * j + 6, 32 * i + 31, 32 * j + 26, '#FF0000', 2);
-                    } else {
-                        core.drawLine(fg, 32 * i + 31, 32 * j + 10, 32 * i + 31, 32 * j + 22, '#FF0000', 2);
-                        core.fillPolygon(fg, [[32 * i + 23, 32 * j + 12], [32 * i + 31, 32 * j + 16], [32 * i + 23, 32 * j + 20]], '#FF0000');
-                    }
+                    core.drawLine(fg, 32 * i + 31, 32 * j + 10, 32 * i + 31, 32 * j + 22, '#FF0000', 2);
+                    core.fillPolygon(fg, [[32 * i + 23, 32 * j + 12], [32 * i + 31, 32 * j + 16], [32 * i + 23, 32 * j + 20]], '#FF0000');
                 }
                 if (!directions.includes('up') && y != 0) {
-                    var ndirections = movableArray[x][y-1];
-                    if (ndirections != null && !ndirections.includes('down')) {
-                        core.drawLine(fg, 32 * i + 6, 32 * j + 1, 32 * i + 26, 32 * j + 1, '#FF0000', 2);
-                    } else {
-                        core.drawLine(fg, 32 * i + 10, 32 * j + 1, 32 * i + 22, 32 * j + 1, '#FF0000', 2);
-                        core.fillPolygon(fg, [[32 * i + 12, 32 * j + 9], [32 * i + 16, 32 * j + 1], [32 * i + 20, 32 * j + 9]], '#FF0000');
-                    }
+                    core.drawLine(fg, 32 * i + 10, 32 * j + 1, 32 * i + 22, 32 * j + 1, '#FF0000', 2);
+                    core.fillPolygon(fg, [[32 * i + 12, 32 * j + 9], [32 * i + 16, 32 * j + 1], [32 * i + 20, 32 * j + 9]], '#FF0000');
                 }
                 if (!directions.includes('down') && y != editor.currentFloorData.height - 1) {
-                    var ndirections = movableArray[x][y+1];
-                    if (ndirections != null && !ndirections.includes('up')) {
-                        core.drawLine(fg, 32 * i + 6, 32 * j + 31, 32 * i + 26, 32 * j + 31, '#FF0000', 2);
-                    } else {
-                        core.drawLine(fg, 32 * i + 10, 32 * j + 31, 32 * i + 22, 32 * j + 31, '#FF0000', 2);
-                        core.fillPolygon(fg, [[32 * i + 12, 32 * j + 23], [32 * i + 16, 32 * j + 31], [32 * i + 20, 32 * j + 23]], '#FF0000');
-                    }
+                    core.drawLine(fg, 32 * i + 10, 32 * j + 31, 32 * i + 22, 32 * j + 31, '#FF0000', 2);
+                    core.fillPolygon(fg, [[32 * i + 12, 32 * j + 23], [32 * i + 16, 32 * j + 31], [32 * i + 20, 32 * j + 23]], '#FF0000');
                 }
             }
         }
@@ -493,48 +471,28 @@ editor.prototype._drawEventBlock_bigmap = function () {
                 var directions = (movableArray[i]||{})[j];
                 if (directions == null) continue;
                 if (!directions.includes('left') && i != 0) {
-                    var ndirections = (movableArray[i-1]||{})[j];
-                    if (ndirections != null && !ndirections.includes('right')) {
-                        core.drawLine(fg, info.left + size * i, info.top + size * j + size / 4, info.left + size * i, info.top + size * j + size * 3 / 4, '#FF0000', 2);
-                    } else {
-                        core.drawLine(fg, info.left + size * i, info.top + size * j + size / 3, info.left + size * i, info.top + size * j + size * 2 / 3, '#FF0000', 2);
-                        core.fillPolygon(fg, [[info.left + size * i + size / 4, info.top + size * j + size * 3 / 8], 
-                                            [info.left + size * i, info.top + size * j + size / 2], 
-                                            [info.left + size * i + size / 4, info.top + size * j + size * 5 / 8]], '#FF0000');
-                    }
+                    core.drawLine(fg, info.left + size * i, info.top + size * j + size / 3, info.left + size * i + 1, info.top + size * j + size * 2 / 3, '#FF0000', 2);
+                    core.fillPolygon(fg, [[info.left + size * i + size / 4, info.top + size * j + size * 3 / 8], 
+                                          [info.left + size * i, info.top + size * j + size / 2], 
+                                          [info.left + size * i + size / 4, info.top + size * j + size * 5 / 8]], '#FF0000');
                 }
                 if (!directions.includes('right') && i != editor.currentFloorData.width - 1) {
-                    var ndirections = (movableArray[i+1]||{})[j];
-                    if (ndirections != null && !ndirections.includes('left')) {
-                        core.drawLine(fg, info.left + size * i + size, info.top + size * j + size / 4, info.left + size * i + size, info.top + size * j + size * 3 / 4, '#FF0000', 2);
-                    } else {
-                        core.drawLine(fg, info.left + size * i + size, info.top + size * j + size / 3, info.left + size * i + size, info.top + size * j + size * 2 / 3, '#FF0000', 2);
-                        core.fillPolygon(fg, [[info.left + size * i + size * 3 / 4, info.top + size * j + size * 3 / 8], 
-                            [info.left + size * i + size, info.top + size * j + size / 2], 
-                            [info.left + size * i + size * 3 / 4, info.top + size * j + size * 5 / 8]], '#FF0000');
-                    }
+                    core.drawLine(fg, info.left + size * i + size, info.top + size * j + size / 3, info.left + size * i + size, info.top + size * j + size * 2 / 3, '#FF0000', 2);
+                    core.fillPolygon(fg, [[info.left + size * i + size * 3 / 4, info.top + size * j + size * 3 / 8], 
+                        [info.left + size * i + size, info.top + size * j + size / 2], 
+                        [info.left + size * i + size * 3 / 4, info.top + size * j + size * 5 / 8]], '#FF0000');
                 }
                 if (!directions.includes('up') && j != 0) {
-                    var ndirections = movableArray[i][j-1];
-                    if (ndirections != null && !ndirections.includes('down')) {
-                        core.drawLine(fg, info.left + size * i + size / 4, info.top + size * j, info.left + size * i + size * 3 / 4, info.top + size * j, '#FF0000', 2);
-                    } else {
-                        core.drawLine(fg, info.left + size * i + size / 3, info.top + size * j, info.left + size * i + size * 2 / 3, info.top + size * j, '#FF0000', 2);
-                        core.fillPolygon(fg, [[info.left + size * i + size * 3 / 8, info.top + size * j + size / 4], 
-                            [info.left + size * i + size / 2, info.top + size * j], 
-                            [info.left + size * i + size * 5 / 8, info.top + size * j + size / 4]], '#FF0000');
-                    }
+                    core.drawLine(fg, info.left + size * i + size / 3, info.top + size * j, info.left + size * i + size * 2 / 3, info.top + size * j, '#FF0000', 2);
+                    core.fillPolygon(fg, [[info.left + size * i + size * 3 / 8, info.top + size * j + size / 4], 
+                        [info.left + size * i + size / 2, info.top + size * j], 
+                        [info.left + size * i + size * 5 / 8, info.top + size * j + size / 4]], '#FF0000');
                 }
                 if (!directions.includes('down') && j != editor.currentFloorData.height - 1) {
-                    var ndirections = movableArray[i][j+1];
-                    if (ndirections != null && !ndirections.includes('up')) {
-                        core.drawLine(fg, info.left + size * i + size / 4, info.top + size * j + size, info.left + size * i + size * 3 / 4, info.top + size * j + size, '#FF0000', 2);
-                    } else {
-                        core.drawLine(fg, info.left + size * i + size / 3, info.top + size * j + size, info.left + size * i + size * 2 / 3, info.top + size * j + size, '#FF0000', 2);
-                        core.fillPolygon(fg, [[info.left + size * i + size * 3 / 8, info.top + size * j + size  * 3 / 4], 
-                            [info.left + size * i + size / 2, info.top + size * j + size], 
-                            [info.left + size * i + size * 5 / 8, info.top + size * j + size * 3 / 4]], '#FF0000');
-                    }
+                    core.drawLine(fg, info.left + size * i + size / 3, info.top + size * j + size - 1, info.left + size * i + size * 2 / 3, info.top + size * j + size - 1, '#FF0000', 2);
+                    core.fillPolygon(fg, [[info.left + size * i + size * 3 / 8, info.top + size * j + size  * 3 / 4], 
+                        [info.left + size * i + size / 2, info.top + size * j + size], 
+                        [info.left + size * i + size * 5 / 8, info.top + size * j + size * 3 / 4]], '#FF0000');
                 }
             }
         }
@@ -756,27 +714,6 @@ editor.prototype.drawInitData = function (icons) {
     });
     var imgNames = ["terrains", "animates", "enemys", "enemy48", "items", "npcs", "npc48", "autotile"];
 
-    var splitCanvas = document.createElement('canvas');
-    var splitCtx = splitCanvas.getContext('2d');
-    splitCtx.imageSmoothingEnabled = false;
-
-    var splitImage = function (image, width, height) {
-        if (image.width == width && image.height == height) {
-            return [image];
-        }
-        var ans = [];
-        for (var j = 0; j < image.height; j += h) {
-            var h = Math.min(height, image.height - j);
-            splitCanvas.width = width;
-            splitCanvas.height = h;
-            core.drawImage(splitCtx, image, 0, j, width, h, 0, 0, width, h);
-            var data = new Image();
-            data.src = splitCanvas.toDataURL("image/png");
-            ans.push(data);
-        }
-        return ans;
-    }
-
     for (var ii = 0; ii < imgNames.length; ii++) {
         var img = imgNames[ii], tempy = 0;
         if (img == 'autotile') {
@@ -792,14 +729,9 @@ editor.prototype.drawInitData = function (icons) {
         }
         var width = images[img].width, height = images[img].height, mh = height;
         if (editor.uivalues.folded) {
-            if (img == 'terrains') {
-                width = Math.ceil((height / 32 + 2) / editor.uivalues.foldPerCol) * 32;
-                if (width > 32) mh = 32 * editor.uivalues.foldPerCol;
-            } else {
-                var per_height = (img == 'enemy48' || img == 'npc48' ? 48 : 32);
-                width = Math.ceil(height / per_height / editor.uivalues.foldPerCol) * 32;
-                if (width > 32) mh = per_height * editor.uivalues.foldPerCol;
-            }
+            var per_height = (img == 'enemy48' || img == 'npc48' ? 48 : 32);
+            width = Math.ceil(height / per_height / editor.uivalues.foldPerCol) * 32;
+            if (width > 32) mh = per_height * editor.uivalues.foldPerCol;
         }
         editor.widthsX[img] = [img, sumWidth / 32, (sumWidth + width) / 32, height];
         sumWidth += width;
@@ -880,13 +812,10 @@ editor.prototype.drawInitData = function (icons) {
             })(editor.airwallImg,nowx);
             if (editor.uivalues.folded) {
                 // --- 单列 & 折行
-                var canvas = document.createElement("canvas");
-                canvas.width = 32;
-                canvas.height = images[img].height + 64;
-                canvas.getContext('2d').drawImage(images[img], 0, 64);
-                var subimgs = splitImage(canvas, 32, editor.uivalues.foldPerCol * 32);
-                for (var i = 0; i < subimgs.length; i++) {
-                    drawImage(subimgs[i], nowx, 0, img);
+                var subimgs = core.splitImage(images[img], 32, editor.uivalues.foldPerCol * 32);
+                var frames = images[img].width / 32;
+                for (var i = 0; i < subimgs.length; i+=frames) {
+                    drawImage(subimgs[i], nowx, i==0?2*32:0, img);
                     nowx += 32;
                 }
             }
@@ -901,7 +830,7 @@ editor.prototype.drawInitData = function (icons) {
             var tempx = editor.uivalues.folded ? 32 : 96;
             for (var im in autotiles) {
                 var tempy = editor.uivalues.folded ? 32 : autotiles[im].height;
-                var subimgs = splitImage(autotiles[im], tempx, tempy);
+                var subimgs = core.splitImage(autotiles[im], tempx, tempy);
                 drawImage(subimgs[0], nowx, nowy, img);
                 nowy += tempy;
             }
@@ -911,8 +840,9 @@ editor.prototype.drawInitData = function (icons) {
         if (editor.uivalues.folded) {
             // --- 单列 & 折行
             var per_height = img.endsWith('48') ? 48 : 32;
-            var subimgs = splitImage(images[img], 32, editor.uivalues.foldPerCol * per_height);
-            for (var i = 0; i < subimgs.length; i++) {
+            var subimgs = core.splitImage(images[img], 32, editor.uivalues.foldPerCol * per_height);
+            var frames = images[img].width / 32;
+            for (var i = 0; i < subimgs.length; i+=frames) {
                 drawImage(subimgs[i], nowx, 0, img);
                 nowx += 32;
             }

@@ -48,7 +48,6 @@ type ResolvedMap = {
     mine: Mine
     chain: { [key: number]: number[] }
     freeze: { [key: number]: number }
-    enemys: [][]
 }
 
 type Enemy = {

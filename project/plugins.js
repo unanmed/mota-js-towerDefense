@@ -2683,7 +2683,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             core.status.hero.money += tower.pauseBuild ? tower.haveCost : tower.haveCost * 0.6;
             delete core.status.realTower[x + ',' + y];
             delete core.status.towers[x + ',' + y];
-            core.status.eventt.id = null;
+            core.status.event.id = null;
             core.status.event.data = null;
             core.removeBlock(x, y);
             core.clearMap('damage');
@@ -3668,7 +3668,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 ny = y * 32 + 16;
             if (!main.replayChecking) {
                 var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
-                var color = [255, 150 - tower.level / tower.max * 150, 150 - tower.level / tower.max * 150, 0.5];
+                var color = [255, 255 - tower.level / tower.max * 150, 255 - tower.level / tower.max * 150, 0.5];
             }
             enemy.forEach(function(one) {
                 var now = all[one];
@@ -3758,7 +3758,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             // 绘制攻击动画
             if (!main.replayChecking) {
                 var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
-                var color = [255, 150 - tower.level / tower.max * 150, 150 - tower.level / tower.max * 150, 0.7];
+                var color = [255, 255 - tower.level / tower.max * 255, 255 - tower.level / tower.max * 255, 0.7];
                 core.drawLine(ctx, x * 32 + 16, y * 32 + 16, enemy.x * 32 + 16, enemy.y * 32 + 16, color, 2);
                 ctx.interval = 300 / (1.5 / tower.speed);
             }
@@ -4518,7 +4518,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     now++;
                     try {
                         core.doAnimationFrameInReplay();
-                        if (now === rounds) {
+                        if (now === rounds + 1) {
                             clearInterval(interval);
                             core.replay();
                         }
@@ -4533,7 +4533,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     now++;
                     try {
                         core.doAnimationFrameInReplay();
-                        if (now === rounds) {
+                        if (now === rounds + 1) {
                             break;
                         }
                     } catch (e) {

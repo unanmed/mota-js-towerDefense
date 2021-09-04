@@ -56,6 +56,7 @@ core.platform
 core.platform.isPC    （是否是电脑端）
 core.platform.isAndroid    （是否是安卓端）
 core.platform.isIOS    （是否是iOS端）
+core.platform.useLocalForage    （是否开启了新版存档）
 
 
 core.domStyle
@@ -316,6 +317,9 @@ drawHero: fn(status?: string, offset?: number, frame?: number)
 status: 只能为 stop, leftFoot 和 rightFoot，不填用stop。
 offset: 相对主角逻辑位置的偏移量，不填视为无偏移。
 frame: 绘制的第几帧
+
+fillPosWithPoint: fn(pos?: ?)
+显示离散的寻路点
 
 gatherFollowers: fn()
 立刻聚集所有的跟随者
@@ -607,9 +611,6 @@ noGather: 是否聚集跟随者
 setHeroMoveInterval: fn(callback?: fn())
 设置行走的效果动画
 
-setHeroOpacity: fn(opacity?: number, moveMode?: string, time?: number, callback?: fn())
-改变勇士的不透明度
-
 setMusicBtn: fn()
 设置音乐图标的显隐状态
 
@@ -681,6 +682,9 @@ triggerDebuff: fn(action: string, type: string|[string])
 获得或移除毒衰咒效果
 action: 要获得还是移除，'get'为获得，'remove'为移除
 type: 获得或移除的内容（poison/weak/curse），可以为字符串或数组
+
+triggerHero: fn(type?: string, time?: number, callback?: fn())
+改变勇士的显隐状态
 
 triggerReplay: fn()
 播放或暂停录像回放
