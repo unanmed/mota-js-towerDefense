@@ -1547,6 +1547,25 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 core.getChainLoc();
                 core.getFreezeLoc();
                 core.status.enemys = { cnt: 0, enemys: {}, hero: { cnt: 0 }, mine: {} };
+                // 强制出怪
+                core.registerAnimationFrame('forceEnemy', true, function() {
+                    if (flags.pause) return;
+                    if (!flags.forceInterval) {
+                        flags.forceInterval = 5000;
+                        flags.nowInterval = 4;
+                    }
+                    flags.forceInterval -= 16.67;
+                    if (flags.forceInterval < flags.nowInterval * 1000) {
+                        flags.nowInterval--;
+                        core.updateStatusBar('interval');
+                    }
+                    if (flags.forceInterval <= 0) {
+                        delete flags.forceInterval;
+                        delete flags.nowInterval;
+                        core.unregisterAnimationFrame('forceEnemy');
+                        core.startMonster(core.status.floorId);
+                    }
+                });
                 return;
             }
             if (!list) return;
@@ -1589,7 +1608,13 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     core.status.enemys.cnt++;
                     core.updateStatusBar('enemy');
                     var hp = now.hp * (1 + flags.waves * flags.waves / 225);
-                    core.status.enemys.enemys[enemy[0] + '_' + Math.round(Date.now() * Math.random())] = {
+                    var id = enemy[0] + '_' + Math.round(Date.now() * Math.random());
+                    while (true) {
+                        if (!core.status.enemys.enemys) break;
+                        if (!(id in core.status.enemys.enemys)) break;
+                        id = enemy[0] + '_' + Math.round(Date.now() * Math.random());
+                    }
+                    core.status.enemys.enemys[id] = {
                         x: startLoc[0],
                         y: startLoc[1],
                         id: enemy[0],
@@ -1700,7 +1725,27 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 };
             }
             core.updateStatusBar('score');
-        }
+        };
+        // 全局初始化
+        this.globalInit = function(fromLoad) {
+            // 初始化怪物路线
+            core.getEnemyRoute();
+            // 初始化画布等
+            core.initDrawEnemys();
+            core.drawAllEnemys(fromLoad);
+            if (core.status.enemys.enemys) core.drawHealthBar();
+            core.deleteTowerEffect();
+            // 初始化防御塔相关
+            core.initTowers();
+            core.initAttack();
+            core.getChainLoc();
+            core.getFreezeLoc();
+            core.control.updateStatusBar(null, true);
+        };
+        // 游戏开始的时候的初始化
+        this.initGameStart = function() {
+            core.updateStatusBar(null, true);
+        };
     },
     "drawEnemys": function() {
         // 绘制怪物 路线相关 sprite化
@@ -2164,7 +2209,6 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 if (main.replayChecking) return;
                 if (timestamp - core.animateFrame.globalTime <= core.values.animateSpeed) return;
                 if (!core.status.thisMap) return;
-                if (flags.pause) return;
                 core.status.globalAnimateStatus++;
                 if (core.status.floorId) {
                     // Global Enemy Animate
@@ -4530,7 +4574,8 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         };
         ////// 回放 //////
         control.prototype.replay = function(force) {
-            flags.pause = false;
+            if (core.isReplaying())
+                flags.pause = false;
             if (!core.isPlaying() || !core.isReplaying() ||
                 core.status.replay.animate || core.status.event.id) return;
             if (core.status.replay.pausing && !force) return;

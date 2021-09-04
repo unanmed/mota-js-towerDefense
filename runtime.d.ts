@@ -46,6 +46,8 @@ type Floor = {
 
 type ResolvedMap = {
     mine: Mine
+    chain: { [key: number]: number[] }
+    freeze: { [key: number]: number }
 }
 
 type Enemy = {
@@ -2760,6 +2762,12 @@ declare class plugin {
     /** 怪物死亡 */
     enemyDie(id: string): void
 
+    /** 全局初始化 */
+    globalInit(fromLoad?: boolean): void
+
+    /** 游戏开始的时候初始化 */
+    initGameStart(): void
+
     /** 绘制地图路线 */
     drawEnemyRoute(): void
 
@@ -2870,7 +2878,7 @@ declare class plugin {
     doAnimationFrameInReplay(): void
 
     /** 向录像中添加操作 */
-    pushActionToRoute(action: any): void
+    pushActionToRoute(action: string): void
 }
 
 type core = {
@@ -3001,6 +3009,7 @@ type core = {
     dymCanvas: { [key: string]: CanvasRenderingContext2D }
     batchCanvas: { [key: string]: CanvasRenderingContext2D[] }
     batchDict: { [key: string]: CanvasRenderingContext2D }
+    batchLength: { [key: string]: number }
     /** 游戏状态 */
     status: gameStatus
 

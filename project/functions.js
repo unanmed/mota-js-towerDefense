@@ -75,7 +75,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                     return true;
                 }
             }, 1000);
-            flags.useEffect = true;
+            flags.pause = true;
             if (core.isReplaying()) flags.pause = false;
         },
         "win": function(reason, norank, noexit) {
@@ -1165,13 +1165,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
             }, 100);
             var t3 = setTimeout(function() {
                 try {
-                    core.initDrawEnemys();
-                    core.drawAllEnemys(true);
-                    core.deleteTowerEffect();
-                    core.getEnemyRoute();
-                    core.drawHealthBar();
-                    core.getChainLoc();
-                    core.getFreezeLoc();
+                    core.globalInit(true);
                     for (var i in core.status.thisMap.mine || {}) {
                         var mine = core.status.thisMap.mine;
                         if (mine[i].cnt) {

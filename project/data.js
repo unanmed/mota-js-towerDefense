@@ -531,7 +531,7 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			},
 			{
 				"type": "function",
-				"function": "function(){\ncore.control.updateStatusBar(false, true);\n}"
+				"function": "function(){\ncore.initGameStart();\n}"
 			}
 		],
 		"shops": [
