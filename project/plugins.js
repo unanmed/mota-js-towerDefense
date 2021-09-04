@@ -3691,7 +3691,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 }
                 core.drawHealthBar(one);
             });
-            if (flags.useEffect)
+            if (!main.replayChecking)
                 ctx.interval = 250 / (0.8 / tower.speed);
             core.expLevelUp(x, y);
             core.playSound('gun.mp3');
