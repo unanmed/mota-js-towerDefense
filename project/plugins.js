@@ -1918,14 +1918,14 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     // 删除画布
                     for (var type in core.batchCanvas) {
                         core.batchCanvas[type].forEach(function(one) {
-                            if (core.dom.gameDraw[one.canvas]) {
+                            if (one.canvas.parentElement === core.dom.gameDraw) {
                                 one.shadowBlur = 0;
                                 core.dom.gameDraw.removeChild(one.canvas);
                             }
                         });
+                        core.batchCanvas[type] = [];
+                        core.batchCanvasLength[type] = 0;
                     }
-                    core.batchCanvas[type] = [];
-                    core.batchCanvasLength[type] = 0;
                 }
                 // 创建200个画布
                 flags.pause = true;
