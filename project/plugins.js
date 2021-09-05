@@ -2331,43 +2331,49 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 destory: { atk: 30, cost: 350, range: 2, speed: 1.5, max: 20 }
             };
 
-            function createIconFromTower(name) {
+            function createIconFromTower(data) {
+                var prefix = data[0];
                 return {
-                    base: name + '-base.png',
-                    weapon: name + '-weapon.png',
-                    update: name + '-extra-1.png',
+                    base: prefix + '-base.png',
+                    weapon: prefix + '-weapon.png',
+                    extra1: prefix + '-extra-1.png', 
+                    weaponUpdate: prefix + '-weapon-' + data[1] + '.png',
+                    extra2: prefix + '-extra-2.png',
+                    special: prefix + '-special.png',
                 }
             }
 
-            function createIconFromEnemy(name) {
+            function createIconFromEnemy(data) {
+                var prefix = data[0];
                 return {
-                    base: name + '.png',
-                    update: name + '-hl.png',
+                    base: prefix + '.png',
+                    update: prefix + '-hl.png',
                 }
             }
             var towerIconInitData = {
-                basic: "tower-basic",
-                gun: "tower-minigun",
-                bomb: "tower-cannon",
+                basic: [ "tower-basic", "double" ],
+                gun: [ "tower-minigun", "heavy" ],
+                bomb: [ "tower-cannon", "long" ],
 
-                laser: "tower-laser",
-                tesla: "tower-tesla",
-                scatter: "tower-multishot",
+                laser: [ "tower-laser", "mirrors" ],
+                tesla: [ "tower-tesla", "high-current" ],
+                scatter: [ "tower-multishot", "penetrating" ],
 
-                freeze: "tower-freezing",
-                barrack: "tower-splash",
-                sniper: "tower-sniper",
+                freeze: [ "tower-freezing", "twisted" ],
+                barrack: [ "tower-splash", "thin" ],
+                sniper: [ "tower-sniper", "long" ],
 
-                mine: "enemy-type-armored",
-                chain: "enemy-type-fighter",
-                destory: "tower-blast",
+                mine: [ "enemy-type-armored" ],
+                chain: [ "enemy-type-fighter" ],
+                destory: [ "tower-blast", "heavy" ],
             }
             window.towerIcons = {};
             for (var name in towerIconInitData) {
                 var data = towerIconInitData[name];
-                if (data.startsWith("tower")) {
+                var prefix = data[0];
+                if (prefix.startsWith("tower")) {
                     window.towerIcons[name] = createIconFromTower(data);
-                } else if (data.startsWith("enemy")) {
+                } else if (prefix.startsWith("enemy")) {
                     window.towerIcons[name] = createIconFromEnemy(data);
                 }
             }
@@ -2744,6 +2750,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 core.getFreezeLoc();
             if (now.type == 'chain')
                 core.getChainLoc();
+            this.updateTowerSprite(now);
             core.drawRange(x, y, core.status.realTower[x + ',' + y].range || 0, core.status.realTower[x + ',' + y].square);
             core.drawTip('升级成功！');
             if (!core.isReplaying())
@@ -2932,16 +2939,37 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             }
             this.updateTowerSprite(tower);
         }
+        var eps = 1e-9;
         this.updateTowerSprite = function(tower) {
+            if (main.replayChecking) return;
             var pos = tower.x + ',' + tower.y;
             var icon = window.towerIcons[tower.type];
             var basectx = core.batchDict['tower-base_' + pos];
             core.clearMap(basectx);
             core.drawImage(basectx, icon.base, 6, 6, 84, 84, 0, 0, 32, 32);
+            if (icon.extra1) {
+                if (tower.level >= Math.ceil(tower.max * 0.25) - eps) {
+                    core.drawImage(basectx, icon.extra1, 6, 6, 84, 84, 0, 0, 32, 32);
+                }
+                if (tower.level >= Math.ceil(tower.max * 0.75) - eps) {
+                    core.drawImage(basectx, icon.extra2, 6, 6, 84, 84, 0, 0, 32, 32);
+                }
+                if (tower.level >= Math.ceil(tower.max * 1) - eps) {
+                    core.drawImage(basectx, icon.special, 6, 6, 84, 84, 0, 0, 32, 32);
+                }
+            } else if (icon.update) {
+                if (tower.level >= Math.ceil(tower.max * 0.5) - eps) {
+                    core.drawImage(basectx, icon.update, 6, 6, 84, 84, 0, 0, 32, 32);
+                }
+            }
             if (icon.weapon) {
                 var weaponctx = core.batchDict['tower-weapon_' + pos];
                 core.clearMap(weaponctx);
-                core.drawImage(weaponctx, icon.weapon, 6, 6, 84, 84, 0, 0, 32, 32);
+                if (tower.level >= Math.ceil(tower.max * 0.5) - eps) {
+                    core.drawImage(weaponctx, icon.weaponUpdate, 6, 6, 84, 84, 0, 0, 32, 32);
+                } else {
+                    core.drawImage(weaponctx, icon.weapon, 6, 6, 84, 84, 0, 0, 32, 32);
+                }
             }
         }
     },
@@ -3642,7 +3670,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
                 var color = [255, 255 - tower.level / tower.max * 255, 255 - tower.level / tower.max * 255, 0.5]
                 core.drawLine(ctx, x * 32 + 16, y * 32 + 16, enemy.x * 32 + 16, enemy.y * 32 + 16, color, 2);
-                this.setTowerEffect(ctx, tower.speed);
+                this.setTowerEffect(ctx, 0.5 / tower.speed);
             }
             if (core.hasSpecial(enemy.special, 4)) {
                 enemy.hp -= atk / 2;
@@ -3821,7 +3849,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             core.playSound('tesla.mp3')
             if (!main.replayChecking) {
                 var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
-                core.drawLine(ctx, x * 32 + 16, y * 32 + 16, all[enemys[0]].x * 32 + 16,
+                core.drawLine(ctx, x * 32 + 16, y * 32, all[enemys[0]].x * 32 + 16,
                     all[enemys[0]].y * 32 + 16, [255, 255, 255, 0.6], 2);
                 this.setTowerEffect(ctx, 0.64 / tower.speed);
             }
