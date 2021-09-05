@@ -2296,7 +2296,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 }
                 for (var one in core.status.enemys.hero) {
                     var ctx = core.getContextByName(one, true);
-                    enemy = core.status.enemys.enemys[one];
+                    enemy = core.status.enemys.hero[one];
                     var now = enemy.hp,
                         total = enemy.total;
                     var color = [255 * 2 - now / total * 2 * 255, now / total * 2 * 255, 0, 1];
@@ -3582,8 +3582,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 if (nx < 0 || nx > 14) continue;
                 for (var ny = y - 1; ny <= y + 1; ny++) {
                     if (ny < 0 || ny > 14) continue;
-                    for (var i in route) {
-                        if (parseInt(i) == route.length) continue;
+                    for (var i = 0; i < route.length-1; i++) {
                         if (core.same(route[i], [nx, ny])) {
                             canReach[i] = true;
                             break;
