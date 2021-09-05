@@ -515,3 +515,25 @@ p#name {
     -webkit-animation: rotate-even 1s ease-in-out 1;
     animation: rotate-even 1s ease-in-out 1;
 }
+
+@keyframes blast-odd {
+    0% { transform: scale(1); }
+    10% { transform: scale(0.3); }
+    100% { transform: scale(1); }
+}
+
+@keyframes blast-even {
+    0% { transform: scale(1); }
+    10% { transform: scale(0.3); }
+    100% { transform: scale(1); }
+}
+
+.blast-odd {
+    -webkit-animation: blast-odd 600ms ease-out 1;
+    animation: blast-odd 600ms ease-out 1;
+}
+
+.blast-even {
+    -webkit-animation: blast-even 600ms ease-out 1;
+    animation: blast-even 600ms ease-out 1;
+}
