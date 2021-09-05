@@ -2191,7 +2191,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                         hero.drown = true;
                         var icon = core.getBlockById('N342');
                         if (hero.level === 2) {
-                            core.getBlockById('N325');
+                            icon = core.getBlockById('N325');
                         }
                         core.drawBlock(icon, core.status.globalAnimateStatus, ctx);
                         // 血条
@@ -2235,7 +2235,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     var heroes = core.status.enemys.hero || {};
                     Object.keys(heroes).forEach(function(one) {
                         var icon = core.getBlockById('N342');
-                        if (one.level === 2) {
+                        if (heroes[one].level === 2) {
                             icon = core.getBlockById('N325');
                         }
                         core.drawBlock(icon, core.status.globalAnimateStatus, one);
@@ -2746,7 +2746,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             core.returnCanvas('tower-base_' + pos, 'mine');
             var towerIcon = window.towerIcons[tower.type];
             if (towerIcon.weapon) { 
-                core.returnCanvas('tower-wepaon_' + pos, 'mine');
+                core.returnCanvas('tower-weapon_' + pos, 'mine');
             }
             core.clearMap('damage');
             core.returnCanvas('tower_' + x + '_' + y, 'tower');
@@ -2869,10 +2869,13 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var x = tower.x, y = tower.y;
             var pos = x + ',' + y;
             var icon = window.towerIcons[tower.type]; 
-            var basectx = core.acquireCanvas('tower-base_' + pos, 'mine');
-            core.relocateCanvas(basectx, x * 32, y * 32);
-            core.drawImage(basectx, icon.base, 6, 6, 84, 84, 0, 0, 32, 32);
-            if (icon.weapon) {
+            // 震荡塔不需要新建canvas
+            if (!core.batchDict['tower-base_' + pos]) {
+                var basectx = core.acquireCanvas('tower-base_' + pos, 'mine');
+                core.relocateCanvas(basectx, x * 32, y * 32);
+                core.drawImage(basectx, icon.base, 6, 6, 84, 84, 0, 0, 32, 32);
+            }
+            if (icon.weapon && !core.batchDict['tower-weapon_' + pos]) {
                 var weaponctx = core.acquireCanvas('tower-weapon_' + pos, 'mine');
                 weaponctx.canvas.style.zIndex = 60;
                 core.relocateCanvas(weaponctx, x * 32, y * 32);
@@ -2884,9 +2887,11 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var pos = tower.x + ',' + tower.y;
             var icon = window.towerIcons[tower.type]; 
             var basectx = core.batchDict['tower-base_' + pos];
+            core.clearMap(basectx);
             core.drawImage(basectx, icon.base, 6, 6, 84, 84, 0, 0, 32, 32);
             if (icon.weapon) {
                 var weaponctx = core.batchDict['tower-weapon_' + pos];
+                core.clearMap(weaponctx);
                 core.drawImage(weaponctx, icon.weapon, 6, 6, 84, 84, 0, 0, 32, 32);
             }
         }
@@ -3548,6 +3553,15 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var transform = "rotate(" + deg + "deg)";
             core.batchDict["tower-weapon_" + pos].canvas.style.transform = transform;
         }
+        var triggleAnimate = function(elm, name) {
+            if (elm.classList.contains(name + "-odd")) {
+                elm.classList.remove(name + "-odd");
+                elm.classList.add(name + "-even");
+            } else {
+                elm.classList.remove(name + "-even");
+                elm.classList.add(name + "-odd");
+            }
+        }
         this.basicAttack = function(x, y, tower) {
             x = parseInt(x);
             y = parseInt(y);
@@ -3865,13 +3879,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             };
             if (!main.replayChecking) {
                 var weaponCanvas = core.batchDict["tower-weapon_" + pos].canvas;
-                if (weaponCanvas.classList.contains("rotate-odd")) {
-                    weaponCanvas.classList.remove("rotate-odd");
-                    weaponCanvas.classList.add("rotate-even");
-                } else {
-                    weaponCanvas.classList.remove("rotate-even");
-                    weaponCanvas.classList.add("rotate-odd");
-                }
+                triggleAnimate(weaponCanvas, "rotate");
             }
             core.expLevelUp(x, y);
             core.autoUpdateStatusBar(x, y);
@@ -4100,6 +4108,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         this.destoryAttack = function(x, y, tower) {
             x = parseInt(x);
             y = parseInt(y);
+            var pos = x + ',' + y;
             // 攻击所有怪物
             var all = core.status.enemys.enemys;
             if (!tower.canReach) this.getCanReachBlock(x, y);
@@ -4113,16 +4122,16 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     if (core.hasSpecial(now.special, 4)) {
                         now.hp -= tower.atk / 2;
                         core.status.totalDamage += tower.atk / 2;
-                        core.status.towers[x + ',' + y].damage += tower.atk / 2;
+                        core.status.towers[pos].damage += tower.atk / 2;
                     } else {
                         now.hp -= tower.atk;
                         core.status.totalDamage += tower.atk;
-                        core.status.towers[x + ',' + y].damage += tower.atk;
+                        core.status.towers[pos].damage += tower.atk;
                     }
-                    core.status.towers[x + ',' + y].exp++;
+                    core.status.towers[pos].exp++;
                     if (all[one].hp <= 0) {
                         core.enemyDie(one);
-                        core.status.towers[x + ',' + y].killed++;
+                        core.status.towers[pos].killed++;
                         continue;
                     }
                     core.drawHealthBar(one);
@@ -4132,6 +4141,8 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             if (!attacked) return;
             core.playSound('destory.mp3');
             if (!main.replayChecking) {
+                var weaponCanvas = core.batchDict["tower-weapon_" + pos].canvas;
+                triggleAnimate(weaponCanvas, "blast");
                 var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
                 ctx.filter = 'blur(5px)';
                 var color = [150 + tower.level / tower.max * 105, 150 - tower.level / tower.max * 100, 150 - tower.level / tower.max * 100, 0.6];
