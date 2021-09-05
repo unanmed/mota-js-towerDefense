@@ -1596,6 +1596,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var total = enemy[1];
             if (!core.isReplaying())
                 core.pushActionToRoute('nextWave');
+            core.autosave();
             // 利用全局帧动画
             core.registerAnimationFrame('startMonster', true, function() {
                 flags.starting = true;
@@ -2711,14 +2712,10 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     core.updateStatusBar();
                     return true;
                 }
-                core.status.event.data = null;
+                core.placeTower(x, y);
                 core.status.event.id = null;
-                core.drawTip('取消放置');
-                core.unlockControl();
-                core.unregisterAction('onclick', 'confirm');
-                core.getChainLoc();
-                core.getFreezeLoc();
                 core.updateStatusBar();
+                core.unregisterAction('onclick', 'confirm');
                 return true;
             }, 200);
         };
