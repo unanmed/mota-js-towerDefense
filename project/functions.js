@@ -12,7 +12,6 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                 return name != 'hero' && name != 'maps';
             });
             core.status.played = true;
-            core.batchDict = {};
             // 初始化人物，图标，统计信息
             core.status.hero = core.clone(hero);
             window.hero = core.status.hero;
@@ -1115,27 +1114,8 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                 if (core.hasFlag("__bgm__")) { // 持续播放
                     core.playBgm(core.getFlag("__bgm__"));
                 }
-
                 core.removeFlag('__fromLoad__');
-                if (callback) callback();
-            });
-            // 分段加载 否则会出问题
-            flags.pause = true;
-            core.drawTip('读档中......');
-            core.registerAction('onclick', 'ignore', function() { return true; }, 10000);
-            core.registerAction('ondown', 'ignore', function() { return true; }, 10000);
-            core.registerAction('onup', 'ignore', function() { return true; }, 10000);
-            core.registerAction('keyDown', 'ignore', function() { return true; }, 10000);
-            core.registerAction('keyUp', 'ignore', function() { return true; }, 10000);
-            var t1 = setTimeout(function() {
-                core.unregisterAction('onclick', 'ignore');
-                core.unregisterAction('ondown', 'ignore');
-                core.unregisterAction('onup', 'ignore');
-                core.unregisterAction('keyDown', 'ignore');
-                core.unregisterAction('keyUp', 'ignore');
-                core.drawTip('读档完毕！');
-            }, 500);
-            var t2 = setTimeout(function() {
+                // 开始读档
                 try {
                     // 出怪列表 夹击位点
                     core.status.thisMap.enemys = core.clone(data.enemyList);
@@ -1149,24 +1129,9 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                     core.status.totalDamage = data.damage;
                     core.status.totalKilled = data.killed;
                     core.status.currTime = data.currTime;
-                } catch (e) {
-                    if (e) {
-                        clearTimeout(t1);
-                        clearTimeout(t3);
-                        core.drawTip('读档失败，请在怪物手册或控制台查看错误信息');
-                        console.log(e);
-                        flags.error = e;
-                        core.unregisterAction('onclick', 'ignore');
-                        core.unregisterAction('ondown', 'ignore');
-                        core.unregisterAction('onup', 'ignore');
-                        core.unregisterAction('keyDown', 'ignore');
-                        core.unregisterAction('keyUp', 'ignore');
-                    }
-                }
-            }, 100);
-            var t3 = setTimeout(function() {
-                try {
+                    // 全局初始化
                     core.globalInit(true);
+                    // 绘制地雷
                     for (var i in core.status.thisMap.mine || {}) {
                         var mine = core.status.thisMap.mine;
                         if (mine[i].cnt) {
@@ -1201,6 +1166,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                             }
                         }
                     }
+                    // 出怪相关
                     if (flags.starting)
                         core.startMonster(flags.waves, false, true);
                     core.control.updateStatusBar(false, true);
@@ -1221,19 +1187,12 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                         });
                     }
                 } catch (e) {
-                    if (e) {
-                        clearTimeout(t1);
-                        core.drawTip('读档失败，请在怪物手册或控制台查看错误信息');
-                        console.log(e);
-                        flags.error = e;
-                        core.unregisterAction('onclick', 'ignore');
-                        core.unregisterAction('ondown', 'ignore');
-                        core.unregisterAction('onup', 'ignore');
-                        core.unregisterAction('keyDown', 'ignore');
-                        core.unregisterAction('keyUp', 'ignore');
-                    }
+                    core.drawTip('读档失败，请在怪物手册或控制台查看错误信息');
+                    console.log(e);
+                    flags.error = e;
                 }
-            }, 200);
+                if (callback) callback();
+            });
         },
         "getStatusLabel": function(name) {
             // 返回某个状态英文名的对应中文标签，如atk -> 攻击，def -> 防御等。

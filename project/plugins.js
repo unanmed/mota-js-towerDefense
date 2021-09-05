@@ -1,18 +1,17 @@
 var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
     "init": function() {
-
-        console.log("插件编写测试");
-
         // 可以写一些直接执行的代码
         // 在这里写的代码将会在【资源加载前】被执行，此时图片等资源尚未被加载。
         // 请勿在这里对包括bgm，图片等资源进行操作。
-
+        core.batchDict = {};
+        core.batchCanvas = {};
+        core.batchCanvasLength = {};
 
         this._afterLoadResources = function() {
             // 本函数将在所有资源加载完毕后，游戏开启前被执行
             // 可以在这个函数里面对资源进行一些操作。
             // 若需要进行切分图片，可以使用 core.splitImage() 函数，或直接在全塔属性-图片切分中操作
-            core.registerResize('batchCanvas', function(obj) {
+            core.registerResize('batchCanvas', function() {
                 for (var type in core.batchCanvas) {
                     for (var name in core.batchCanvas[type]) {
                         var ctx = core.batchCanvas[type][name],
@@ -1797,9 +1796,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             if (n == 1 || !n) return originCreateCanvas.call(core.ui, name, x, y, width, height, z);
             // 批量创建
             var fragment = document.createDocumentFragment();
-            if (!core.batchCanvas) core.batchCanvas = {};
             if (!core.batchCanvas[name]) core.batchCanvas[name] = [];
-            if (!core.batchCanvasLength) core.batchCanvasLength = {};
             if (!core.batchCanvasLength[name]) core.batchCanvasLength[name] = 0;
             for (var i = core.batchCanvasLength[name]; i < n + core.batchCanvasLength[name]; i++) {
                 var newCanvas = document.createElement("canvas");
@@ -1899,6 +1896,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             }
             // 如果仍有空闲画布 则直接取用 并加入到dictionary中
             var canvas = canvases.shift();
+            canvas._type = type;
             canvas.canvas.style.display = 'block';
             core.batchDict[name] = canvas;
             return canvas;
@@ -1913,6 +1911,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     c.canvas.style.transform = '';
                     c.canvas.style.zIndex = 34;
                 }
+                delete c.canvas._type;
                 c.canvas.style.display = 'none';
                 core.batchCanvas[type].push(c);
                 delete core.batchDict[canvas];
@@ -1921,24 +1920,18 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         // 初始化
         this.initDrawEnemys = function() {
             if (!main.replayChecking) {
-                // 归还所有画布 同时删除
-                if (core.batchCanvas) {
-                    if (core.batchDict) {
-                        for (var one in core.batchDict) {
-                            this.returnCanvas(one, core.batchDict[one].canvas.id.split('_')[0]);
-                        }
-                    }
-                    // 删除画布
-                    for (var type in core.batchCanvas) {
-                        core.batchCanvas[type].forEach(function(one) {
-                            if (one.canvas.parentElement === core.dom.gameDraw) {
-                                one.shadowBlur = 0;
-                                core.dom.gameDraw.removeChild(one.canvas);
-                            }
-                        });
-                        core.batchCanvas[type] = [];
-                        core.batchCanvasLength[type] = 0;
-                    }
+                // 归还所有画布
+                for (var one in core.batchDict) {
+                    var type = core.batchDict[one].canvas._type;
+                    this.returnCanvas(one, type);
+                }
+                // 删除画布
+                for (var type in core.batchCanvas) {
+                    core.batchCanvas[type].forEach(function(one) {
+                        core.dom.gameDraw.removeChild(one.canvas);
+                    });
+                    core.batchCanvas[type] = [];
+                    core.batchCanvasLength[type] = 0;
                 }
                 // 创建200个画布
                 flags.pause = true;
@@ -3748,11 +3741,13 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             if (!main.replayChecking) {
                 rotateWeapon(pos, nx - x, ny - y);
                 var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
+                ctx.filter = 'blur(0px)';
                 var color = [255, 150 - tower.level / tower.max * 150, 150 - tower.level / tower.max * 150, 0.5];
                 core.drawLine(ctx, x * 32 + 16, y * 32 + 16, nx * 32 + 16, ny * 32 + 16, color, 2);
                 color = [255, 100 - tower.level / tower.max * 100, 100 - tower.level / tower.max * 100, 0.5];
+                ctx.filter = 'blur(3px)';
                 core.fillCircle(ctx, nx * 32 + 16, ny * 32 + 16, tower.explode * 32, color);
-                this.setTowerEffect(ctx, 1 / tower.speed);
+                this.setTowerEffect(ctx, 0.6 / tower.speed);
             }
             core.expLevelUp(x, y);
             core.autoUpdateStatusBar(x, y);
@@ -4222,7 +4217,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 ctx.filter = 'blur(5px)';
                 var color = [150 + tower.level / tower.max * 105, 150 - tower.level / tower.max * 100, 150 - tower.level / tower.max * 100, 0.6];
                 core.fillCircle(ctx, x * 32 + 16, y * 32 + 16, (tower.range - 0.2) * 32, color);
-                this.setTowerEffect(ctx, 1 / tower.speed);
+                this.setTowerEffect(ctx, 0.5 / tower.speed);
             }
             core.expLevelUp(x, y);
             core.autoUpdateStatusBar(x, y);

@@ -3010,7 +3010,7 @@ type core = {
     dymCanvas: { [key: string]: CanvasRenderingContext2D }
     batchCanvas: { [key: string]: CanvasRenderingContext2D[] }
     batchDict: { [key: string]: CanvasRenderingContext2D }
-    batchLength: { [key: string]: number }
+    batchCanvasLength: { [key: string]: number }
     /** 游戏状态 */
     status: gameStatus
 
