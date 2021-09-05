@@ -2189,7 +2189,11 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     // 如果还没有画过 进行绘制
                     if (!hero.drown && !main.replayChecking) {
                         hero.drown = true;
-                        core.drawBlock(core.getBlockById('N342'), core.status.globalAnimateStatus, ctx);
+                        var icon = core.getBlockById('N342');
+                        if (hero.level === 2) {
+                            core.getBlockById('N325');
+                        }
+                        core.drawBlock(icon, core.status.globalAnimateStatus, ctx);
                         // 血条
                         core.fillRect(ctx, 4, 0, 24, 2, '#333333');
                         core.fillRect(ctx, 4, 0, 24, 2, '#00ff00');
@@ -2230,7 +2234,11 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     // Global Hero Animate
                     var heroes = core.status.enemys.hero || {};
                     Object.keys(heroes).forEach(function(one) {
-                        core.drawBlock(core.getBlockById('N342'), core.status.globalAnimateStatus, one);
+                        var icon = core.getBlockById('N342');
+                        if (one.level === 2) {
+                            icon = core.getBlockById('N325');
+                        }
+                        core.drawBlock(icon, core.status.globalAnimateStatus, one);
                     });
 
                     // Global Autotile Animate
@@ -3845,7 +3853,8 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 to: index - 1,
                 x: loc[0],
                 y: loc[1],
-                special: []
+                special: [],
+                level: tower.level >= 25 ? 2 : 1,
             };
             if (!main.replayChecking) {
                 var weaponCanvas = core.batchDict["tower-weapon_" + pos].canvas;
