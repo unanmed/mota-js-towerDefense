@@ -1551,7 +1551,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 core.status.enemys = { cnt: 0, enemys: {}, hero: { cnt: 0 }, mine: {} };
                 if (!flags.forceInterval) {
                     flags.forceInterval = 5000;
-                    flags.nowInterval = 4;
+                    flags.nowInterval = 5;
                 }
                 // 强制出怪
                 core.registerAnimationFrame('forceEnemy', true, function() {
@@ -1594,6 +1594,8 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             core.unregisterAnimationFrame('forceEnemy');
             var first = true;
             var total = enemy[1];
+            if (!core.isReplaying())
+                core.pushActionToRoute('nextWave');
             // 利用全局帧动画
             core.registerAnimationFrame('startMonster', true, function() {
                 flags.starting = true;
@@ -1642,17 +1644,16 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                         core.unregisterAnimationFrame('startMonster');
                         // 自动出怪
                         if (flags.autoNext) {
+                            console.log(1);
                             if (!flags.forceInterval) {
                                 if (flags.waves % 10 == 0) {
                                     flags.forceInterval = 60000;
-                                    flags.nowInterval = 59;
+                                    flags.nowInterval = 60;
                                 } else {
                                     flags.forceInterval = 15000;
-                                    flags.nowInterval = 14;
+                                    flags.nowInterval = 15;
                                 }
                             }
-                            if (!core.isReplaying())
-                                core.pushActionToRoute('nextWave');
                             core.startMonster(core.status.floorId);
                             core.updateStatusBar();
                             return;
