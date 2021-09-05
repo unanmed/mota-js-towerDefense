@@ -3700,7 +3700,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             });
             // 绘制攻击动画
             if (!main.replayChecking) {
-                rotateWeapon(pos, enemy.x - x, enemy.y - y);
+                rotateWeapon(pos, dx, dy);
                 var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
                 dx *= 32;
                 dy *= 32;
