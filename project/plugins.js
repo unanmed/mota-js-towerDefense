@@ -2763,11 +2763,14 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var level = now.level,
                 next = level + 1;
             var toStatus = {};
+            var skipped = [
+                'level', 'type', 'damage', 'max',
+                'haveCost', 'killed', 'exp', 'expLevel',
+                'square', 'attackInterval', 'x', 'y'
+            ];
             for (var one in now) {
                 // 跳过属性
-                if (one == 'level' || one == 'type' || one == 'damage' || (one == 'max') ||
-                    one == 'haveCost' || one == 'killed' || one == 'exp' || one == 'expLevel' ||
-                    one == 'square' || one == 'attackInterval') {
+                if (skipped.indexOf(one) > -1) {
                     toStatus[one] = now[one];
                     continue;
                 }
@@ -2814,9 +2817,13 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         this.getTowerRealStatus = function(x, y, name, status) {
             if (status) var tower = status;
             else var tower = core.status.towers[x + ',' + y];
-            if (name == 'cost' || name == 'level' || name == 'type' || name == 'damage' ||
-                (name == 'max') || name == 'killed' || name == 'exp' || name == 'expLevel' ||
-                name == 'square' || name == 'haveCost' || name == 'attackInterval' || name == 'pauseBuild')
+            var skipped = [
+                'cost', 'level', 'type', 'damage',
+                'max', 'killed', 'exp', 'expLevel',
+                'square', 'haveCost', 'attackInterval',
+                'pauseBuild', 'x', 'y'
+            ];
+            if (skipped.indexOf(name) > -1)
                 return tower[name];
             if (name == 'cnt' || name == 'chain') return Math.floor(tower.expLevel / 5) + tower[name];
             if (name == 'hero' || name == 'mine') {
