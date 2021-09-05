@@ -2052,9 +2052,9 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                             var played = false;
                             for (var i = mine[enemy.to].cnt; i > 0; i--) {
                                 if (!mine[enemy.to][i]) continue;
-                                played = true;
                                 if (!played)
                                     core.playSound('bomb.mp3');
+                                played = true;
                                 enemy.hp -= mine[enemy.to][i].atk;
                                 core.status.totalDamage += mine[enemy.to][i].atk;
                                 // 把这个地雷删了
@@ -2238,6 +2238,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     }
                 }
             });
+
             function drawEnemy(timestamp) {
                 if (main.replayChecking) return;
                 if (!core.status.thisMap) return;
@@ -2256,7 +2257,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                         Object.keys(enemys).forEach(function(one) {
                             core.drawBlock(core.getBlockById(one.split('_')[0]), core.status.globalAnimateStatus, one);
                         });
-    
+
                         // Global Hero Animate
                         var heroes = core.status.enemys.hero || {};
                         Object.keys(heroes).forEach(function(one) {
@@ -2266,7 +2267,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                             }
                             core.drawBlock(icon, core.status.globalAnimateStatus, one);
                         });
-    
+
                         // Global Autotile Animate
                         core.status.autotileAnimateObjs.forEach(function(block) {
                             core.maps._drawAutotileAnimate(block, core.status.globalAnimateStatus);
@@ -3386,10 +3387,10 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
          * @param {number} speed 
          */
         this.setTowerEffect = function(ctx, speed) {
-            ctx.totalTime = ctx.interval = 12 / speed;
-            ctx.canvas.style.opacity = 1;
-        }
-        // 特效控制
+                ctx.totalTime = ctx.interval = 12 / speed;
+                ctx.canvas.style.opacity = 1;
+            }
+            // 特效控制
         this.deleteTowerEffect = function() {
             core.registerAnimationFrame('deleteEffect', true, function() {
                 if (main.replayChecking) return;
@@ -3582,7 +3583,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 if (nx < 0 || nx > 14) continue;
                 for (var ny = y - 1; ny <= y + 1; ny++) {
                     if (ny < 0 || ny > 14) continue;
-                    for (var i = 0; i < route.length-1; i++) {
+                    for (var i = 0; i < route.length - 1; i++) {
                         if (core.same(route[i], [nx, ny])) {
                             canReach[i] = true;
                             break;
