@@ -1909,6 +1909,10 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var c = core.getContextByName(canvas, true);
             core.clearMap(c);
             if (c) {
+                if (type === "mine") {
+                    c.canvas.style.transform = '';
+                    c.canvas.style.zIndex = 34;
+                }
                 c.canvas.style.display = 'none';
                 core.batchCanvas[type].push(c);
                 delete core.batchDict[canvas];
@@ -1927,20 +1931,20 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     // 删除画布
                     for (var type in core.batchCanvas) {
                         core.batchCanvas[type].forEach(function(one) {
-                            if (core.dom.gameDraw[one.canvas]) {
+                            if (one.canvas.parentElement === core.dom.gameDraw) {
                                 one.shadowBlur = 0;
                                 core.dom.gameDraw.removeChild(one.canvas);
                             }
                         });
+                        core.batchCanvas[type] = [];
+                        core.batchCanvasLength[type] = 0;
                     }
-                    core.batchCanvas[type] = [];
-                    core.batchCanvasLength[type] = 0;
                 }
                 // 创建200个画布
                 flags.pause = true;
                 core.createCanvas('enemy', 0, 0, 32, 34, 35, 200);
                 core.createCanvas('tower', 0, 0, 416, 416, 60, 5);
-                core.createCanvas('mine', 0, 0, 32, 32, 34, 10);
+                core.createCanvas('mine', 0, 0, 32, 32, 34, 40);
             }
             core.drawAllEnemys();
             core.initAttack();
@@ -1962,6 +1966,10 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     var ctx = core.acquireCanvas(id);
                     this.drawHealthBar(id);
                     core.relocateCanvas(ctx, hero.x * 32, hero.y * 32 - 1);
+                }
+                for (var pos in core.status.towers) {
+                    var tower = core.status.towers[pos];
+                    core.plugin.initTowerSprite(tower);
                 }
             }
             // 注册全局帧动画
@@ -2040,8 +2048,12 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                         // 被地雷炸
                         var mine = core.status.thisMap.mine || {};
                         if (enemy.to in mine) {
+                            var played = false;
                             for (var i = mine[enemy.to].cnt; i > 0; i--) {
                                 if (!mine[enemy.to][i]) continue;
+                                played = true;
+                                if (!played)
+                                    core.playSound('bomb.mp3');
                                 enemy.hp -= mine[enemy.to][i].atk;
                                 core.status.totalDamage += mine[enemy.to][i].atk;
                                 // 把这个地雷删了
@@ -2053,7 +2065,6 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                                     break;
                                 }
                             }
-                            core.playSound('bomb.mp3');
                             if (!dead)
                                 core.drawHealthBar(one);
                             // 绘制地雷
@@ -2199,7 +2210,11 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     // 如果还没有画过 进行绘制
                     if (!hero.drown && !main.replayChecking) {
                         hero.drown = true;
-                        core.drawBlock(core.getBlockById('N342'), core.status.globalAnimateStatus, ctx);
+                        var icon = core.getBlockById('N342');
+                        if (hero.level === 2) {
+                            icon = core.getBlockById('N325');
+                        }
+                        core.drawBlock(icon, core.status.globalAnimateStatus, ctx);
                         // 血条
                         core.fillRect(ctx, 4, 0, 24, 2, '#333333');
                         core.fillRect(ctx, 4, 0, 24, 2, '#00ff00');
@@ -2240,7 +2255,11 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                         // Global Hero Animate
                         var heroes = core.status.enemys.hero || {};
                         Object.keys(heroes).forEach(function(one) {
-                            core.drawBlock(core.getBlockById('N342'), core.status.globalAnimateStatus, one);
+                            var icon = core.getBlockById('N342');
+                            if (heroes[one].level === 2) {
+                                icon = core.getBlockById('N325');
+                            }
+                            core.drawBlock(icon, core.status.globalAnimateStatus, one);
                         });
 
                         // Global Autotile Animate
@@ -2307,6 +2326,47 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 chain: { rate: 10, cost: 180, max: 20, maxAttack: 100 },
                 destory: { atk: 30, cost: 350, range: 2, speed: 1.5, max: 20 }
             };
+
+            function createIconFromTower(name) {
+                return {
+                    base: name + '-base.png',
+                    weapon: name + '-weapon.png',
+                    update: name + '-extra-1.png',
+                }
+            }
+
+            function createIconFromEnemy(name) {
+                return {
+                    base: name + '.png',
+                    update: name + '-hl.png',
+                }
+            }
+            var towerIconInitData = {
+                basic: "tower-basic",
+                gun: "tower-minigun",
+                bomb: "tower-cannon",
+
+                laser: "tower-laser",
+                tesla: "tower-tesla",
+                scatter: "tower-multishot",
+
+                freeze: "tower-freezing",
+                barrack: "tower-splash",
+                sniper: "tower-sniper",
+
+                mine: "enemy-type-armored",
+                chain: "enemy-type-fighter",
+                destory: "tower-blast",
+            }
+            window.towerIcons = {};
+            for (var name in towerIconInitData) {
+                var data = towerIconInitData[name];
+                if (data.startsWith("tower")) {
+                    window.towerIcons[name] = createIconFromTower(data);
+                } else if (data.startsWith("enemy")) {
+                    window.towerIcons[name] = createIconFromEnemy(data);
+                }
+            }
             // 升级控制
             window.upgrades = {
                 basic: function(level, name) {
@@ -2616,6 +2676,8 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     }
                     core.status.towers[nx + ',' + ny] = core.clone(towers[tower]);
                     var now = core.status.towers[nx + ',' + ny];
+                    now.x = x;
+                    now.y = y;
                     now.level = 1;
                     now.killed = 0;
                     now.damage = 0;
@@ -2631,7 +2693,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     core.drawTip('成功放置防御塔！');
                     core.unregisterAction('onclick', 'confirm');
                     core.saveRealStatusInCache(x, y);
-                    core.setBlock(tower, x, y);
+                    core.plugin.initTowerSprite(now);
                     core.getChainLoc();
                     core.getFreezeLoc();
                     if (!core.isReplaying())
@@ -2713,11 +2775,15 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 return false;
             }
             core.status.hero.money += tower.pauseBuild ? tower.haveCost : tower.haveCost * 0.6;
-            delete core.status.realTower[x + ',' + y];
-            delete core.status.towers[x + ',' + y];
+            delete core.status.realTower[pos];
+            delete core.status.towers[pos];
             core.status.event.id = null;
             core.status.event.data = null;
-            core.removeBlock(x, y);
+            core.returnCanvas('tower-base_' + pos, 'mine');
+            var towerIcon = window.towerIcons[tower.type];
+            if (towerIcon.weapon) {
+                core.returnCanvas('tower-weapon_' + pos, 'mine');
+            }
             core.clearMap('damage');
             core.returnCanvas('tower_' + x + '_' + y, 'tower');
             core.getChainLoc();
@@ -2734,11 +2800,14 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var level = now.level,
                 next = level + 1;
             var toStatus = {};
+            var skipped = [
+                'level', 'type', 'damage', 'max',
+                'haveCost', 'killed', 'exp', 'expLevel',
+                'square', 'attackInterval', 'x', 'y'
+            ];
             for (var one in now) {
                 // 跳过属性
-                if (one == 'level' || one == 'type' || one == 'damage' || (one == 'max') ||
-                    one == 'haveCost' || one == 'killed' || one == 'exp' || one == 'expLevel' ||
-                    one == 'square' || one == 'attackInterval') {
+                if (skipped.indexOf(one) > -1) {
                     toStatus[one] = now[one];
                     continue;
                 }
@@ -2785,9 +2854,13 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         this.getTowerRealStatus = function(x, y, name, status) {
             if (status) var tower = status;
             else var tower = core.status.towers[x + ',' + y];
-            if (name == 'cost' || name == 'level' || name == 'type' || name == 'damage' ||
-                (name == 'max') || name == 'killed' || name == 'exp' || name == 'expLevel' ||
-                name == 'square' || name == 'haveCost' || name == 'attackInterval' || name == 'pauseBuild')
+            var skipped = [
+                'cost', 'level', 'type', 'damage',
+                'max', 'killed', 'exp', 'expLevel',
+                'square', 'haveCost', 'attackInterval',
+                'pauseBuild', 'x', 'y'
+            ];
+            if (skipped.indexOf(name) > -1)
                 return tower[name];
             if (name == 'cnt' || name == 'chain') return Math.floor(tower.expLevel / 5) + tower[name];
             if (name == 'hero' || name == 'mine') {
@@ -2829,6 +2902,38 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 core.updateStatusBar();
             }
         };
+        this.initTowerSprite = function(tower) {
+            if (main.replayChecking) return;
+            var x = tower.x,
+                y = tower.y;
+            var pos = x + ',' + y;
+            var icon = window.towerIcons[tower.type];
+            // 震荡塔不需要新建canvas
+            if (!core.batchDict['tower-base_' + pos]) {
+                var basectx = core.acquireCanvas('tower-base_' + pos, 'mine');
+                core.relocateCanvas(basectx, x * 32, y * 32);
+                core.drawImage(basectx, icon.base, 6, 6, 84, 84, 0, 0, 32, 32);
+            }
+            if (icon.weapon && !core.batchDict['tower-weapon_' + pos]) {
+                var weaponctx = core.acquireCanvas('tower-weapon_' + pos, 'mine');
+                weaponctx.canvas.style.zIndex = 60;
+                core.relocateCanvas(weaponctx, x * 32, y * 32);
+                core.drawImage(weaponctx, icon.weapon, 6, 6, 84, 84, 0, 0, 32, 32);
+            }
+            this.updateTowerSprite(tower);
+        }
+        this.updateTowerSprite = function(tower) {
+            var pos = tower.x + ',' + tower.y;
+            var icon = window.towerIcons[tower.type];
+            var basectx = core.batchDict['tower-base_' + pos];
+            core.clearMap(basectx);
+            core.drawImage(basectx, icon.base, 6, 6, 84, 84, 0, 0, 32, 32);
+            if (icon.weapon) {
+                var weaponctx = core.batchDict['tower-weapon_' + pos];
+                core.clearMap(weaponctx);
+                core.drawImage(weaponctx, icon.weapon, 6, 6, 84, 84, 0, 0, 32, 32);
+            }
+        }
     },
     "drawTower": function() {
         // 防御塔绘制相关
@@ -3247,6 +3352,16 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                             y = loc.split(',')[1];
                         core.expLevelUp(x, y);
                         core.autoUpdateStatusBar(x, y);
+                        // 旋转
+                        if (tower.type === 'freeze' && !main.replayChecking) {
+                            var weaponCanvas = core.batchDict["tower-weapon_" + loc].canvas;
+                            var lastTransfrom = weaponCanvas.style.transform;
+                            var lastDeg = lastTransfrom ? Number(lastTransfrom.slice(7, -4)) : 0;
+                            if (lastDeg > 180) {
+                                lastDeg -= 360;
+                            }
+                            weaponCanvas.style.transform = "rotate(" + (lastDeg + 5) + "deg)";
+                        }
                     }
                 }
             });
@@ -3470,10 +3585,26 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             delete core.status.enemys.hero[hero];
             core.status.enemys.hero.cnt--;
         };
-        // 基础塔
+        // 旋转炮塔
+        var rotateWeapon = function(pos, dx, dy) {
+            // atan2 是从X轴开始逆时针旋转, 炮塔是Y轴开始顺时针旋转, 因此交换x y坐标计算
+            var deg = Math.atan2(dy, dx) / 3.1415926535 * 180 + 90;
+            var transform = "rotate(" + deg + "deg)";
+            core.batchDict["tower-weapon_" + pos].canvas.style.transform = transform;
+        }
+        var triggleAnimate = function(elm, name) {
+            if (elm.classList.contains(name + "-odd")) {
+                elm.classList.remove(name + "-odd");
+                elm.classList.add(name + "-even");
+            } else {
+                elm.classList.remove(name + "-even");
+                elm.classList.add(name + "-odd");
+            }
+        }
         this.basicAttack = function(x, y, tower) {
             x = parseInt(x);
             y = parseInt(y);
+            var pos = x + ',' + y;
             // 打距离基地最近的
             var atk = tower.atk;
             var enemy = this.getClosestEnemy(x, y);
@@ -3482,6 +3613,8 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             enemy = core.status.enemys.enemys[enemy];
             // 绘制攻击动画
             if (!main.replayChecking) {
+                // 旋转炮塔
+                rotateWeapon(pos, enemy.x - x, enemy.y - y);
                 var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
                 var color = [255, 255 - tower.level / tower.max * 255, 255 - tower.level / tower.max * 255, 0.5]
                 core.drawLine(ctx, x * 32 + 16, y * 32 + 16, enemy.x * 32 + 16, enemy.y * 32 + 16, color, 2);
@@ -3490,18 +3623,18 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             if (core.hasSpecial(enemy.special, 4)) {
                 enemy.hp -= atk / 2;
                 core.status.totalDamage += atk / 2;
-                core.status.towers[x + ',' + y].damage += atk / 2;
+                core.status.towers[pos].damage += atk / 2;
             } else {
                 enemy.hp -= atk;
                 core.status.totalDamage += atk;
-                core.status.towers[x + ',' + y].damage += atk;
+                core.status.towers[pos].damage += atk;
             }
-            core.status.towers[x + ',' + y].exp++;
+            core.status.towers[pos].exp++;
             core.expLevelUp(x, y);
             core.playSound('gun.mp3');
             if (enemy.hp <= 0) {
                 core.enemyDie(id);
-                core.status.towers[x + ',' + y].killed++;
+                core.status.towers[pos].killed++;
                 core.autoUpdateStatusBar(x, y);
                 return;
             }
@@ -3512,6 +3645,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         this.gunAttack = function(x, y, tower) {
             x = parseInt(x);
             y = parseInt(y);
+            var pos = x + ',' + y;
             // 打距离基地最近的
             var atk = tower.atk;
             var enemy = this.getClosestEnemy(x, y);
@@ -3520,6 +3654,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             enemy = core.status.enemys.enemys[enemy];
             // 绘制攻击动画
             if (!main.replayChecking) {
+                rotateWeapon(pos, enemy.x - x, enemy.y - y);
                 var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
                 var color = [255, 255 - tower.level / tower.max * 255, 255 - tower.level / tower.max * 255, 0.4]
                 core.drawLine(ctx, x * 32 + 16, y * 32 + 16, enemy.x * 32 + 16, enemy.y * 32 + 16, color, 2);
@@ -3528,18 +3663,18 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             if (core.hasSpecial(enemy.special, 4)) {
                 enemy.hp -= atk / 2;
                 core.status.totalDamage += atk / 2;
-                core.status.towers[x + ',' + y].damage += atk / 2;
+                core.status.towers[pos].damage += atk / 2;
             } else {
                 enemy.hp -= atk;
                 core.status.totalDamage += atk;
-                core.status.towers[x + ',' + y].damage += atk;
+                core.status.towers[pos].damage += atk;
             }
-            core.status.towers[x + ',' + y].exp += 0.5;
+            core.status.towers[pos].exp += 0.5;
             core.expLevelUp(x, y);
             core.playSound('gun.mp3');
             if (enemy.hp <= 0) {
                 core.enemyDie(id);
-                core.status.towers[x + ',' + y].killed++;
+                core.status.towers[pos].killed++;
                 core.autoUpdateStatusBar(x, y);
                 return;
             }
@@ -3550,6 +3685,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         this.bombAttack = function(x, y, tower) {
             x = parseInt(x);
             y = parseInt(y);
+            var pos = x + ',' + y;
             // 打距离基地最近的 并有爆炸范围
             var atk = tower.atk;
             var enemy = this.getClosestEnemy(x, y);
@@ -3580,6 +3716,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             core.playSound('bomb.mp3');
             // 绘制攻击动画
             if (!main.replayChecking) {
+                rotateWeapon(pos, enemy.x - x, enemy.y - y);
                 var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
                 var color = [255, 150 - tower.level / tower.max * 150, 150 - tower.level / tower.max * 150, 0.5];
                 core.drawLine(ctx, x * 32 + 16, y * 32 + 16, nx * 32 + 16, ny * 32 + 16, color, 2);
@@ -3594,6 +3731,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         this.laserAttack = function(x, y, tower) {
             x = parseInt(x);
             y = parseInt(y);
+            var pos = x + ',' + y;
             // 打距离基地最近的 并有穿透效果
             var atk = tower.atk;
             var enemy = this.getClosestEnemy(x, y);
@@ -3623,6 +3761,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             core.playSound('laser.mp3');
             // 绘制攻击动画
             if (!main.replayChecking) {
+                rotateWeapon(pos, dx, dy);
                 var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
                 dx *= 32;
                 dy *= 32;
@@ -3752,6 +3891,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             if (!core.status.enemys.hero) core.status.enemys.hero = {};
             x = parseInt(x);
             y = parseInt(y);
+            var pos = x + ',' + y;
             // 获得该塔的出士兵的位置
             var loc = this.getBarrackBlock(x, y);
             if (!loc) return;
@@ -3762,7 +3902,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var hero = tower.hero;
             if (!core.status.enemys.hero.cnt) core.status.enemys.hero.cnt = 0;
             core.status.enemys.hero.cnt++;
-            core.status.towers[x + ',' + y].exp += 20;
+            core.status.towers[pos].exp += 20;
             core.status.enemys.hero.cnt++;
             core.status.enemys.hero['hero_' + Math.round(Date.now() * Math.random())] = {
                 hp: hero.hp,
@@ -3773,8 +3913,13 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 to: index - 1,
                 x: loc[0],
                 y: loc[1],
-                special: []
+                special: [],
+                level: tower.level >= 25 ? 2 : 1,
             };
+            if (!main.replayChecking) {
+                var weaponCanvas = core.batchDict["tower-weapon_" + pos].canvas;
+                triggleAnimate(weaponCanvas, "rotate");
+            }
             core.expLevelUp(x, y);
             core.autoUpdateStatusBar(x, y);
         };
@@ -3782,6 +3927,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         this.sniperAttack = function(x, y, tower) {
             x = parseInt(x);
             y = parseInt(y);
+            var pos = x + ',' + y;
             // 打距离基地最近的
             var atk = tower.atk;
             var enemy = this.getClosestEnemy(x, y);
@@ -3790,8 +3936,9 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             enemy = core.status.enemys.enemys[enemy];
             // 绘制攻击动画
             if (!main.replayChecking) {
+                rotateWeapon(pos, enemy.x - x, enemy.y - y);
                 var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
-                var color = [255, 255 - tower.level / tower.max * 255, 255 - tower.level / tower.max * 255, 0.7];
+                var color = [255, 150 - tower.level / tower.max * 150, 150 - tower.level / tower.max * 150, 0.7];
                 core.drawLine(ctx, x * 32 + 16, y * 32 + 16, enemy.x * 32 + 16, enemy.y * 32 + 16, color, 2);
                 ctx.interval = 300 / (1.5 / tower.speed);
             }
@@ -3932,7 +4079,9 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         // 夹击塔 获得夹击塔夹击点
         this.getChainLoc = function() {
             // 先获得所有可能的夹击点
-            var allTower = core.searchBlockWithFilter(function(block) { return block.event.id == 'chain'; });
+            var allTower = Object
+                .values(core.status.towers)
+                .filter(function(tower) { return tower.type === 'chain'; });
             var all = {};
             allTower.forEach(function(one) {
                 for (var dir in core.utils.scan2) {
@@ -3942,7 +4091,14 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     all[x + ',' + y] = true;
                 }
             });
-            // 检查夹击
+            var isChain = function(x, y) {
+                    var pos = x + ',' + y;
+                    if (core.status.towers[pos] && core.status.towers[pos].type === 'chain') {
+                        return true;
+                    }
+                    return false;
+                }
+                // 检查夹击
             var chain = {};
             var towers = core.status.realTower;
             core.clearMap('fg');
@@ -3960,25 +4116,25 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 }
                 chain[index] = [0, 0];
                 // 左右
-                if (core.getBlockId(x - 1, y) == 'chain' && core.getBlockId(x + 1, y) == 'chain') {
+                if (isChain(x - 1, y) && isChain(x + 1, y)) {
                     chain[index][1] += (towers[(x - 1) + ',' + y].maxAttack + towers[(x + 1) + ',' + y].maxAttack) / 2;
                     chain[index][0] = Math.max((towers[(x - 1) + ',' + y].rate + towers[(x + 1) + ',' + y].rate) / 2, chain[index][0]);
                     core.drawLine('fg', (x - 1) * 32 + 24, y * 32 + 16, (x + 1) * 32 + 8, y * 32 + 16, [100, 255, 255, 0.6], 4);
                 }
                 // 上下
-                if (core.getBlockId(x, y - 1) == 'chain' && core.getBlockId(x, y + 1) == 'chain') {
+                if (isChain(x, y - 1) && isChain(x, y + 1)) {
                     chain[index][1] += (towers[x + ',' + (y - 1)].maxAttack + towers[x + ',' + (y + 1)].maxAttack) / 2;
                     chain[index][0] = Math.max((towers[x + ',' + (y - 1)].rate + towers[x + ',' + (y + 1)].rate) / 2, chain[index][0]);
                     core.drawLine('fg', x * 32 + 16, (y - 1) * 32 + 24, x * 32 + 16, (y + 1) * 32 + 8, [100, 255, 255, 0.6], 4);
                 }
                 // 左上右下
-                if (core.getBlockId(x - 1, y - 1) == 'chain' && core.getBlockId(x + 1, y + 1) == 'chain') {
+                if (isChain(x - 1, y - 1) && isChain(x + 1, y + 1)) {
                     chain[index][1] += (towers[(x - 1) + ',' + (y - 1)].maxAttack + towers[(x + 1) + ',' + (y + 1)].maxAttack) / 2;
                     chain[index][0] = Math.max((towers[(x - 1) + ',' + (y - 1)].rate + towers[(x + 1) + ',' + (y + 1)].rate) / 2, chain[index][0]);
                     core.drawLine('fg', (x - 1) * 32 + 24, (y - 1) * 32 + 24, (x + 1) * 32 + 8, (y + 1) * 32 + 8, [100, 255, 255, 0.6], 4);
                 }
                 // 左下右上
-                if (core.getBlockId(x + 1, y - 1) == 'chain' && core.getBlockId(x - 1, y + 1) == 'chain') {
+                if (isChain(x + 1, y - 1) && isChain(x - 1, y + 1)) {
                     chain[index][1] += (towers[(x + 1) + ',' + (y - 1)].maxAttack + towers[(x - 1) + ',' + (y + 1)].maxAttack) / 2;
                     chain[index][0] = Math.max((towers[(x + 1) + ',' + (y - 1)].rate + towers[(x + 1) + ',' + (y - 1)].rate) / 2, chain[index][0]);
                     core.drawLine('fg', (x + 1) * 32 + 8, (y - 1) * 32 + 24, (x - 1) * 32 + 24, (y + 1) * 32 + 8, [100, 255, 255, 0.6], 4);
@@ -3991,6 +4147,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         this.destoryAttack = function(x, y, tower) {
             x = parseInt(x);
             y = parseInt(y);
+            var pos = x + ',' + y;
             // 攻击所有怪物
             var all = core.status.enemys.enemys;
             if (!tower.canReach) this.getCanReachBlock(x, y);
@@ -4004,16 +4161,16 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     if (core.hasSpecial(now.special, 4)) {
                         now.hp -= tower.atk / 2;
                         core.status.totalDamage += tower.atk / 2;
-                        core.status.towers[x + ',' + y].damage += tower.atk / 2;
+                        core.status.towers[pos].damage += tower.atk / 2;
                     } else {
                         now.hp -= tower.atk;
                         core.status.totalDamage += tower.atk;
-                        core.status.towers[x + ',' + y].damage += tower.atk;
+                        core.status.towers[pos].damage += tower.atk;
                     }
-                    core.status.towers[x + ',' + y].exp++;
+                    core.status.towers[pos].exp++;
                     if (all[one].hp <= 0) {
                         core.enemyDie(one);
-                        core.status.towers[x + ',' + y].killed++;
+                        core.status.towers[pos].killed++;
                         continue;
                     }
                     core.drawHealthBar(one);
@@ -4023,6 +4180,8 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             if (!attacked) return;
             core.playSound('destory.mp3');
             if (!main.replayChecking) {
+                var weaponCanvas = core.batchDict["tower-weapon_" + pos].canvas;
+                triggleAnimate(weaponCanvas, "blast");
                 var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
                 ctx.filter = 'blur(5px)';
                 var color = [150 + tower.level / tower.max * 105, 150 - tower.level / tower.max * 100, 150 - tower.level / tower.max * 100, 0.6];
@@ -4335,6 +4494,10 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 core.ui.closePanel();
             });
         };
+        ////// 设置statusBar的innerHTML，会自动斜体和放缩，也可以增加自定义css //////
+        utils.prototype.setStatusBarInnerHTML = function(name, value, css) {
+            return;
+        };
     },
     "book": function() {
         // 怪物手册
@@ -4478,6 +4641,8 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 if (core.status.hero.money < towers[tower].cost) return false;
                 core.status.towers[x + ',' + y] = core.clone(towers[tower]);
                 var now = core.status.towers[x + ',' + y];
+                now.x = x;
+                now.y = y;
                 now.level = 1;
                 now.killed = 0;
                 now.damage = 0;
@@ -4491,7 +4656,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 core.status.event.id = null;
                 core.unlockControl();
                 core.saveRealStatusInCache(x, y);
-                core.setBlock(tower, x, y);
+                core.plugin.initTowerSprite(now);
                 core.getChainLoc();
                 core.getFreezeLoc();
                 core.replay();
