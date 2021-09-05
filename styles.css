@@ -490,3 +490,28 @@ p#name {
     0% { opacity: 1 }
     100% { opacity: 0 }
 }
+
+@-webkit-keyframes startImageDivDisappear {
+    0% { opacity: 1 }
+    100% { opacity: 0 }
+}
+
+@keyframes rotate-odd {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(120deg); }
+}
+
+@keyframes rotate-even {
+    100% { transform: rotate(0deg); }
+    100% { transform: rotate(120deg); }
+}
+
+.rotate-odd {
+    -webkit-animation: rotate-odd 1s ease-in-out 1;
+    animation: rotate-odd 1s ease-in-out 1;
+}
+
+.rotate-even {
+    -webkit-animation: rotate-even 1s ease-in-out 1;
+    animation: rotate-even 1s ease-in-out 1;
+}
