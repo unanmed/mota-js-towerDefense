@@ -94,7 +94,8 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 		"animates": [
 			"hand",
 			"sword",
-			"zone"
+			"zone",
+			"update",
 		],
 		"bgms": [
 			"bgm.mp3"
@@ -126,7 +127,8 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			"shop.mp3",
 			"sniper.mp3",
 			"tesla.mp3",
-			"zone.mp3"
+			"zone.mp3",
+			"155-Support13.ogg",
 		],
 		"fonts": [],
 		"nameMap": {

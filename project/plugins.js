@@ -2767,6 +2767,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 tower.exp -= need;
                 this.saveRealStatusInCache(x, y);
                 var id = core.status.event.id;
+                core.drawAnimate("update", x, y);
                 if (core.status.event.data == x + ',' + y && (id == 'checkEnemy' || id.startsWith('confirm'))) {
                     core.updateStatusBar();
                     core.drawRange(x, y, core.status.realTower[x + ',' + y].range || 0, core.status.realTower[x + ',' + y].square);
