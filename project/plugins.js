@@ -2280,31 +2280,33 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 for (var one in core.status.enemys.enemys) {
                     var ctx = core.getContextByName(one, true);
                     enemy = core.status.enemys.enemys[one];
-                    if (!enemy) return;
                     var now = enemy.hp,
                         total = enemy.total;
+                    var color = [255 * 2 - now / total * 2 * 255, now / total * 2 * 255, 0, 1];
                     core.fillRect(ctx, 4, 0, 24, 2, '#333333');
-                    core.fillRect(ctx, 4, 0, now / total * 24, 2, '#00ff00');
+                    core.fillRect(ctx, 4, 0, now / total * 24, 2, color);
                     core.strokeRect(ctx, 3, 0, 26, 2, '#000000');
                 }
                 for (var one in core.status.enemys.hero) {
                     var ctx = core.getContextByName(one, true);
                     enemy = core.status.enemys.enemys[one];
-                    if (!enemy) return;
                     var now = enemy.hp,
                         total = enemy.total;
+                    var color = [255 * 2 - now / total * 2 * 255, now / total * 2 * 255, 0, 1];
                     core.fillRect(ctx, 4, 0, 24, 2, '#333333');
-                    core.fillRect(ctx, 4, 0, now / total * 24, 2, '#00ff00');
+                    core.fillRect(ctx, 4, 0, now / total * 24, 2, color);
                     core.strokeRect(ctx, 3, 0, 26, 2, '#000000');
                 }
+                return;
             }
             var ctx = core.getContextByName(enemy, true);
             enemy = core.status.enemys.enemys[enemy] || core.status.enemys.hero[enemy];
             if (!enemy) return;
             var now = enemy.hp,
                 total = enemy.total;
+            var color = [255 * 2 - now / total * 2 * 255, now / total * 2 * 255, 0, 1];
             core.fillRect(ctx, 4, 0, 24, 2, '#333333');
-            core.fillRect(ctx, 4, 0, now / total * 24, 2, '#00ff00');
+            core.fillRect(ctx, 4, 0, now / total * 24, 2, color);
             core.strokeRect(ctx, 3, 0, 26, 2, '#000000');
         }
     },
@@ -2769,7 +2771,8 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         };
         // 卖出防御塔
         this.sellTower = function(x, y) {
-            var tower = core.status.realTower[x + ',' + y];
+            var pos = x + ',' + y;
+            var tower = core.status.realTower[pos];
             if (!tower) {
                 console.error('不存在防御塔！');
                 return false;
@@ -3904,7 +3907,13 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             core.status.enemys.hero.cnt++;
             core.status.towers[pos].exp += 20;
             core.status.enemys.hero.cnt++;
-            core.status.enemys.hero['hero_' + Math.round(Date.now() * Math.random())] = {
+            var id = 'hero_' + Math.round(Date.now() * Math.random())
+            while (true) {
+                if (!core.status.enemys.hero) break;
+                if (!(id in core.status.enemys.hero)) break;
+                id = 'hero_' + Math.round(Date.now() * Math.random());
+            }
+            core.status.enemys.hero[id] = {
                 hp: hero.hp,
                 atk: hero.atk,
                 def: hero.def,
@@ -4494,10 +4503,6 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 core.ui.closePanel();
             });
         };
-        ////// 设置statusBar的innerHTML，会自动斜体和放缩，也可以增加自定义css //////
-        utils.prototype.setStatusBarInnerHTML = function(name, value, css) {
-            return;
-        };
     },
     "book": function() {
         // 怪物手册
@@ -4788,7 +4793,6 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             if (this._doReplayAction(action)) return;
             this._replay_error(action);
         };
-        core.setStatusBarInnerHTML('hp', 1000, 'font-size:16px');
         ////// 设置播放速度 //////
         control.prototype.setReplaySpeed = function(speed) {
             return;
@@ -4842,12 +4846,11 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             // 检测当前录像最后一项的类型
             var last = core.status.route[core.status.route.length - 1];
             if (action == 'wait') {
-                if (typeof last == 'number')
-                    core.status.route[core.status.route.length - 1]++;
-                else core.status.route.push(1);
+                if (parseInt(last))
+                    core.status.route[core.status.route.length - 1] =
+                    (parseInt(core.status.route[core.status.route.length - 1]) + 1).toString();
+                else core.status.route.push('1');
             } else {
-                if (typeof last == 'number')
-                    core.status.route[core.status.route.length - 1] = core.status.route[core.status.route.length - 1].toString();
                 core.status.route.push(action);
             }
         };
