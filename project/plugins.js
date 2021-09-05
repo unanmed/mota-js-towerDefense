@@ -1971,6 +1971,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     var tower = core.status.towers[pos];
                     core.plugin.initTowerSprite(tower);
                 }
+                drawEnemy(-1);
             }
             // 注册全局帧动画
             core.registerAnimationFrame('drawCanvases', true, function() {
@@ -2237,13 +2238,17 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     }
                 }
             });
-            // 400ms执行一次帧动画
-            core.registerAnimationFrame('globalAnimate', true, function(timestamp) {
-                if (timestamp - core.animateFrame.globalTime <= core.values.animateSpeed) return;
-                if (!main.replayChecking) {
-                    if (!core.status.thisMap) return;
-                    core.status.globalAnimateStatus++;
-                    if (core.status.floorId) {
+            function drawEnemy(timestamp) {
+                if (main.replayChecking) return;
+                if (!core.status.thisMap) return;
+                // 传入-1时强制进行绘制
+                if (timestamp !== -1) {
+                    if (timestamp - core.animateFrame.globalTime <= core.values.animateSpeed) return;
+                }
+                core.status.globalAnimateStatus++;
+                if (core.status.floorId) {
+                    // 暂停时不进行怪物绘制，除非强制
+                    if (!flags.pause || timestamp === -1) {
                         // Global Enemy Animate
                         if (!core.status || !core.status.enemys) return;
                         if (core.status.enemys.cnt >= (core.domStyle.isVertical ? 150 : 400)) return;
@@ -2251,7 +2256,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                         Object.keys(enemys).forEach(function(one) {
                             core.drawBlock(core.getBlockById(one.split('_')[0]), core.status.globalAnimateStatus, one);
                         });
-
+    
                         // Global Hero Animate
                         var heroes = core.status.enemys.hero || {};
                         Object.keys(heroes).forEach(function(one) {
@@ -2261,7 +2266,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                             }
                             core.drawBlock(icon, core.status.globalAnimateStatus, one);
                         });
-
+    
                         // Global Autotile Animate
                         core.status.autotileAnimateObjs.forEach(function(block) {
                             core.maps._drawAutotileAnimate(block, core.status.globalAnimateStatus);
@@ -2271,7 +2276,9 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     core.drawBoxAnimate();
                 }
                 core.animateFrame.globalTime = timestamp;
-            });
+            }
+            // 400ms执行一次帧动画
+            core.registerAnimationFrame('globalAnimate', true, drawEnemy);
         };
         // 绘制血条
         this.drawHealthBar = function(enemy) {
@@ -2917,11 +2924,15 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 core.relocateCanvas(basectx, x * 32, y * 32);
                 core.drawImage(basectx, icon.base, 6, 6, 84, 84, 0, 0, 32, 32);
             }
-            if (icon.weapon && !core.batchDict['tower-weapon_' + pos]) {
-                var weaponctx = core.acquireCanvas('tower-weapon_' + pos, 'mine');
-                weaponctx.canvas.style.zIndex = 60;
-                core.relocateCanvas(weaponctx, x * 32, y * 32);
-                core.drawImage(weaponctx, icon.weapon, 6, 6, 84, 84, 0, 0, 32, 32);
+            if (icon.weapon) {
+                if (!core.batchDict['tower-weapon_' + pos]) {
+                    var weaponctx = core.acquireCanvas('tower-weapon_' + pos, 'mine');
+                    weaponctx.canvas.style.zIndex = 60;
+                    core.relocateCanvas(weaponctx, x * 32, y * 32);
+                    core.drawImage(weaponctx, icon.weapon, 6, 6, 84, 84, 0, 0, 32, 32);
+                } else {
+                    core.batchDict['tower-weapon_' + pos].canvas.style.transform = "";
+                }
             }
             this.updateTowerSprite(tower);
         }
@@ -3358,8 +3369,8 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                         // 旋转
                         if (tower.type === 'freeze' && !main.replayChecking) {
                             var weaponCanvas = core.batchDict["tower-weapon_" + loc].canvas;
-                            var lastTransfrom = weaponCanvas.style.transform;
-                            var lastDeg = lastTransfrom ? Number(lastTransfrom.slice(7, -4)) : 0;
+                            var lastTransform = weaponCanvas.style.transform;
+                            var lastDeg = lastTransform ? Number(lastTransform.slice(7, -4)) : 0;
                             if (lastDeg > 180) {
                                 lastDeg -= 360;
                             }
@@ -3369,6 +3380,15 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 }
             });
         };
+        /**
+         * 
+         * @param {CanvasRenderingContext2D} ctx 
+         * @param {number} speed 
+         */
+        this.setTowerEffect = function(ctx, speed) {
+            ctx.totalTime = ctx.interval = 12 / speed;
+            ctx.canvas.style.opacity = 1;
+        }
         // 特效控制
         this.deleteTowerEffect = function() {
             core.registerAnimationFrame('deleteEffect', true, function() {
@@ -3376,8 +3396,14 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 if (flags.pause) return;
                 for (var one in core.batchDict) {
                     if (!one.startsWith('tower')) continue;
-                    core.batchDict[one].interval -= 16.67;
-                    if (core.batchDict[one].interval <= 0) core.clearMap(one);
+                    var ctx = core.batchDict[one];
+                    ctx.interval -= 1;
+                    if (ctx.interval <= 0) {
+                        core.clearMap(one);
+                    } else {
+                        x = ctx.interval / ctx.totalTime;
+                        ctx.canvas.style.opacity = 1 - (1 - x) * (1 - x);
+                    }
                 }
             });
         };
@@ -3621,7 +3647,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
                 var color = [255, 255 - tower.level / tower.max * 255, 255 - tower.level / tower.max * 255, 0.5]
                 core.drawLine(ctx, x * 32 + 16, y * 32 + 16, enemy.x * 32 + 16, enemy.y * 32 + 16, color, 2);
-                ctx.interval = 200 / (0.6 / tower.speed);
+                this.setTowerEffect(ctx, tower.speed);
             }
             if (core.hasSpecial(enemy.special, 4)) {
                 enemy.hp -= atk / 2;
@@ -3661,7 +3687,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
                 var color = [255, 255 - tower.level / tower.max * 255, 255 - tower.level / tower.max * 255, 0.4]
                 core.drawLine(ctx, x * 32 + 16, y * 32 + 16, enemy.x * 32 + 16, enemy.y * 32 + 16, color, 2);
-                ctx.interval = 200 / (0.25 / tower.speed);
+                this.setTowerEffect(ctx, 0.25 / tower.speed);
             }
             if (core.hasSpecial(enemy.special, 4)) {
                 enemy.hp -= atk / 2;
@@ -3719,13 +3745,13 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             core.playSound('bomb.mp3');
             // 绘制攻击动画
             if (!main.replayChecking) {
-                rotateWeapon(pos, enemy.x - x, enemy.y - y);
+                rotateWeapon(pos, nx - x, ny - y);
                 var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
                 var color = [255, 150 - tower.level / tower.max * 150, 150 - tower.level / tower.max * 150, 0.5];
                 core.drawLine(ctx, x * 32 + 16, y * 32 + 16, nx * 32 + 16, ny * 32 + 16, color, 2);
                 color = [255, 100 - tower.level / tower.max * 100, 100 - tower.level / tower.max * 100, 0.5];
                 core.fillCircle(ctx, nx * 32 + 16, ny * 32 + 16, tower.explode * 32, color);
-                ctx.interval = 200 / (1 / tower.speed);
+                this.setTowerEffect(ctx, 1 / tower.speed);
             }
             core.expLevelUp(x, y);
             core.autoUpdateStatusBar(x, y);
@@ -3770,7 +3796,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 dy *= 32;
                 var color = [170 + tower.level / tower.max * 85, 255 - tower.level / tower.max * 255, 170 + tower.level / tower.max * 85, 0.5];
                 core.drawLine(ctx, x * 32 + 16, y * 32 + 16, x * 32 + 16 + dx * 13, y * 32 + 16 + dy * 13, color, 3);
-                ctx.interval = 200;
+                this.setTowerEffect(ctx, 1);
             }
             core.expLevelUp(x, y);
             core.autoUpdateStatusBar(x, y);
@@ -3800,7 +3826,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
                 core.drawLine(ctx, x * 32 + 16, y * 32 + 16, all[enemys[0]].x * 32 + 16,
                     all[enemys[0]].y * 32 + 16, [255, 255, 255, 0.6], 2);
-                ctx.interval = 250 / (0.8 / tower.speed);
+                this.setTowerEffect(ctx, 0.64 / tower.speed);
             }
             enemys.forEach(function(one, i) {
                 var now = all[one];
@@ -3845,7 +3871,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             if (!main.replayChecking) {
                 var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
                 var color = [255, 255 - tower.level / tower.max * 150, 255 - tower.level / tower.max * 150, 0.5];
-                ctx.interval = 250 / (0.8 / tower.speed);
+                this.setTowerEffect(ctx, 0.64 / tower.speed);
             }
             enemy.forEach(function(one) {
                 var now = all[one];
@@ -3949,7 +3975,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
                 var color = [255, 150 - tower.level / tower.max * 150, 150 - tower.level / tower.max * 150, 0.7];
                 core.drawLine(ctx, x * 32 + 16, y * 32 + 16, enemy.x * 32 + 16, enemy.y * 32 + 16, color, 2);
-                ctx.interval = 300 / (1.5 / tower.speed);
+                this.setTowerEffect(ctx, 1 / tower.speed);
             }
             if (core.hasSpecial(enemy.special, 4)) {
                 enemy.hp -= atk / 2;
@@ -4195,7 +4221,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 ctx.filter = 'blur(5px)';
                 var color = [150 + tower.level / tower.max * 105, 150 - tower.level / tower.max * 100, 150 - tower.level / tower.max * 100, 0.6];
                 core.fillCircle(ctx, x * 32 + 16, y * 32 + 16, (tower.range - 0.2) * 32, color);
-                ctx.interval = 250 / (1.25 / tower.speed);
+                this.setTowerEffect(ctx, 1 / tower.speed);
             }
             core.expLevelUp(x, y);
             core.autoUpdateStatusBar(x, y);
