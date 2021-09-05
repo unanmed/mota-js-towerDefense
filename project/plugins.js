@@ -1533,7 +1533,10 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         // 出怪
         this.startMonster = function(floorId, start, fromLoad) {
             floorId = floorId || core.status.floorId;
-            if (flags.starting && !fromLoad) return core.drawTip('当前正在出怪！');
+            if (flags.starting && !fromLoad) {
+                core.drawTip('当前正在出怪！');
+                return false;
+            }
             var list = (core.status.thisMap || {}).enemys || core.initMonster(core.status.floorId);
             var startLoc = core.getEnemyRoute()[0];
             // 初始化
@@ -1547,13 +1550,13 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 core.getChainLoc();
                 core.getFreezeLoc();
                 core.status.enemys = { cnt: 0, enemys: {}, hero: { cnt: 0 }, mine: {} };
+                if (!flags.forceInterval) {
+                    flags.forceInterval = 5000;
+                    flags.nowInterval = 4;
+                }
                 // 强制出怪
                 core.registerAnimationFrame('forceEnemy', true, function() {
                     if (flags.pause) return;
-                    if (!flags.forceInterval) {
-                        flags.forceInterval = 5000;
-                        flags.nowInterval = 4;
-                    }
                     flags.forceInterval -= 16.67;
                     if (flags.forceInterval < flags.nowInterval * 1000) {
                         flags.nowInterval--;
@@ -1570,7 +1573,10 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             }
             if (!list) return;
             var enemy = list[flags.waves];
-            if (!enemy) return core.drawTip('怪物清空了！');
+            if (!enemy) {
+                core.drawTip('怪物清空了！');
+                return false;
+            }
             if (Object.keys(core.status.thisMap.enemys).length - flags.waves <= 10)
                 this.randomMonster(Object.keys(core.status.thisMap.enemys).length, 10);
             // 开始添加怪物
@@ -1580,7 +1586,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     core.drawTip('开始出怪');
                 else core.drawTip('现在处于暂停阶段，取消暂停后将开始出怪');
             }
-            if (flags.forceInterval) {
+            if (flags.forceInterval && flags.waves != 0) {
                 var forceMoney = flags.forceInterval / 1000 * (1 + flags.waves * flags.waves / 2250);
                 core.status.hero.money += Math.floor(forceMoney);
             }
@@ -1684,6 +1690,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 }
                 flags.interval = interval;
             });
+            return true;
         };
         // 怪物死亡
         this.enemyDie = function(id) {
@@ -1706,7 +1713,13 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 enemy = core.material.enemys[toEnemy];
                 var hp = enemy.hp * (1 + e.wave * e.wave / 225);
                 core.status.enemys.cnt++;
-                core.status.enemys.enemys[toEnemy + '_' + Date.now()] = {
+                id = toEnemy + '_' + Math.round(Date.now() * Math.random());
+                while (true) {
+                    if (!core.status.enemys.enemys) break;
+                    if (!(id in core.status.enemys.enemys)) break;
+                    id = toEnemy + '_' + Math.round(Date.now() * Math.random());
+                }
+                core.status.enemys.enemys[id] = {
                     x: e.x,
                     y: e.y,
                     id: toEnemy,
@@ -1991,7 +2004,8 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     // 改变目标方块
                     dx = enemy.x - route[enemy.to][0];
                     dy = enemy.y - route[enemy.to][1];
-                    if ((dx * (dx + speedX) <= 0 && dy == 0) || (dy * (dy + speedY) <= 0 && dx == 0)) {
+                    if ((dx * (dx + speedX) <= 0 && dy == 0) || (dy * (dy + speedY) <= 0 && dx == 0) ||
+                        (dx * (dx - speedX) <= 0 && dy == 0) || (dy * (dy - speedY) <= 0 && dx == 0)) {
                         enemy.x = route[enemy.to][0];
                         enemy.y = route[enemy.to][1];
                         // 达到基地
@@ -2039,6 +2053,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                                     break;
                                 }
                             }
+                            core.playSound('bomb.mp3');
                             if (!dead)
                                 core.drawHealthBar(one);
                             // 绘制地雷
@@ -2079,6 +2094,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                         if (chain && chain[enemy.to]) {
                             if (chain[enemy.to][0] > 0) {
                                 // 扣血
+                                core.playSound('laser.mp3');
                                 enemy.hp -= Math.min(chain[enemy.to][1], enemy.total * chain[enemy.to][0] / 100);
                                 core.status.totalDamage += parseInt(chain[enemy.to]) || 0;
                                 if (enemy.hp <= 0) {
@@ -2108,6 +2124,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                             dy = hero.y - enemy.y;
                             if (Math.abs(dx) <= 1 && Math.abs(dy) <= 1) {
                                 // 执行战斗
+                                core.playSound('battle.mp3');
                                 // 默认勇士战胜 
                                 if (typeof enemy.special == 'number') enemy.special = [enemy.special];
                                 enemy.special.push(5);
@@ -2140,6 +2157,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                             dy = hero.y - enemy.y;
                             if (Math.abs(dx) <= 1 && Math.abs(dy) <= 1) {
                                 // 执行战斗
+                                core.playSound('battle.mp3');
                                 // 默认勇士战胜 
                                 var damageInfo = core.getDamageInfo(enemy, hero);
                                 if (!damageInfo || damageInfo.damage >= hero.hp) {
@@ -2206,32 +2224,33 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             });
             // 400ms执行一次帧动画
             core.registerAnimationFrame('globalAnimate', true, function(timestamp) {
-                if (main.replayChecking) return;
                 if (timestamp - core.animateFrame.globalTime <= core.values.animateSpeed) return;
-                if (!core.status.thisMap) return;
-                core.status.globalAnimateStatus++;
-                if (core.status.floorId) {
-                    // Global Enemy Animate
-                    if (!core.status || !core.status.enemys) return;
-                    if (core.status.enemys.cnt >= (core.domStyle.isVertical ? 150 : 400)) return;
-                    var enemys = core.status.enemys.enemys;
-                    Object.keys(enemys).forEach(function(one) {
-                        core.drawBlock(core.getBlockById(one.split('_')[0]), core.status.globalAnimateStatus, one);
-                    });
+                if (!main.replayChecking) {
+                    if (!core.status.thisMap) return;
+                    core.status.globalAnimateStatus++;
+                    if (core.status.floorId) {
+                        // Global Enemy Animate
+                        if (!core.status || !core.status.enemys) return;
+                        if (core.status.enemys.cnt >= (core.domStyle.isVertical ? 150 : 400)) return;
+                        var enemys = core.status.enemys.enemys;
+                        Object.keys(enemys).forEach(function(one) {
+                            core.drawBlock(core.getBlockById(one.split('_')[0]), core.status.globalAnimateStatus, one);
+                        });
 
-                    // Global Hero Animate
-                    var heroes = core.status.enemys.hero || {};
-                    Object.keys(heroes).forEach(function(one) {
-                        core.drawBlock(core.getBlockById('N342'), core.status.globalAnimateStatus, one);
-                    });
+                        // Global Hero Animate
+                        var heroes = core.status.enemys.hero || {};
+                        Object.keys(heroes).forEach(function(one) {
+                            core.drawBlock(core.getBlockById('N342'), core.status.globalAnimateStatus, one);
+                        });
 
-                    // Global Autotile Animate
-                    core.status.autotileAnimateObjs.forEach(function(block) {
-                        core.maps._drawAutotileAnimate(block, core.status.globalAnimateStatus);
-                    });
+                        // Global Autotile Animate
+                        core.status.autotileAnimateObjs.forEach(function(block) {
+                            core.maps._drawAutotileAnimate(block, core.status.globalAnimateStatus);
+                        });
+                    }
+                    // Box animate
+                    core.drawBoxAnimate();
                 }
-                // Box animate
-                core.drawBoxAnimate();
                 core.animateFrame.globalTime = timestamp;
             });
         };
@@ -2635,9 +2654,18 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         this.upgradeTower = function(x, y) {
             var now = core.clone(core.status.towers[x + ',' + y]);
             // 检查最大等级
-            if (now.max && now.level >= now.max) return core.drawTip('当前塔已满级！');
-            if (now.cost > core.status.hero.money) return core.drawTip('金钱不足！');
-            if (!now) return console.error('不存在防御塔！');
+            if (now.max && now.level >= now.max) {
+                core.drawTip('当前塔已满级！');
+                return false;
+            }
+            if (now.cost > core.status.hero.money) {
+                core.drawTip('金钱不足！');
+                return false;
+            }
+            if (!now) {
+                console.error('不存在防御塔！');
+                return false;
+            }
             core.status.hero.money -= now.cost;
             // 获得升级后的各项属性
             var toStatus = core.getNextLvStatus(x, y);
@@ -2654,6 +2682,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             core.drawTip('升级成功！');
             if (!core.isReplaying())
                 core.pushActionToRoute('upgrade:' + x + ':' + y);
+            return true;
         };
         // 防御塔经验升级
         this.expLevelUp = function(x, y) {
@@ -2679,7 +2708,10 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         // 卖出防御塔
         this.sellTower = function(x, y) {
             var tower = core.status.realTower[x + ',' + y];
-            if (!tower) return console.error('不存在防御塔！');
+            if (!tower) {
+                console.error('不存在防御塔！');
+                return false;
+            }
             core.status.hero.money += tower.pauseBuild ? tower.haveCost : tower.haveCost * 0.6;
             delete core.status.realTower[x + ',' + y];
             delete core.status.towers[x + ',' + y];
@@ -2693,6 +2725,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             core.drawTip('成功卖出防御塔！');
             if (!core.isReplaying())
                 core.pushActionToRoute('sell:' + x + ':' + y);
+            return true;
         };
         // 获得升级后的属性
         this.getNextLvStatus = function(x, y, fromDraw) {
@@ -3587,6 +3620,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 }
                 core.drawHealthBar(one);
             });
+            core.playSound('laser.mp3');
             // 绘制攻击动画
             if (!main.replayChecking) {
                 var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
@@ -3624,6 +3658,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
                 core.drawLine(ctx, x * 32 + 16, y * 32 + 16, all[enemys[0]].x * 32 + 16,
                     all[enemys[0]].y * 32 + 16, [255, 255, 255, 0.6], 2);
+                ctx.interval = 250 / (0.8 / tower.speed);
             }
             enemys.forEach(function(one, i) {
                 var now = all[one];
@@ -3651,7 +3686,6 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 }
                 core.drawHealthBar(one);
             });
-            ctx.interval = 250 / (0.8 / tower.speed);
             core.expLevelUp(x, y);
             core.autoUpdateStatusBar(x, y);
         };
@@ -3669,6 +3703,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             if (!main.replayChecking) {
                 var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
                 var color = [255, 255 - tower.level / tower.max * 150, 255 - tower.level / tower.max * 150, 0.5];
+                ctx.interval = 250 / (0.8 / tower.speed);
             }
             enemy.forEach(function(one) {
                 var now = all[one];
@@ -3691,8 +3726,6 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 }
                 core.drawHealthBar(one);
             });
-            if (!main.replayChecking)
-                ctx.interval = 250 / (0.8 / tower.speed);
             core.expLevelUp(x, y);
             core.playSound('gun.mp3');
             core.autoUpdateStatusBar(x, y);
@@ -4198,6 +4231,8 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 core.drawTip('当前禁止存档');
                 return;
             }
+            if (typeof core.status.route.slice(-1)[0] == 'number')
+                core.status.route[core.status.route.length - 1] = (core.status.route[core.status.route.length - 1]).toString()
             if (core.status.event.id == 'save' && core.events.recoverEvents(core.status.event.interval))
                 return;
             if (!this._checkStatus('save', fromUserAction)) return;
@@ -4440,6 +4475,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var x = detail[1],
                 y = detail[2];
             try {
+                if (core.status.hero.money < towers[tower].cost) return false;
                 core.status.towers[x + ',' + y] = core.clone(towers[tower]);
                 var now = core.status.towers[x + ',' + y];
                 now.level = 1;
@@ -4472,7 +4508,8 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var x = detail[1],
                 y = detail[2];
             try {
-                core.upgradeTower(x, y);
+                var success = core.upgradeTower(x, y);
+                if (!success) return false;
                 core.replay();
             } catch (e) {
                 main.log(e);
@@ -4487,7 +4524,8 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var x = detail[1],
                 y = detail[2];
             try {
-                core.sellTower(x, y);
+                var success = core.sellTower(x, y);
+                if (!success) return false;
                 core.replay();
             } catch (e) {
                 main.log(e);
@@ -4499,7 +4537,8 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         core.registerReplayAction('nextWave', function(action) {
             if (action != 'nextWave') return false;
             try {
-                core.startMonster(core.status.floorId);
+                var success = core.startMonster(core.status.floorId);
+                if (!success) return false;
                 core.replay();
             } catch (e) {
                 main.log(e);
@@ -4524,22 +4563,19 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                         }
                     } catch (e) {
                         main.log(e);
-                        clearTimeout(interval);
+                        clearInterval(interval);
                         fail = true;
                     }
-                }, 16.6 / core.status.replay.speed);
+                }, 16.6);
             } else {
                 while (true) {
                     now++;
                     try {
                         core.doAnimationFrameInReplay();
-                        if (now === rounds + 1) {
-                            break;
-                        }
+                        if (now === rounds + 1) break;
                     } catch (e) {
                         main.log(e);
-                        fail = true;
-                        break;
+                        return false;
                     }
                 }
                 core.replay();
@@ -4587,6 +4623,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             if (this._doReplayAction(action)) return;
             this._replay_error(action);
         };
+        core.setStatusBarInnerHTML('hp', 1000, 'font-size:16px');
         ////// 设置播放速度 //////
         control.prototype.setReplaySpeed = function(speed) {
             return;
@@ -4629,7 +4666,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     } catch (e) {
                         main.log(e);
                         flags.error = e;
-                        core.drawTip('录像运行出错！已停止运行！错误信息请在控制台或怪物手册查看');
+                        core.drawTip('录像运行出错！错误信息请在控制台或怪物手册查看');
                         core.pauseReplay();
                     }
                 }
@@ -4640,9 +4677,14 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             // 检测当前录像最后一项的类型
             var last = core.status.route[core.status.route.length - 1];
             if (action == 'wait') {
-                if (parseInt(last)) core.status.route[core.status.route.length - 1] = (parseInt(last) + 1).toString();
-                else core.status.route.push('1');
-            } else core.status.route.push(action);
+                if (typeof last == 'number')
+                    core.status.route[core.status.route.length - 1]++;
+                else core.status.route.push(1);
+            } else {
+                if (typeof last == 'number')
+                    core.status.route[core.status.route.length - 1] = core.status.route[core.status.route.length - 1].toString();
+                core.status.route.push(action);
+            }
         };
     }
 }

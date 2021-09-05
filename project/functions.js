@@ -1174,11 +1174,29 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                                 ny = loc[1] * 32;
                             var ctx = core.acquireCanvas('mine_' + i, 'mine');
                             core.relocateCanvas(ctx, nx, ny);
+                            ctx.shadowColor = '#000';
+                            ctx.shadowBlur = 2;
                             for (var j = 0; j < mine[i].cnt; j++) {
-                                if (j == 0) core.drawImage(ctx, 'mine.png', 4, 4, 8, 8);
-                                if (j == 1) core.drawImage(ctx, 'mine.png', 20, 4, 8, 8);
-                                if (j == 2) core.drawImage(ctx, 'mine.png', 4, 20, 8, 8);
-                                if (j == 3) core.drawImage(ctx, 'mine.png', 20, 20, 8, 8);
+                                if (!mine[i][j + 1]) continue;
+                                var level = mine[i][j + 1].level;
+                                var color2 = [34 + level / 30 * 221, 221 - level / 30 * 221, 68];
+                                var color1 = [68 + level / 30 * 187, 255 - level / 30 * 155, 119];
+                                if (j == 0) {
+                                    core.fillCircle(ctx, 8, 8, 4, color1);
+                                    core.fillCircle(ctx, 8, 8, 2, color2);
+                                }
+                                if (j == 1) {
+                                    core.fillCircle(ctx, 24, 8, 4, color1);
+                                    core.fillCircle(ctx, 24, 8, 2, color2);
+                                }
+                                if (j == 2) {
+                                    core.fillCircle(ctx, 8, 24, 4, color1);
+                                    core.fillCircle(ctx, 8, 24, 2, color2);
+                                }
+                                if (j == 3) {
+                                    core.fillCircle(ctx, 24, 24, 4, color1);
+                                    core.fillCircle(ctx, 24, 24, 2, color2);
+                                }
                             }
                         }
                     }

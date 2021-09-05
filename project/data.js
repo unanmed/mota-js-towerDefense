@@ -24,6 +24,7 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 		],
 		"sounds": [
 			"attack.mp3",
+			"battle.mp3",
 			"bomb.mp3",
 			"cancel.mp3",
 			"centerFly.mp3",
@@ -39,6 +40,7 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			"icePickaxe.mp3",
 			"item.mp3",
 			"jump.mp3",
+			"laser.mp3",
 			"load.mp3",
 			"open_ui.mp3",
 			"pickaxe.mp3",

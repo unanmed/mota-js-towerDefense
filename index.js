@@ -9,7 +9,7 @@ if (process.argv.length < 4) {
 }
 
 global.silent = process.argv[4] || "";
-if (process.getuid && process.getuid() == 0 && global.silent == "1") {
+if (process.getuid && process.getuid() == 0 && global.silent == "1" ) {
     console.log("Cannot run this script with root privilege!");
     process.exit(3);
 }
@@ -28,39 +28,38 @@ if (fs.existsSync(replayName))
 global.replayData = replayData;
 
 // ------ Define global values ------ //
-(function($) {
-    var element = function() {
-        this.getContext = () => {
+(function ($) {
+    var element = function () {
+        this.getContext = ()=>{
             var obj = {
                 canvas: new element()
             };
             ["createPattern", "translate", "drawImage", "clearRect", "rotate",
-                "fillRect", "fillText", "strokeRect", "getImageData", "beginPath", "moveTo",
-                "lineTo", "stroke", "fill"
-            ]
-            .forEach(v => obj[v] = () => {});
-            obj.measureText = () => { return { width: 0 } };
+             "fillRect", "fillText", "strokeRect", "getImageData", "beginPath", "moveTo", 
+             "lineTo", "stroke", "fill"]
+                .forEach(v => obj[v] = () => {});
+            obj.measureText = () => {return {width: 0}};
             return obj;
         };
-        this.insertBefore = () => {};
-        this.appendChild = () => {};
-        this.removeChild = () => {};
-        this.setAttribute = () => {};
-        this.getAttribute = () => "";
+        this.insertBefore = ()=>{};
+        this.appendChild = ()=>{};
+        this.removeChild = ()=>{};
+        this.setAttribute = ()=>{};
+        this.getAttribute = ()=>"";
         Object.defineProperty(this, "style", {
-            get: () => { return {} },
-            set: () => {},
+            get: ()=>{return {}},
+            set: ()=>{},
         });
         this.classList = {
-            contains: () => {},
-            add: () => {},
-            remove: () => {},
+            contains: ()=>{},
+            add: ()=>{},
+            remove: ()=>{},
         }
         this.toDataURL = () => {}
     }
     var elements = {};
     $.document = {
-        getElementById: (name) => elements[name] ? elements[name] : (elements[name] = new element()),
+        getElementById: (name) => elements[name] ? elements[name]: (elements[name] = new element()),
         getElementsByClassName: () => [],
         createElement: () => new element(),
         body: new element(),
@@ -68,10 +67,10 @@ global.replayData = replayData;
         addEventListener: () => {},
     }
     $.window = $;
-    $.atob = function(a) {
+    $.atob = function (a) {
         return Buffer.from(a, 'base64').toString('binary');
     };
-    $.btoa = function(b) {
+    $.btoa = function (b) {
         return Buffer.from(b).toString('base64');
     }
     $.loadSource = (url) => {
@@ -84,13 +83,12 @@ global.replayData = replayData;
         setItem: (name, value) => dict[name] = value,
         removeItem: (name) => delete dict[name],
     }
-    $.location = { protocol: "https" }
-    $.navigator = { userAgent: "Chrome/76.0.3809.100" }
+    $.location = { protocol: "https"}
+    $.navigator = { userAgent: "Chrome/76.0.3809.100"}
     $._setTimeout = $.setTimeout;
     $.setTimeout = (callback, time) => time ? process.nextTick(callback) : callback();
     $._setInterval = $.setInterval;
-    var _intervals = {},
-        _id = 0;
+    var _intervals = {}, _id = 0;
     $.setInterval = (callback) => {
         var id = ++_id;
         _intervals[id] = true;
@@ -98,10 +96,17 @@ global.replayData = replayData;
         return id;
     }
     $.clearInterval = id => delete _intervals[id];
-    $.clearTimeout = () => {};
+    $.clearTimeout = ()=>{};
     $.h5cosUrl = "";
+    $.localforage = {
+        setItem: () => {},
+        getItem: () => {},
+        iterate: () => {return () => {}},
+        removeItem: () => {},
+        keys: () => {}
+    }
     if ($.silent == "1")
-        $.console.log = () => {}; // ignore console.log() if called from python
+        $.console.log = ()=>{}; // ignore console.log() if called from python
 })(global);
 
 // ---------- Code -------- //
@@ -122,66 +127,67 @@ function code() {
 
     main.replayChecking = true;
 
-    main.loadMod = function(dir, modName, callback) {
-        loadSource(dir + '/' + modName + (this.useCompress ? ".min" : "") + '.js');
+    main.loadMod = function (dir, modName, callback) {
+        loadSource(dir + '/' + modName + (this.useCompress?".min":"") + '.js');
         callback(modName);
     }
     main.setMainTipsText = (text) => console.log(text);
-    main.loadFloors = function(callback) {
+    main.loadFloors = function (callback) {
         if (this.useCompress) {
             loadSource("project/floors.min.js")
-        } else {
+        }
+        else {
             for (var i = 0; i < main.floorIds.length; i++)
-                loadSource('project/floors/' + main.floorIds[i] + '.js');
+                loadSource('project/floors/' + main.floorIds[i] +'.js');
         }
         this.afterMainInit(callback);
     }
-
     function ignoreFuncs(name, values) {
         values.split(",").forEach(value => {
             core[name][value] = () => {};
         });
     }
-    main.afterMainInit = function(callback) {
-        core.utils.setLocalForage = function(key, value, success, error) {
+    main.afterMainInit = function (callback) {
+        core.utils.setLocalForage = function (key, value, success, error) {
             error && error();
         }
-        core.utils.getLocalForage = function(key, value, success, error) {
+        core.utils.getLocalForage = function (key, value, success, error) {
             error && error();
         }
-        core.utils.removeLocalForage = function(key, success, error) {
+        core.utils.removeLocalForage = function (key, success, error) {
             error && error();
         }
-        core.utils.http = function(type, url, formData, success, error) {
+        core.utils.http = function (type, url, formData, success, error) {
             error && error("HTTP Not supported for " + url);
         }
         if (core.extensions)
-            core.extensions._load = function(callback) {
+            core.extensions._load = function (callback) {
                 callback();
             }
-
-        core.loader.loadImage = function(imgName, callback, v27callback) {
-                if (v27callback) {
-                    // module - name - callback
-                    console.log("Load Image: " + imgName + "/" + callback);
-                    v27callback(callback, { width: 32, height: 32 });
-                } else {
-                    console.log("Load Image: " + imgName);
-                    callback(imgName, { width: 32, height: 32 });
-                }
+        
+        core.loader.loadImage = function (imgName, callback, v27callback) {
+            if (v27callback) {
+                // module - name - callback
+                console.log("Load Image: " + imgName + "/" + callback);
+                v27callback(callback, {width: 32, height: 32});
+            } else {
+                console.log("Load Image: " + imgName);
+                callback(imgName, {width: 32, height: 32});
             }
-            // core.loader._load = function (callback) {callback();}
+        }
+        // core.loader._load = function (callback) {callback();}
         core.utils.splitImage = () => [];
-        core.icons.getTilesetOffset = function(id) {
+        core.icons.getTilesetOffset = function (id) {
             if (typeof id == 'string') {
                 // Tileset的ID必须是 X+数字 的形式
                 if (!/^X\d+$/.test(id)) return null;
                 id = parseInt(id.substring(1));
-            } else if (typeof id != 'number') {
+            }
+            else if (typeof id != 'number') {
                 return null;
             }
             if (id >= this.tilesetStartOffset) {
-                return { "image": { width: 32, height: 32 }, "x": 0, "y": 0 };
+                return {"image": {width:32, height:32}, "x": 0, "y": 0};
             }
             return null;
         }
@@ -189,7 +195,7 @@ function code() {
         ignoreFuncs('control', 'resize,showStartAnimate,_setRequestAnimationFrame');
         ignoreFuncs('maps', '_makeAutotileEdges');
         ignoreFuncs('ui', 'clearMap');
-
+        
         this.useCompress = false;
         callback();
     }
@@ -213,16 +219,16 @@ function code() {
     ignoreFuncs('utils', 'setStatusBarInnerHTML');
     ignoreFuncs('plugin', 'drawLight');
 
-    (function() {
-        ["bg", "event", "hero", "event2", "fg", "damage", "animate", "curtain", "ui", "data"]
-        .forEach(v => core.canvas[v] = document.createElement().getContext());
-        if (silent == "2") core.ui.drawTip = (text) => console.log(text + " [" + core.status.hero.loc.x + "," + core.status.hero.loc.y + "," + core.status.floorId + "]");
+    (function () {
+        ["bg","event","hero","event2","fg","damage","animate","curtain","ui","data"]
+            .forEach(v => core.canvas[v] = document.createElement().getContext());
+        if (silent == "2") core.ui.drawTip = (text) => console.log(text + " ["+core.status.hero.loc.x+","+core.status.hero.loc.y+","+core.status.floorId+"]");
         core.enemys.nextCriticals = () => [];
         core.ui.splitLines = () => [""];
         core.ui._getRealContent = () => "";
-        core.ui.drawTextContent = () => { return { offsetY: 0 } };
+        core.ui.drawTextContent = () => {return {offsetY: 0}};
         core.ui.drawChoices = (content, choices) => {
-            core.status.event.ui = { "text": content, "choices": choices };
+            core.status.event.ui = {"text": content, "choices": choices};
         }
         core.control.screenFlash = (color, time, times, callback) => {
             if (callback) callback();
@@ -231,49 +237,49 @@ function code() {
             if (callback) callback();
         }
         core.events._action_showGif = core.doAction;
-        core.maps.resizeMap = function(floorId) {
+        core.maps.resizeMap = function (floorId) {
             core.bigmap.width = core.floors[floorId].width;
             core.bigmap.height = core.floors[floorId].height;
         }
         var animateBlock = core.maps.animateBlock;
-        core.maps.animateBlock = function(loc, type, time, callback) {
+        core.maps.animateBlock = function (loc, type, time, callback) {
             return animateBlock.call(core.maps, loc, type, 1, callback);
         }
-        core.maps.animateSetBlock = function(number, x, y, floorId, time, callback) {
+        core.maps.animateSetBlock = function (number, x, y, floorId, time, callback) {
             core.setBlock(number, x, y, floorId);
             if (callback) callback();
         }
         var moveBlock = core.maps.moveBlock;
-        core.maps.moveBlock = function(x, y, steps, time, keep, callback) {
+        core.maps.moveBlock = function (x, y, steps, time, keep, callback) {
             return moveBlock.call(core.maps, x, y, steps, 1, keep, callback);
         }
         core.ui.createCanvas = () => document.createElement().getContext();
-        core.utils.replaceText = () => "";
+        core.utils.replaceText = ()=>"";
         // ignore _uievent_
         for (var funcname in core.ui) {
             if (core.ui[funcname] instanceof Function && funcname.startsWith('_uievent_')) {
-                core.ui[funcname] = () => {};
+                core.ui[funcname] = ()=>{};
             }
         }
     })();
 
-    core.control._replay_error = function(action) {
+    core.control._replay_error = function (action) {
         console.log("录像文件出错...... 当前操作" + action);
         console.log("接下来10个操作" + core.status.replay.toReplay.slice(0, 10));
         console.log("已执行操作数：" + core.status.route.length);
         console.log("floorId: " + core.status.floorId);
         console.log(JSON.stringify(core.clone(
-            core.status.hero, (x, y) => (typeof y == 'number') || x == 'items')));
+            core.status.hero, (x,y)=>(typeof y=='number') || x=='items')));
         core.status.replay.replaying = false;
         //process.stdin.resume();
         process.exit(10)
     }
 
-    core.control._replay_finished = function() {
+    core.control._replay_finished = function () {
         console.log("Replay ended!!!");
         console.timeEnd();
         console.log(JSON.stringify(core.clone(
-            core.status.hero, (x, y) => (typeof y == 'number') || x == 'items')));
+            core.status.hero, (x,y)=>(typeof y=='number') || x=='items')));
         process.exit(16);
     };
 
@@ -284,21 +290,21 @@ function code() {
         _win(...rest);
     }
 
-    var _replaceText = function(text) {
-        return (text || "").replace(/\${(.*?)}/g, function(word, value) {
+    var _replaceText = function (text) {
+        return (text || "").replace(/\${(.*?)}/g, function (word, value) {
             return core.calValue(value);
         });
     }
 
-    core.events._action_win = function(data, x, y, prefix) {
+    core.events._action_win = function (data, x, y, prefix) {
         this.win(_replaceText(data.reason), data.norank, data.noexit);
     }
 
-    core.control.stopReplay = function() {
+    core.control.stopReplay = function () {
         console.log("Replay finished!!!");
         console.timeEnd();
         console.log(JSON.stringify(core.clone(
-            core.status.hero, (x, y) => (typeof y == 'number') || x == 'items')));
+            core.status.hero, (x,y)=>(typeof y=='number') || x=='items')));
         process.stdout.write("\n---------- " + Math.floor(core.status.hero.hp) + "|" + reason + " ----------\n");
         process.exit(0);
     }

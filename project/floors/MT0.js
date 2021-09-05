@@ -37,7 +37,7 @@ main.floors.MT0=
         },
         {
             "type": "function",
-            "function": "function(){\nsetTimeout(core.updateStatusBar, 5);\n}"
+            "function": "function(){\nif (!main.replayChecking) {\n\tsetTimeout(function () { core.control.updateStatusBar(null, true) }, 5);\n}\n}"
         }
     ],
     "parallelDo": "",
