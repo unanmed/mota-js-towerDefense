@@ -1645,7 +1645,6 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                         core.unregisterAnimationFrame('startMonster');
                         // 自动出怪
                         if (flags.autoNext) {
-                            console.log(1);
                             if (!flags.forceInterval) {
                                 if (flags.waves % 10 == 0) {
                                     flags.forceInterval = 60000;
@@ -2555,6 +2554,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         };
         // 放置防御塔
         this.placeTower = function(x, y) {
+            if (core.getBgNumber(x, y) != 311) return true;
             core.updateStatusBar();
             var tower = core.status.event.data;
             if (!tower || typeof tower != 'string') {
