@@ -3642,7 +3642,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
                 var color = [255, 255 - tower.level / tower.max * 255, 255 - tower.level / tower.max * 255, 0.5]
                 core.drawLine(ctx, x * 32 + 16, y * 32 + 16, enemy.x * 32 + 16, enemy.y * 32 + 16, color, 2);
-                this.setTowerEffect(ctx, tower.speed);
+                this.setTowerEffect(ctx, 1 / tower.speed);
             }
             if (core.hasSpecial(enemy.special, 4)) {
                 enemy.hp -= atk / 2;
