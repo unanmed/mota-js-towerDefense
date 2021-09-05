@@ -277,6 +277,7 @@ type Braver = {
     total: number
     to: number
     special: any
+    level: number
 }
 
 type Mine = {

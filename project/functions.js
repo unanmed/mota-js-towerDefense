@@ -12,6 +12,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                 return name != 'hero' && name != 'maps';
             });
             core.status.played = true;
+            core.batchDict = {};
             // 初始化人物，图标，统计信息
             core.status.hero = core.clone(hero);
             window.hero = core.status.hero;
