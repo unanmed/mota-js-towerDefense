@@ -2852,7 +2852,7 @@ events.prototype.save = function(fromUserAction) {
 ////// 点击读取按钮时的打开操作 //////
 events.prototype.load = function(fromUserAction) {
     if (core.isReplaying()) return;
-    if (core.isPlaying() && !core.hasFlag('pause')) return core.drawTip('请先暂停游戏');
+    if (core.isPlaying() && !core.hasFlag('__pause__')) return core.drawTip('请先暂停游戏');
     var saveIndex = core.saves.saveIndex;
     var page = parseInt((saveIndex - 1) / 5),
         offset = saveIndex - 5 * page;
