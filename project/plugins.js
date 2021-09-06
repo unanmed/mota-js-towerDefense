@@ -1424,7 +1424,8 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             if (name == 'speed')
                 return tower[name] / (1 + tower.expLevel / 100);
             if (name == 'rate' && tower.rate * (1 + tower.expLevel / 100) >= 80) return 80;
-            if (tower.type == 'chain') return tower[name] * (1 + tower.expLevel / 10);
+            if (tower.type == 'chain') return tower[name] * (1 + tower.expLevel / 20);
+            if (tower.type == 'barrack') return tower[name] * (1 + tower.expLevel / 20);
             return tower[name] * (1 + tower.expLevel / 100);
         };
         // 保存防御塔真实属性
@@ -1447,230 +1448,6 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         };
     },
     "towerAttack": function() {
-        // 特效控制
-        this.deleteTowerEffect = function() {
-            core.registerAnimationFrame('deleteEffect', true, function() {
-                if (main.replayChecking) return;
-                if (flags.__pause__) return;
-                for (var one in core.batchDict) {
-                    if (!one.startsWith('tower')) continue;
-                    var ctx = core.batchDict[one];
-                    ctx.interval -= 1;
-                    if (ctx.interval <= 0) {
-                        core.clearMap(one);
-                    } else {
-                        x = ctx.interval / ctx.totalTime;
-                        ctx.canvas.style.opacity = 1 - (1 - x) * (1 - x);
-                    }
-                }
-            });
-        };
-        // 获得在范围内的距离基地最近的怪物
-        this.getClosestEnemy = function(x, y, n) {
-            n = n || 1;
-            var enemys = [];
-            var tower = core.status.realTower[x + ',' + y];
-            if (!tower) return console.error('不存在的防御塔！');
-            if (!tower.canReach) this.getCanReachBlock(x, y);
-            var canReach = tower.canReach;
-            if (!canReach) return null;
-            var inRange = [];
-            Object.keys(core.status.enemys.enemys).forEach(function(id) {
-                enemys.push(id);
-            });
-            var all = core.status.enemys.enemys;
-            // 按照顺序 检索enemy.to 获得符合要求的怪物数组
-            inRange = enemys.filter(function(one) { return canReach[all[one].to - 1]; });
-            if (inRange.length == 0) return null;
-            // 细检索 获得在最前方的怪物并锁定该目标
-            // 先排序
-            inRange.sort(function(a, b) { return all[b].to - all[a].to; });
-            // n == 1时 优化方案
-            if (n == 1) {
-                // 获得enemy.to最大的怪物
-                var max = all[inRange[0]].to;
-                var needCheck = [];
-                for (var i = 0; i < inRange.length; i++) {
-                    if (all[inRange[i]].to == max) needCheck.push(inRange[i]);
-                    else break;
-                }
-                if (needCheck.length == 0) return null;
-                // 把需要检索的怪物细检索
-                var route = core.status.thisMap.route;
-                var next = route[all[needCheck[0]].to];
-                var closest;
-                for (var i in needCheck) {
-                    var dx = all[needCheck[i]].x - next[0],
-                        dy = all[needCheck[i]].y - next[1];
-                    var l = dx * dx + dy * dy;
-                    if (!closest) {
-                        closest = {
-                            id: needCheck[i],
-                            l: l
-                        };
-                    }
-                    if (l < closest.l) closest = { id: needCheck[i], l: l };
-                }
-                // 细检索完毕 返回目标怪物
-                return closest.id;
-            } else { // n != 1时 优化方案
-                // 获得最近的几个怪物的最小enemy.to 并获得他们
-                var min;
-                var needCheck = []
-                for (var i = 0; i < inRange.length; i++) {
-                    if (i >= n) {
-                        if (all[inRange[i]].to < min) break;
-                    }
-                    if (!min) min = all[inRange[i]].to;
-                    if (all[inRange[i]].to < min) min = all[inRange[i]].to;
-                    needCheck.push(inRange[i]);
-                }
-                var ori = core.clone(needCheck);
-                // 细检索这些怪物 获得最近的几个
-                needCheck = needCheck.map(function(one) {
-                    var enemy = all[one];
-                    var route = core.status.thisMap.route;
-                    var next = route[enemy.to];
-                    var dx = enemy.x - next[0],
-                        dy = enemy.y - next[1];
-                    return dx * dx + dy * dy;
-                });
-                ori.sort(function(a, b) { return needCheck[a] - needCheck[b] });
-                // 返回最近的几个怪物
-                return ori.splice(0, n);
-            }
-        };
-        // 获得一定爆炸范围内的怪物
-        this.getEnemyInBombRange = function(x, y, range) {
-            // 由于不会有范围内格子的缓存 所以直接遍历所有怪物
-            var enemys = core.clone(core.status.enemys.enemys);
-            enemys = Object.keys(enemys);
-            enemys = enemys.filter(function(one) {
-                var enemy = core.status.enemys.enemys[one];
-                var dx = enemy.x - x,
-                    dy = enemy.y - y;
-                return dx * dx + dy * dy <= range * range;
-            })
-            return enemys;
-        };
-        // 获得一条线上的怪物 抄的我自己的人类塔 我自己看不懂了...
-        this.getEnemyInLine = function(x1, y1, x2, y2) {
-            // 直接遍历就行
-            var enemys = core.clone(core.status.enemys.enemys);
-            enemys = Object.keys(enemys);
-            enemys = enemys.filter(function(one) {
-                var enemy = core.status.enemys.enemys[one];
-                var nx = enemy.x,
-                    ny = enemy.y;
-                if ((x1 < nx - 0.33 && x2 < nx - 0.33) || (x1 > nx + 0.33 && x2 > nx + 0.33) ||
-                    (y1 < ny - 0.33 && y2 < ny - 0.33) || (y1 > ny + 0.33 && y2 > ny + 0.33)) return;
-                for (var time = 1; time <= 2; time++) {
-                    // 左下右上
-                    if (time == 1) {
-                        var loc1 = [nx - 0.33, ny + 0.33],
-                            loc2 = [nx + 0.33, ny - 0.33];
-                        var n1 = (y2 - y1) / (x2 - x1) * (loc1[0] - x1) + y1 - loc1[1],
-                            n2 = (y2 - y1) / (x2 - x1) * (loc2[0] - x1) + y1 - loc2[1];
-                        if (n1 * n2 <= 0) return true;
-                        else return false
-                    } else { // 左上右下
-                        var loc1 = [x - 0.33, y - 0.33],
-                            loc2 = [x + 0.33, y + 0.33];
-                        var n1 = (y2 - y1) / (x2 - x1) * (loc1[0] - x1) + y1 - loc1[1],
-                            n2 = (y2 - y1) / (x2 - x1) * (loc2[0] - x1) + y1 - loc2[1];
-                        if (n1 * n2 <= 0) return true;
-                        else return false;
-                    }
-                }
-            });
-            return enemys;
-        };
-        // 获得一定范围内的距离中心最近的怪物
-        this.getClosestEnemyInRange = function(x, y, range, ignore) {
-            // 遍历吧，没什么好方法
-            var enemys = core.clone(core.status.enemys.enemys);
-            // 开始遍历
-            var closest,
-                l;
-            for (var one in enemys) {
-                if (ignore.includes(one)) continue;
-                var now = enemys[one];
-                var dx = now.x - x,
-                    dy = now.y - y;
-                if (!closest) {
-                    closest = one;
-                    l = dx * dx + dy * dy;
-                    continue;
-                }
-                var d = dx * dx + dy * dy;
-                if (d < l) {
-                    l = d;
-                    closest = one;
-                }
-            }
-            if (l <= range * range) return closest;
-            else return null;
-        };
-        // 获得士兵塔出兵位置
-        this.getBarrackBlock = function(x, y) {
-            // 检测四周
-            var canLoc = [];
-            if (core.getBgNumber(x - 1, y) == '300') canLoc.push([x - 1, y]);
-            if (core.getBgNumber(x + 1, y) == '300') canLoc.push([x + 1, y]);
-            if (core.getBgNumber(x, y - 1) == '300') canLoc.push([x, y - 1]);
-            if (core.getBgNumber(x, y + 1) == '300') canLoc.push([x, y + 1]);
-            if (canLoc.length == 0) return null;
-            // 转换成索引形式
-            var route = core.status.thisMap.route;
-            canLoc = canLoc.map(function(loc) {
-                // 因为是数组 不能用indexOf之类的方法......遍历+core.same
-                for (var i in route) {
-                    if (core.same(loc, route[i])) return i;
-                }
-            });
-            // 返回索引最大的 因为要在距离基地最近的地方出兵
-            canLoc.sort(function(a, b) { return b - a; });
-            return canLoc[0];
-        };
-        // 获得地雷塔可以攻击到的格子
-        this.getMineBlock = function(x, y) {
-            var route = core.status.thisMap.route;
-            var canReach = {};
-            for (var nx = x - 1; nx <= x + 1; nx++) {
-                if (nx < 0 || nx > 14) continue;
-                for (var ny = y - 1; ny <= y + 1; ny++) {
-                    if (ny < 0 || ny > 14) continue;
-                    for (var i = 0; i < route.length - 1; i++) {
-                        if (core.same(route[i], [nx, ny])) {
-                            canReach[i] = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            core.status.realTower[x + ',' + y].canReach = canReach;
-        };
-        // 获得可以攻击到的格子
-        this.getCanReachBlock = function(x, y) {
-            var tower = core.status.realTower[x + ',' + y];
-            var route = core.status.thisMap.route;
-            var canReach = {};
-            // 遍历所有格子 检测是否能打到
-            route.forEach(function(loc, i) {
-                var dx = loc[0] - x,
-                    dy = loc[1] - y
-                if (dx * dx + dy * dy <= tower.range * tower.range) {
-                    canReach[i] = true;
-                }
-            });
-            core.status.realTower[x + ',' + y].canReach = core.clone(canReach);
-        };
-        // 勇士死亡
-        this.heroDie = function(hero) {
-            core.returnCanvas(hero);
-            delete core.status.enemys.hero[hero];
-            core.status.enemys.hero.cnt--;
-        };
         // 旋转炮塔
         var rotateWeapon = function(pos, dx, dy) {
             // atan2 是从X轴开始逆时针旋转, 炮塔是Y轴开始顺时针旋转, 因此交换x y坐标计算
@@ -1693,7 +1470,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var pos = x + ',' + y;
             // 打距离基地最近的
             var atk = tower.atk;
-            var enemy = this.getClosestEnemy(x, y);
+            var enemy = core.getClosestEnemy(x, y)[0];
             if (!enemy) return;
             var id = enemy;
             enemy = core.status.enemys.enemys[enemy];
@@ -1734,7 +1511,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var pos = x + ',' + y;
             // 打距离基地最近的
             var atk = tower.atk;
-            var enemy = this.getClosestEnemy(x, y);
+            var enemy = core.getClosestEnemy(x, y)[0];
             if (!enemy) return;
             var id = enemy;
             enemy = core.status.enemys.enemys[enemy];
@@ -1773,13 +1550,12 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             y = parseInt(y);
             var pos = x + ',' + y;
             // 打距离基地最近的 并有爆炸范围
-            var atk = tower.atk;
-            var enemy = this.getClosestEnemy(x, y);
+            var enemy = core.getClosestEnemy(x, y)[0];
             if (!enemy) return;
             enemy = core.status.enemys.enemys[enemy];
             var nx = enemy.x,
                 ny = enemy.y;
-            enemy = this.getEnemyInBombRange(enemy.x, enemy.y, tower.explode);
+            enemy = core.getEnemyInBombRange(enemy.x, enemy.y, tower.explode);
             // 爆炸攻击
             enemy.forEach(function(one) {
                 var now = core.status.enemys.enemys[one];
@@ -1821,13 +1597,12 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             y = parseInt(y);
             var pos = x + ',' + y;
             // 打距离基地最近的 并有穿透效果
-            var atk = tower.atk;
-            var enemy = this.getClosestEnemy(x, y);
+            var enemy = core.getClosestEnemy(x, y)[0];
             if (!enemy) return;
             enemy = core.status.enemys.enemys[enemy];
             var dx = -(x - enemy.x) * 32,
                 dy = -(y - enemy.y) * 32;
-            enemy = this.getEnemyInLine(x, y, x + dx * 13, y + dy * 13);
+            enemy = core.getEnemyInLine(x, y, x + dx * 13, y + dy * 13);
             enemy.forEach(function(one) {
                 var now = core.status.enemys.enemys[one];
                 if (core.hasSpecial(now.special, 4)) {
@@ -1865,7 +1640,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             x = parseInt(x);
             y = parseInt(y);
             // 打距离基地最近的 并有连锁效果
-            var enemy = this.getClosestEnemy(x, y);
+            var enemy = core.getClosestEnemy(x, y)[0];
             if (!enemy) return;
             var enemys = [enemy];
             var all = core.status.enemys.enemys;
@@ -1873,7 +1648,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var nx = all[enemy].x,
                 ny = all[enemy].y;
             for (var t = 1; t < tower.chain; t++) {
-                var next = this.getClosestEnemyInRange(nx, ny, 2, enemys);
+                var next = core.getClosestEnemyInRange(nx, ny, 2, enemys);
                 if (!next) break;
                 nx = all[next].x;
                 ny = all[next].y;
@@ -1921,9 +1696,8 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             x = parseInt(x);
             y = parseInt(y);
             // 打距离基地最近的几个怪物
-            var atk = tower.atk;
-            var enemy = this.getClosestEnemy(x, y, tower.cnt);
-            if (!enemy) return;
+            var enemy = core.getClosestEnemy(x, y, tower.cnt);
+            if (enemy.length === 0) return;
             var all = core.status.enemys.enemys;
             var nx = x * 32 + 16,
                 ny = y * 32 + 16;
@@ -1981,7 +1755,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             y = parseInt(y);
             var pos = x + ',' + y;
             // 获得该塔的出士兵的位置
-            var loc = this.getBarrackBlock(x, y);
+            var loc = core.getBarrackBlock(x, y);
             if (!loc) return;
             // 将loc转化为坐标形式
             var index = parseInt(loc);
@@ -2024,7 +1798,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var pos = x + ',' + y;
             // 打距离基地最近的
             var atk = tower.atk;
-            var enemy = this.getClosestEnemy(x, y);
+            var enemy = this.getClosestEnemy(x, y)[0];
             if (!enemy) return;
             var id = enemy;
             enemy = core.status.enemys.enemys[enemy];
@@ -2063,7 +1837,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             y = parseInt(y);
             // 往地上铺地雷 每个图块最多4个
             if (!tower.canReach) {
-                this.getMineBlock(x, y);
+                core.getMineBlock(x, y);
                 tower = core.status.realTower[x + ',' + y];
             }
             // 排序一下 先在距离基地进的地方放地雷
@@ -2280,155 +2054,4 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             core.autoUpdateStatusBar(x, y);
         };
     },
-    "replay": function() {
-        // 录像相关
-        // 注册所有录像操作
-        // 放置防御塔
-        core.registerReplayAction('placeTower', function(action) {
-            if (typeof action != 'string' || !action.includes('place:')) return false;
-            // 获得放置信息
-            var detail = action.split(':');
-            var tower = detail[3];
-            var x = detail[1],
-                y = detail[2];
-            try {
-                if (core.status.hero.money < towers[tower].cost) return false;
-                core.status.towers[x + ',' + y] = core.clone(towers[tower]);
-                var now = core.status.towers[x + ',' + y];
-                now.x = x;
-                now.y = y;
-                now.level = 1;
-                now.killed = 0;
-                now.damage = 0;
-                now.expLevel = 0;
-                now.exp = 0;
-                now.type = tower;
-                now.haveCost = towers[tower].cost;
-                if (flags.__pause__) now.pauseBuild = true;
-                core.status.hero.money -= now.cost;
-                core.status.event.data = null;
-                core.status.event.id = null;
-                core.unlockControl();
-                core.saveRealStatusInCache(x, y);
-                core.plugin.initTowerSprite(now);
-                core.getChainLoc();
-                core.getFreezeLoc();
-                core.replay();
-            } catch (e) {
-                main.log(e);
-                return false;
-            }
-            return true;
-        });
-        // 升级防御塔
-        core.registerReplayAction('upgradeTower', function(action) {
-            if (typeof action != 'string' || !action.includes('upgrade:')) return false;
-            var detail = action.split(':');
-            var x = detail[1],
-                y = detail[2];
-            try {
-                var success = core.upgradeTower(x, y);
-                if (!success) return false;
-                core.replay();
-            } catch (e) {
-                main.log(e);
-                return false;
-            }
-            return true;
-        });
-        // 卖出防御塔
-        core.registerReplayAction('sellTower', function(action) {
-            if (typeof action != 'string' || !action.includes('sell:')) return false;
-            var detail = action.split(':');
-            var x = detail[1],
-                y = detail[2];
-            try {
-                var success = core.sellTower(x, y);
-                if (!success) return false;
-                core.replay();
-            } catch (e) {
-                main.log(e);
-                return false;
-            }
-            return true;
-        });
-        // 提前下一波
-        core.registerReplayAction('nextWave', function(action) {
-            if (action != 'nextWave') return false;
-            try {
-                var success = core.startMonster(core.status.floorId);
-                if (!success) return false;
-                core.replay();
-            } catch (e) {
-                main.log(e);
-                return false;
-            }
-            return true;
-        });
-        // 啥都不干
-        core.registerReplayAction('wait', function(action) {
-            if (!parseInt(action)) return false;
-            var rounds = parseInt(action);
-            var fail = false;
-            var now = 0;
-            if (!main.replayChecking) {
-                var interval = window.setInterval(function() {
-                    now++;
-                    try {
-                        core.doAnimationFrameInReplay();
-                        if (now === rounds + 1) {
-                            clearInterval(interval);
-                            core.replay();
-                        }
-                    } catch (e) {
-                        main.log(e);
-                        clearInterval(interval);
-                        fail = true;
-                    }
-                }, 16.6);
-            } else {
-                while (true) {
-                    now++;
-                    try {
-                        core.doAnimationFrameInReplay();
-                        if (now === rounds + 1) break;
-                    } catch (e) {
-                        main.log(e);
-                        return false;
-                    }
-                }
-                core.replay();
-            }
-            if (fail) return false;
-            else return true;
-        });
-        // 录像中每回合执行一次animationFrame
-        this.doAnimationFrameInReplay = function() {
-            core.control.renderFrameFuncs.forEach(function(b) {
-                if (b.func) {
-                    try {
-                        core.doFunc(b.func, core.control);
-                    } catch (e) {
-                        main.log(e);
-                        flags.error = e;
-                        core.drawTip('录像运行出错！错误信息请在控制台或怪物手册查看');
-                        core.pauseReplay();
-                    }
-                }
-            });
-        };
-        // 向录像中push操作
-        this.pushActionToRoute = function(action) {
-            // 检测当前录像最后一项的类型
-            var last = core.status.route[core.status.route.length - 1];
-            if (action == 'wait') {
-                if (parseInt(last))
-                    core.status.route[core.status.route.length - 1] =
-                    (parseInt(core.status.route[core.status.route.length - 1]) + 1).toString();
-                else core.status.route.push('1');
-            } else {
-                core.status.route.push(action);
-            }
-        };
-    }
 }

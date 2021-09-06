@@ -22,6 +22,12 @@ defense.prototype._init = function() {
     this.initTowers();
     // ---- 注册batchCanvas的resize
     core.control.registerResize('_batchCanvas', this._resize_batchCanvas);
+    // ---- 注册录像操作
+    core.registerReplayAction('placeTower', this._replay_placeTower);
+    core.registerReplayAction('upgradeTower', this._replay_upgradeTower);
+    core.registerReplayAction('sellTower', this._replay_sellTower);
+    core.registerReplayAction('nextWave', this._replay_nextWave);
+    core.registerReplayAction('wait', this._replay_wait);
 }
 
 ////// 初始化防御塔 ////// 
@@ -29,16 +35,16 @@ defense.prototype.initTowers = function() {
     this.towers = {
         basic: { atk: 6, cost: 30, speed: 0.6, range: 2, max: 20 },
         gun: { atk: 4, cost: 100, speed: 0.2, range: 3, max: 20 },
-        bomb: { atk: 20, cost: 100, speed: 0.8, range: 3, explode: 1, max: 20 },
-        laser: { atk: 15, cost: 100, range: 3, speed: 1, max: 20 },
-        tesla: { atk: 8, cost: 130, speed: 0.8, range: 3, chain: 3, max: 20 },
-        scatter: { atk: 8, cost: 140, speed: 0.8, range: 3, cnt: 6, max: 20 },
+        bomb: { atk: 10, cost: 100, speed: 1.2, range: 3, explode: 0.75, max: 20 },
+        laser: { atk: 10, cost: 100, range: 3, speed: 1.25, max: 20 },
+        tesla: { atk: 6, cost: 130, speed: 1.25, range: 3, chain: 3, max: 20 },
+        scatter: { atk: 7, cost: 140, speed: 1, range: 3, cnt: 6, max: 20 },
         freeze: { rate: 30, cost: 100, range: 2, max: 7 },
         barrack: { hero: { hp: 100, atk: 20, def: 0, speed: 2 }, speed: 5, cost: 125, max: 40 },
         sniper: { atk: 30, cost: 100, speed: 1.5, range: 4, max: 20 },
         mine: { mine: { atk: 50 }, speed: 2, square: true, cost: 120, max: 30 },
         chain: { rate: 10, cost: 180, max: 20, maxAttack: 100 },
-        destory: { atk: 30, cost: 350, range: 2, speed: 1.5, max: 20 }
+        destory: { atk: 40, cost: 250, range: 2, speed: 1.5, max: 20 }
     };
 
     function createIconFromTower(data) {
@@ -442,6 +448,25 @@ defense.prototype.initAttack = function() {
             }
         }
     }
+}
+
+////// 删除攻击特效 //////
+defense.prototype.deleteTowerEffect = function() {
+    core.registerAnimationFrame('deleteEffect', true, function() {
+        if (main.replayChecking) return;
+        if (flags.__pause__) return;
+        for (var one in core.batchDict) {
+            if (!one.startsWith('tower')) continue;
+            var ctx = core.batchDict[one];
+            ctx.interval -= 1;
+            if (ctx.interval <= 0) {
+                core.clearMap(one);
+            } else {
+                var x = ctx.interval / ctx.totalTime;
+                ctx.canvas.style.opacity = 1 - (1 - x) * (1 - x);
+            }
+        }
+    });
 }
 
 ////// 获取地图路线 //////
@@ -872,6 +897,7 @@ defense.prototype.drawAllEnemys = function(fromLoad) {
     core.registerAnimationFrame('globalAnimate', true, this._drawAllEnemys_drawEnemyAnimation);
 
     function draw() {
+        delete core.defense.sortedEnemy;
         if (flags.__pause__) return;
         if (!core.status.thisMap) return;
         if (!core.status.enemys) return;
@@ -1391,7 +1417,7 @@ defense.prototype.expLevelUp = function(x, y) {
     if (exp >= need) {
         tower.expLevel++;
         tower.exp -= need;
-        this.saveRealStatusInCache(x, y);
+        core.saveRealStatusInCache(x, y);
         var id = core.status.event.id;
         core.drawAnimate("update", x, y);
         if (core.status.event.data == x + ',' + y && (id == 'checkEnemy' || id.startsWith('confirm'))) {
@@ -1912,4 +1938,322 @@ defense.prototype._drawConstructor_drawVertical = function(ctx, type) {
 defense.prototype.setTowerEffect = function(ctx, speed) {
     ctx.totalTime = ctx.interval = 12 / speed;
     ctx.canvas.style.opacity = 1;
+}
+
+//////////// 防御塔 锁定怪物相关 ////////////
+
+////// 获取距离基地最近的攻击对象 //////
+defense.prototype.getClosestEnemy = function(x, y, n) {
+    n = n || 1;
+    var tower = core.status.realTower[x + ',' + y];
+    if (!tower) return console.error('不存在的防御塔！');
+    if (!tower.canReach) core.getCanReachBlock(x, y);
+    var canReach = tower.canReach;
+    var enemy = this.getSortedEnemy(canReach);
+    if (enemy.length == 0) return [];
+    var all = core.status.enemys.enemys;
+    // 获取应当检索的怪物数组
+    var need = all[enemy[n - 1] || enemy[enemy.length - 1]].to;
+    var needCheck = enemy.filter(function(v) { return all[v].to === need });
+    if (needCheck.length == 1) return enemy.splice(0, n);
+    var route = core.status.thisMap.route;
+    var l = {};
+    needCheck.forEach(function(one) {
+        var enemy = all[one];
+        var dx = enemy.x - route[enemy.to][0],
+            dy = enemy.y - route[enemy.to][1];
+        l[one] = dx * dx + dy * dy;
+    });
+    needCheck.sort(function(a, b) { return l[a] - l[b]; });
+    var x = enemy.filter(function(v) { return all[v].to < need });
+    return x.concat(needCheck.splice(0, n - x.length));
+}
+
+////// 获取排序过的怪物列表 //////
+defense.prototype.getSortedEnemy = function(canReach) {
+    var all = core.status.enemys.enemys;
+    if (this.sortedEnemy) return this.sortedEnemy.filter(function(one) {
+        return (all[one].to - 1) in canReach;
+    });
+    this.sortedEnemy = Object.keys(all).sort(function(a, b) { return all[b].to - all[a].to; });
+    return this.sortedEnemy.filter(function(one) {
+        return (all[one].to - 1) in canReach;
+    });
+}
+
+////// 获得在一定范围内的所有怪物 //////
+defense.prototype.getEnemyInBombRange = function(x, y, range) {
+    // 由于不会有范围内格子的缓存 所以直接遍历所有怪物
+    return Object.values(core.status.enemys.enemys).filter(function(enemy) {
+        var dx = enemy.x - x,
+            dy = enemy.y - y;
+        return dx * dx + dy * dy <= range * range;
+    });
+}
+
+////// 获得一条线上的所有怪物 //////
+defense.prototype.getEnemyInLine = function(x1, y1, x2, y2) {
+    // 直接遍历就行
+    return Object.values(core.status.enemys.enemys).filter(function(enemy) {
+        var nx = enemy.x,
+            ny = enemy.y;
+        if ((x1 < nx - 0.33 && x2 < nx - 0.33) || (x1 > nx + 0.33 && x2 > nx + 0.33) ||
+            (y1 < ny - 0.33 && y2 < ny - 0.33) || (y1 > ny + 0.33 && y2 > ny + 0.33)) return;
+        for (var time = 1; time <= 2; time++) {
+            // 左下右上
+            if (time == 1) {
+                var loc1 = [nx - 0.33, ny + 0.33],
+                    loc2 = [nx + 0.33, ny - 0.33];
+                var n1 = (y2 - y1) / (x2 - x1) * (loc1[0] - x1) + y1 - loc1[1],
+                    n2 = (y2 - y1) / (x2 - x1) * (loc2[0] - x1) + y1 - loc2[1];
+                if (n1 * n2 <= 0) return true;
+                else return false
+            } else { // 左上右下
+                var loc1 = [x - 0.33, y - 0.33],
+                    loc2 = [x + 0.33, y + 0.33];
+                var n1 = (y2 - y1) / (x2 - x1) * (loc1[0] - x1) + y1 - loc1[1],
+                    n2 = (y2 - y1) / (x2 - x1) * (loc2[0] - x1) + y1 - loc2[1];
+                if (n1 * n2 <= 0) return true;
+                else return false;
+            }
+        }
+    });
+}
+
+////// 获得在范围内的距离中心最近的怪物 //////
+defense.prototype.getClosestEnemyInRange = function(x, y, range, ignore) {
+    // 遍历吧，没什么好方法
+    var enemys = core.status.enemys.enemys;
+    var closest,
+        l;
+    for (var one in enemys) {
+        if (ignore.includes(one)) continue;
+        var now = enemys[one];
+        var dx = now.x - x,
+            dy = now.y - y;
+        if (!closest) {
+            closest = one;
+            l = dx * dx + dy * dy;
+            continue;
+        }
+        var d = dx * dx + dy * dy;
+        if (d < l) {
+            l = d;
+            closest = one;
+        }
+    }
+    if (l <= range * range) return closest;
+    else return null;
+}
+
+////// 获得士兵塔出兵位置 //////
+defense.prototype.getBarrackBlock = function(x, y) {
+    // 检测四周
+    var canLoc = [];
+    if (core.getBgNumber(x - 1, y) == '300') canLoc.push([x - 1, y]);
+    if (core.getBgNumber(x + 1, y) == '300') canLoc.push([x + 1, y]);
+    if (core.getBgNumber(x, y - 1) == '300') canLoc.push([x, y - 1]);
+    if (core.getBgNumber(x, y + 1) == '300') canLoc.push([x, y + 1]);
+    if (canLoc.length == 0) return null;
+    // 转换成索引形式
+    var route = core.status.thisMap.route;
+    canLoc = canLoc.map(function(loc) {
+        // 因为是数组 不能用indexOf之类的方法......遍历+core.same
+        for (var i in route) {
+            if (core.same(loc, route[i])) return i;
+        }
+    });
+    // 返回索引最大的 因为要在距离基地最近的地方出兵
+    canLoc.sort(function(a, b) { return b - a; });
+    return canLoc[0];
+}
+
+////// 获得地雷塔可以攻击到的格子 //////
+defense.prototype.getMineBlock = function(x, y) {
+    var route = core.status.thisMap.route;
+    var canReach = {};
+    for (var nx = x - 1; nx <= x + 1; nx++) {
+        if (nx < 0 || nx > 14) continue;
+        for (var ny = y - 1; ny <= y + 1; ny++) {
+            if (ny < 0 || ny > 14) continue;
+            for (var i = 0; i < route.length - 1; i++) {
+                if (core.same(route[i], [nx, ny])) {
+                    canReach[i] = true;
+                    break;
+                }
+            }
+        }
+    }
+    core.status.realTower[x + ',' + y].canReach = canReach;
+}
+
+////// 获得防御塔能攻击到的格子 //////
+defense.prototype.getCanReachBlock = function(x, y) {
+    var tower = core.status.realTower[x + ',' + y];
+    var route = core.status.thisMap.route;
+    var canReach = {};
+    // 遍历所有格子 检测是否能打到
+    route.forEach(function(loc, i) {
+        var dx = loc[0] - x,
+            dy = loc[1] - y
+        if (dx * dx + dy * dy <= tower.range * tower.range) {
+            canReach[i] = true;
+        }
+    });
+    core.status.realTower[x + ',' + y].canReach = core.clone(canReach);
+}
+
+////// 勇士死亡 //////
+defense.prototype.heroDie = function(hero) {
+    core.returnCanvas(hero);
+    delete core.status.enemys.hero[hero];
+    core.status.enemys.hero.cnt--;
+}
+
+//////////// 录像 相关 ////////////
+defense.prototype._replay_placeTower = function(action) {
+    if (typeof action != 'string' || !action.includes('place:')) return false;
+    // 获得放置信息
+    var detail = action.split(':');
+    var tower = detail[3];
+    var x = detail[1],
+        y = detail[2];
+    try {
+        if (core.status.hero.money < towers[tower].cost) return false;
+        core.status.towers[x + ',' + y] = core.clone(towers[tower]);
+        var now = core.status.towers[x + ',' + y];
+        now.x = x;
+        now.y = y;
+        now.level = 1;
+        now.killed = 0;
+        now.damage = 0;
+        now.expLevel = 0;
+        now.exp = 0;
+        now.type = tower;
+        now.haveCost = towers[tower].cost;
+        if (flags.__pause__) now.pauseBuild = true;
+        core.status.hero.money -= now.cost;
+        core.status.event.data = null;
+        core.status.event.id = null;
+        core.unlockControl();
+        core.saveRealStatusInCache(x, y);
+        core.plugin.initTowerSprite(now);
+        core.getChainLoc();
+        core.getFreezeLoc();
+        core.replay();
+    } catch (e) {
+        main.log(e);
+        return false;
+    }
+    return true;
+}
+
+defense.prototype._replay_upgradeTower = function(action) {
+    if (typeof action != 'string' || !action.includes('upgrade:')) return false;
+    var detail = action.split(':');
+    var x = detail[1],
+        y = detail[2];
+    try {
+        var success = core.upgradeTower(x, y);
+        if (!success) return false;
+        core.replay();
+    } catch (e) {
+        main.log(e);
+        return false;
+    }
+    return true;
+}
+
+defense.prototype._replay_sellTower = function(action) {
+    if (typeof action != 'string' || !action.includes('sell:')) return false;
+    var detail = action.split(':');
+    var x = detail[1],
+        y = detail[2];
+    try {
+        var success = core.sellTower(x, y);
+        if (!success) return false;
+        core.replay();
+    } catch (e) {
+        main.log(e);
+        return false;
+    }
+    return true;
+}
+
+defense.prototype._replay_nextWave = function(action) {
+    if (action != 'nextWave') return false;
+    try {
+        var success = core.startMonster(core.status.floorId);
+        if (!success) return false;
+        core.replay();
+    } catch (e) {
+        main.log(e);
+        return false;
+    }
+    return true;
+}
+
+defense.prototype._replay_wait = function(action) {
+    if (!parseInt(action)) return false;
+    var rounds = parseInt(action);
+    var fail = false;
+    var now = 0;
+    if (!main.replayChecking) {
+        var interval = window.setInterval(function() {
+            now++;
+            try {
+                core.defense._replay_doAnimationFrame();
+                if (now === rounds + 1) {
+                    clearInterval(interval);
+                    core.replay();
+                }
+            } catch (e) {
+                main.log(e);
+                clearInterval(interval);
+                fail = true;
+            }
+        }, 16.6);
+    } else {
+        while (true) {
+            now++;
+            try {
+                core.defense._replay_doAnimationFrame();
+                if (now === rounds + 1) break;
+            } catch (e) {
+                main.log(e);
+                return false;
+            }
+        }
+        core.replay();
+    }
+    if (fail) return false;
+    else return true;
+}
+
+defense.prototype._replay_doAnimationFrame = function() {
+    core.control.renderFrameFuncs.forEach(function(b) {
+        if (b.func) {
+            try {
+                core.doFunc(b.func, core.control);
+            } catch (e) {
+                main.log(e);
+                flags.error = e;
+                core.drawTip('录像运行出错！错误信息请在控制台或怪物手册查看');
+                core.pauseReplay();
+            }
+        }
+    });
+}
+
+defense.prototype.pushActionToRoute = function(action) {
+    // 检测当前录像最后一项的类型
+    var last = core.status.route[core.status.route.length - 1];
+    if (action == 'wait') {
+        if (parseInt(last))
+            core.status.route[core.status.route.length - 1] =
+            (parseInt(core.status.route[core.status.route.length - 1]) + 1).toString();
+        else core.status.route.push('1');
+    } else {
+        core.status.route.push(action);
+    }
 }

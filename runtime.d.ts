@@ -2753,7 +2753,7 @@ declare class icons {
  */
  declare class defense {
     /** 获得当前地图的怪物路线 */
-    getEnemyRoute(): any
+    getEnemyRoute(): number[][]
 
     /** 获取怪物或勇士等单位的唯一随机id
      * @param start id的起始字符，一般为怪物id或hero
@@ -2761,10 +2761,10 @@ declare class icons {
      * @returns 由start起始字符和起始字符后唯一数字标识构成，中间由下划线分开
      * @example core.getUnitId('greenSlime', core.status.enemys.enemys); // 会输出绿史莱姆的在当前怪物对象中的唯一标识，比如'greenSlime_12416893265'
      */
-    getUnitId(start: string, parent: any): string
+    getUnitId(start: string, parent: object): string
 
     /** 初始化出怪列表 */
-    initMonster(floorId?: string): any
+    initMonster(floorId?: string): number[][]
 
     /** 进行下一波出怪 */
     startMonster(floorId?: string, start?: boolean, fromLoad?: boolean): void
@@ -2821,7 +2821,7 @@ declare class icons {
     /** 获得防御塔的下一级属性
      * @param fromDraw 是否是在绘制中获取，为true则获得真实属性，否则只获得原始属性
      */
-    getNextLvStatus(x: number, y: number, fromDraw?: boolean): any
+    getNextLvStatus(x: number, y: number, fromDraw?: boolean): object
 
     /** 获得防御塔升级所需经验 */
     expLevelUpNeed(level: number): number
@@ -2830,7 +2830,7 @@ declare class icons {
      * @param name 要获得的属性英文名
      * @param status 可选，填写后从该属性中获得真实属性，必须包含经验等级和要获得的属性
      */
-    getTowerRealStatus(x?: number, y?: number, name: string, status?: object): any
+    getTowerRealStatus(x?: number, y?: number, name: string, status?: object): object
 
     /** 保存防御塔的真实属性，会保存所有属性 */
     saveRealStatusInCache(x?: number, y?: number): void
@@ -2856,29 +2856,32 @@ declare class icons {
     deleteTowerEffect(): void
 
     /** 获得在范围内的距离基地最近的怪物
-     * @param n 获得的怪物数量，为数组形式，不填视为1
+     * @param n 获得的怪物数量，不填视为1
      */
-    getClosestEnemy(x: number, y: number, n?: number): string | any
+    getClosestEnemy(x: number, y: number, n?: number): string[]
+
+    /** 获得当前帧根据enemy.to排序后的怪物数组 */
+    getSortedEnemy(): string[]
 
     /** 获得在一定爆炸范围内的所有怪物 */
-    getEnemyInBombRange(x: number, y: number, range: number): any
+    getEnemyInBombRange(x: number, y: number, range: number): string[]
 
     /** 获得一条线上的所有怪物 */
-    getEnemyInLine(x1: number, y1: number, x2: number, y2: number): any
+    getEnemyInLine(x1: number, y1: number, x2: number, y2: number): string[]
 
     /** 获得范围内距离中心最近的怪物
      * @param ignore 忽视的怪物的id数组
      */
-    getClosestEnemyInRange(x: number, y: number, range: number, ignore: any): any
+    getClosestEnemyInRange(x: number, y: number, range: number, ignore: any): string | null
 
     /** 获得士兵塔出兵位置，返回格子索引 */
     getBarrackBlock(x: number, y: number): number
 
     /** 获得地雷塔可以攻击到的格子，返回格子的索引数组 */
-    getMineBlock(x: number, y: number): any
+    getMineBlock(x: number, y: number): number[]
 
     /** 获得防御塔可以攻击到的格子，返回格子的索引数组 */
-    getCanReachBlock(x: number, y: number): any
+    getCanReachBlock(x: number, y: number): number[]
 
     /** 勇士死亡 */
     heroDie(hero: string): void
@@ -2888,9 +2891,6 @@ declare class icons {
 
     /** 获得全地图的所有夹击位点，保存在core.status.thisMap.chain中 */
     getChainLoc(): void
-
-    /** 录像中执行animationFrame */
-    doAnimationFrameInReplay(): void
 
     /** 向录像中添加操作 */
     pushActionToRoute(action: string): void
