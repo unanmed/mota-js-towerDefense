@@ -2747,17 +2747,24 @@ declare class icons {
     getTilesetOffset(id?: string): void
 }
 
-/** 插件中的函数 */
-declare class plugin {
- 
+/**
+ * @file defense.js
+ * defense.js 负责样板内塔防相关操作
+ */
+ declare class defense {
     /** 获得当前地图的怪物路线 */
     getEnemyRoute(): any
 
-    /** 获得地图初始10波的怪物，并存入缓存和存档 */
-    initMonster(floorId?: string): any
+    /** 获取怪物或勇士等单位的唯一随机id
+     * @param start id的起始字符，一般为怪物id或hero
+     * @param parent 要获得的单位的父对象，比如怪物的父对象就是core.status.enemys.enemys
+     * @returns 由start起始字符和起始字符后唯一数字标识构成，中间由下划线分开
+     * @example core.getUnitId('greenSlime', core.status.enemys.enemys); // 会输出绿史莱姆的在当前怪物对象中的唯一标识，比如'greenSlime_12416893265'
+     */
+    getUnitId(start: string, parent: any): string
 
-    /** 伪随机出怪 */
-    randomMonster(start: number, number: number): void
+    /** 初始化出怪列表 */
+    initMonster(floorId?: string): any
 
     /** 进行下一波出怪 */
     startMonster(floorId?: string, start?: boolean, fromLoad?: boolean): void
@@ -2785,6 +2792,11 @@ declare class plugin {
 
     /** 注册绘制所有怪物和勇士的全局帧动画 */
     drawAllEnemys(fromLoad?: boolean): void
+
+    /** 怪物与勇士战斗
+     * @returns true: 勇士胜 false: 怪物胜 null: 不存在指定怪物或勇士
+     */
+    doBatle(enemy: any, hero: any): boolean
 
     /** 绘制血条
      * @param enemy 绘制该怪物或勇士的血条，不填表示绘制所有勇士和怪物的血条
@@ -2882,6 +2894,10 @@ declare class plugin {
 
     /** 向录像中添加操作 */
     pushActionToRoute(action: string): void
+}
+
+declare class plugin {
+
 }
 
 type core = {
@@ -3033,7 +3049,8 @@ type core = {
     icons: icons
     actions: actions
     plugin: plugin
+    defense: defense
 
-} & control & events & loader & enemys & items & maps & ui & utils & icons & actions & plugin
+} & control & events & loader & enemys & items & maps & ui & utils & icons & actions & plugin & defense
 
 declare var core: core

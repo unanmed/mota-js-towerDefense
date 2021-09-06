@@ -2710,7 +2710,7 @@ events.prototype._checkStatus = function(name, fromUserAction, checkItem) {
 ////// 点击怪物手册时的打开操作 //////
 events.prototype.openBook = function(fromUserAction) {
     if (core.isReplaying()) return;
-    if (!flags.pause) return core.drawTip('请先暂停游戏');
+    if (!flags.__pause__) return core.drawTip('请先暂停游戏');
     // 如果能恢复事件（从callBook事件触发）
     if (core.status.event.id == 'book' && core.events.recoverEvents(core.status.event.interval))
         return;
@@ -2831,7 +2831,7 @@ events.prototype.openKeyBoard = function(fromUserAction) {
 ////// 点击保存按钮时的打开操作 //////
 events.prototype.save = function(fromUserAction) {
     if (core.isReplaying()) return;
-    if (!flags.pause) return core.drawTip('请先暂停游戏');
+    if (!flags.__pause__) return core.drawTip('请先暂停游戏');
     if (core.hasFlag('__forbidSave__')) {
         core.playSound('操作失败');
         core.drawTip('当前禁止存档');
@@ -2877,7 +2877,7 @@ events.prototype.load = function(fromUserAction) {
 ////// 点击设置按钮时的操作 //////
 events.prototype.openSettings = function(fromUserAction) {
     if (core.isReplaying()) return;
-    if (!flags.pause) return core.drawTip('请先暂停游戏');
+    if (!flags.__pause__) return core.drawTip('请先暂停游戏');
     if (!this._checkStatus('settings', fromUserAction))
         return;
     core.playSound('打开界面');

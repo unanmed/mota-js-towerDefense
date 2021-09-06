@@ -2119,7 +2119,7 @@ ui.prototype._drawStorageRemove = function() {
 }
 
 ui.prototype._drawReplay = function() {
-    if (!flags.pause) return core.drawTip('请先暂停游戏');
+    if (!flags.__pause__) return core.drawTip('请先暂停游戏');
     core.lockControl();
     core.status.event.id = 'replay';
     core.playSound('打开界面');

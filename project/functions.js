@@ -50,7 +50,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
             // 隐藏右下角的音乐按钮
             core.dom.musicBtn.style.display = 'none';
             core.dom.enlargeBtn.style.display = 'none';
-            if (!flags.waves) {
+            if (!flags.__waves__) {
                 core.unregisterAnimationFrame("forceEnemy");
                 core.unregisterAnimationFrame("startEnemy");
             }
@@ -59,8 +59,8 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                 if (id && id != 'checkTower' && id != 'enemyDetail' && !id.endsWith('confirm') &&
                     !id.startsWith('confirm') && id != 'placeTower') return false;
                 if (keycode == 32) {
-                    if (!flags.pause) {
-                        flags.pause = true;
+                    if (!flags.__pause__) {
+                        flags.__pause__ = true;
                         core.drawTip('游戏暂停');
                         core.updateStatusBar('score');
                     } else {
@@ -68,15 +68,15 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                             core.status.towers[one].pauseBuild = false;
                             core.status.realTower[one].pauseBuild = false;
                         }
-                        flags.pause = false;
+                        flags.__pause__ = false;
                         core.drawTip('继续游戏');
                         core.updateStatusBar();
                     }
                     return true;
                 }
             }, 1000);
-            flags.pause = true;
-            if (core.isReplaying()) flags.pause = false;
+            flags.__pause__ = true;
+            if (core.isReplaying()) flags.__pause__ = false;
         },
         "win": function(reason, norank, noexit) {
             // 游戏获胜事件
@@ -208,6 +208,12 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
 
                 // 首次抵达楼层时执行的事件（后插入，先执行）
                 if (!core.hasVisitedFloor(floorId)) {
+                    var todo = core.clone(core.floors[floorId].firstArrive);
+                    core.push(todo, [
+                        { "type": "function", "function": "function(){\ncore.startMonster('MT0', true);\n}" },
+                        { "type": "setValue", "name": "status:money", "value": "200" },
+                        { "type": "function", "function": "function(){\nif (!main.replayChecking) {\n\tsetTimeout(function () { core.control.updateStatusBar(null, true) }, 5);\n}\n}" },
+                    ]);
                     core.insertAction(core.floors[floorId].firstArrive);
                     core.visitFloor(floorId);
                 }
@@ -746,23 +752,23 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
             // 根据keyCode值来执行对应操作
             switch (keyCode) {
                 case 27: // ESC：打开菜单栏
-                    if (!flags.pause) return core.drawTip('请先暂停游戏');
+                    if (!flags.__pause__) return core.drawTip('请先暂停游戏');
                     core.openSettings(true);
                     break;
                 case 88: // X：使用怪物手册
-                    if (!flags.pause) return core.drawTip('请先暂停游戏');
+                    if (!flags.__pause__) return core.drawTip('请先暂停游戏');
                     core.openBook(true);
                     break;
                 case 83: // S：存档
-                    if (!flags.pause) return core.drawTip('请先暂停游戏');
+                    if (!flags.__pause__) return core.drawTip('请先暂停游戏');
                     core.save(true);
                     break;
                 case 68: // D：读档
-                    if (!flags.pause) return core.drawTip('请先暂停游戏');
+                    if (!flags.__pause__) return core.drawTip('请先暂停游戏');
                     core.load(true);
                     break;
                 case 82: // R：回放录像
-                    if (!flags.pause) return core.drawTip('请先暂停游戏');
+                    if (!flags.__pause__) return core.drawTip('请先暂停游戏');
                     core.ui._drawReplay();
                     break;
                 case 79: // O：查看工程
@@ -794,15 +800,15 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
             if (!_isVertical()) {
                 // 暂停
                 if (py < 21) {
-                    if (!flags.pause) {
-                        flags.pause = true;
+                    if (!flags.__pause__) {
+                        flags.__pause__ = true;
                         core.drawTip('游戏暂停');
                         core.updateStatusBar('score');
                     } else {
                         for (var one in core.status.towers) {
                             core.status.towers[one].pauseBuild = false;
                         }
-                        flags.pause = false;
+                        flags.__pause__ = false;
                         core.drawTip('继续游戏');
                         core.updateStatusBar();
                     }
@@ -862,7 +868,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                             core.drawTip('取消自动出怪');
                         } else {
                             flags.autoNext = true;
-                            if (!flags.starting) core.startMonster(core.status.floorId);
+                            if (!flags.__starting__) core.startMonster(core.status.floorId);
                             core.drawTip('开启自动出怪');
                         }
                         core.updateStatusBar();
@@ -886,7 +892,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                             core.drawTip('取消自动出怪');
                         } else {
                             flags.autoNext = true;
-                            if (!flags.starting) core.startMonster(core.status.floorId);
+                            if (!flags.__starting__) core.startMonster(core.status.floorId);
                             core.drawTip('开启自动出怪');
                         }
                         core.updateStatusBar();
@@ -898,14 +904,14 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                         var list = Math.floor((px - 9) / 37);
                         var id = line * 3 + list;
                         if (id > 11) return;
-                        core.status.event.data = Object.keys(towers)[id];
+                        core.status.event.data = Object.keys(core.defense.towers)[id];
                         core.status.event.id = null;
                         core.updateStatusBar();
                         return;
                     }
                     // 波数详细信息
                     if (py > 150 && py < 270) {
-                        var wave = Math.ceil((py - 150) / 30) + (flags.waves || 0);
+                        var wave = Math.ceil((py - 150) / 30) + (flags.__waves__ || 0);
                         core.status.event.id = 'enemyDetail';
                         core.status.event.data = wave - 1;
                         core.updateStatusBar('enemy');
@@ -980,7 +986,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                             core.drawTip('取消自动出怪');
                         } else {
                             flags.autoNext = true;
-                            if (!flags.starting) core.startMonster(core.status.floorId);
+                            if (!flags.__starting__) core.startMonster(core.status.floorId);
                             core.drawTip('开启自动出怪');
                         }
                         core.updateStatusBar();
@@ -1003,7 +1009,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                             core.drawTip('取消自动出怪');
                         } else {
                             flags.autoNext = true;
-                            if (!flags.starting) core.startMonster(core.status.floorId);
+                            if (!flags.__starting__) core.startMonster(core.status.floorId);
                             core.drawTip('开启自动出怪');
                         }
                         core.updateStatusBar();
@@ -1015,7 +1021,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                         var list = Math.floor((px - 260) / 37);
                         var id = line * 4 + list;
                         if (id > 11) return;
-                        core.status.event.data = Object.keys(towers)[id];
+                        core.status.event.data = Object.keys(core.defense.towers)[id];
                         core.status.event.id = null;
                         core.updateStatusBar();
                         return;
@@ -1024,22 +1030,22 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                     if (py > 70 && py < 130 && px < 250) {
                         var line = Math.floor((py - 70) / 30);
                         var list = Math.floor(px / 125);
-                        var wave = list * 2 + line + (flags.waves || 0) + 1;
+                        var wave = list * 2 + line + (flags.__waves__ || 0) + 1;
                         core.status.event.id = 'enemyDetail';
                         core.status.event.data = wave - 1;
                         core.updateStatusBar();
                     }
                     // 暂停 继续
                     if (py > 140 && py < 165 && px > 288 && px < 378) {
-                        if (!flags.pause) {
-                            flags.pause = true;
+                        if (!flags.__pause__) {
+                            flags.__pause__ = true;
                             core.drawTip('游戏暂停');
                             core.updateStatusBar();
                         } else {
                             for (var one in core.status.towers) {
                                 core.status.towers[one].pauseBuild = false;
                             }
-                            flags.pause = false;
+                            flags.__pause__ = false;
                             core.drawTip('继续游戏');
                             core.updateStatusBar();
                         }
@@ -1183,20 +1189,20 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                         }
                     }
                     // 出怪相关
-                    if (flags.starting)
-                        core.startMonster(flags.waves, false, true);
+                    if (flags.__starting__)
+                        core.startMonster(flags.__waves__, false, true);
                     core.control.updateStatusBar(false, true);
-                    if (flags.forceInterval) {
+                    if (core.defense.forceInterval) {
                         core.registerAnimationFrame('forceEnemy', true, function() {
-                            if (flags.pause) return;
-                            flags.forceInterval -= 16.67;
-                            if (flags.forceInterval < flags.nowInterval * 1000) {
-                                flags.nowInterval--;
+                            if (flags.__pause__) return;
+                            core.defense.forceInterval -= 16.67;
+                            if (core.defense.forceInterval < core.defense.nowInterval * 1000) {
+                                core.defense.nowInterval--;
                                 core.updateStatusBar('interval');
                             }
-                            if (flags.forceInterval <= 0) {
-                                delete flags.forceInterval;
-                                delete flags.nowInterval;
+                            if (core.defense.forceInterval <= 0) {
+                                delete core.defense.forceInterval;
+                                delete core.defense.nowInterval;
                                 core.unregisterAnimationFrame('forceEnemy');
                                 core.startMonster(core.status.floorId);
                             }
@@ -1672,7 +1678,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                     if (type == 'score' || !type) {
                         var score = Math.round(core.status.score || 0);
                         core.setTextAlign(ctx, 'center');
-                        if (!flags.pause)
+                        if (!flags.__pause__)
                             core.fillText(ctx, score, 64, 21, '#fff', '18px Arial');
                         else {
                             core.fillText(ctx, '暂停中', 64, 21, '#ff7', '18px Arial');
@@ -1687,7 +1693,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                     if (type == 'wave' || !type) {
                         // 当前波数
                         core.drawImage(ctx, core.statusBar.icons.lv, 5, 30, 20, 20);
-                        core.fillText(ctx, flags.waves || 0, 30, 46, '#fff', '18px Arial');
+                        core.fillText(ctx, flags.__waves__ || 0, 30, 46, '#fff', '18px Arial');
                     }
                     if (type == 'money' || !type) {
                         // 金钱
@@ -1711,7 +1717,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                 // 分数
                 var score = Math.round(core.status.score || 0);
                 core.setTextAlign(ctx, 'center');
-                if (!flags.pause)
+                if (!flags.__pause__)
                     core.fillText(ctx, score, 208, 21, '#fff', '18px Arial');
                 else core.fillText(ctx, '暂停中', 208, 21, '#ff7', '18px Arial');
                 // 当前生命值
@@ -1720,7 +1726,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                 core.fillText(ctx, core.status.hero.hp, 95, 21, '#fff', '18px Arial');
                 // 波数
                 core.drawImage(ctx, core.statusBar.icons.lv, 5, 5, 20, 20);
-                core.fillText(ctx, flags.waves || 0, 30, 21, '#fff', '18px Arial');
+                core.fillText(ctx, flags.__waves__ || 0, 30, 21, '#fff', '18px Arial');
                 // 金钱
                 core.drawImage(ctx, core.statusBar.icons.money, 305, 5, 20, 20);
                 core.fillText(ctx, core.formatBigNumber(core.status.hero.money), 330, 21, '#fff', '18px Arial');
@@ -1770,6 +1776,68 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
             core.fillText('ui', 'HTML5魔塔交流群：539113091', text_start, top + 112 + 32);
             // TODO: 写自己的“关于”页面，每次增加32像素即可
             core.playSound('打开界面');
+        }
+    },
+    "defense": {
+        "initMonster": function(floorId) {
+            if (floorId == 'MT0') {
+                // 第一关 前10波手动添加 之后由伪随机产生固定值 并存入缓存 计入存档
+                var enemys = [
+                    ['greenSlime', 10],
+                    ['greenSlime', 17],
+                    ['redSlime', 13],
+                    ['greenSlime', 21],
+                    ['blackSlime', 9],
+                    ['bat', 16],
+                    ['redSlime', 15],
+                    ['greenSlime', 13],
+                    ['bat', 14],
+                    ['bigBat', 1],
+                ];
+                core.status.maps[floorId].enemys = enemys;
+                return enemys;
+            }
+        },
+        "enemyDie": function(id) {
+            var e = core.clone(core.status.enemys.enemys[id]);
+            if (!e) return;
+            core.returnCanvas(id, 'enemy');
+            var enemyId = id.split('_')[0];
+            var enemy = core.material.enemys[enemyId];
+            core.status.hero.money += e.money;
+            if (!core.status.score) core.status.score = 0;
+            core.status.score += Math.round(enemy.hp * enemy.speed);
+            delete core.status.enemys.enemys[id];
+            core.status.enemys.cnt--;
+            core.status.totalKilled++;
+            // 如果拥有重生属性
+            if (core.hasSpecial(enemy.special, 1)) {
+                // 对怪物属性进行重置，并重命名怪物id
+                var toEnemy = enemy.toEnemy;
+                if (!toEnemy) return;
+                enemy = core.material.enemys[toEnemy];
+                var hp = enemy.hp * (1 + e.wave * e.wave / 225);
+                core.status.enemys.cnt++;
+                id = core.getUnitId(toEnemy, core.status.enemys.enemys);
+                core.status.enemys.enemys[id] = {
+                    x: e.x,
+                    y: e.y,
+                    id: toEnemy,
+                    speed: enemy.speed,
+                    hp: hp,
+                    total: hp,
+                    atk: enemy.atk * (1 + e.wave * e.wave / 900),
+                    def: enemy.def * (1 + e.wave * e.wave / 900),
+                    to: (Number.isInteger(e.x) && Number.isInteger(e.y) &&
+                        core.same(core.status.thisMap.route[e.to], [e.x, e.y])) ? (e.to + 1) : e.to,
+                    drown: false,
+                    money: Math.floor(enemy.money * (1 + e.wave * e.wave / 4900)) * (2 - flags.hard),
+                    freeze: 1,
+                    wave: e.wave,
+                    special: core.clone(core.material.enemys[toEnemy].special) || []
+                };
+            }
+            core.updateStatusBar();
         }
     }
 }
