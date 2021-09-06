@@ -1984,7 +1984,9 @@ defense.prototype.getSortedEnemy = function(canReach) {
 ////// 获得在一定范围内的所有怪物 //////
 defense.prototype.getEnemyInBombRange = function(x, y, range) {
     // 由于不会有范围内格子的缓存 所以直接遍历所有怪物
-    return Object.values(core.status.enemys.enemys).filter(function(enemy) {
+    var all = core.status.enemys.enemys;
+    return Object.keys(all).filter(function(one) {
+        var enemy = all[one];
         var dx = enemy.x - x,
             dy = enemy.y - y;
         return dx * dx + dy * dy <= range * range;
@@ -1994,7 +1996,9 @@ defense.prototype.getEnemyInBombRange = function(x, y, range) {
 ////// 获得一条线上的所有怪物 //////
 defense.prototype.getEnemyInLine = function(x1, y1, x2, y2) {
     // 直接遍历就行
-    return Object.values(core.status.enemys.enemys).filter(function(enemy) {
+    var all = core.status.enemys.enemys;
+    return Object.keys(all).filter(function(one) {
+        var enemy = all[one];
         var nx = enemy.x,
             ny = enemy.y;
         if ((x1 < nx - 0.33 && x2 < nx - 0.33) || (x1 > nx + 0.33 && x2 > nx + 0.33) ||

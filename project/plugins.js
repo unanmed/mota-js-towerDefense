@@ -1555,7 +1555,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             enemy = core.status.enemys.enemys[enemy];
             var nx = enemy.x,
                 ny = enemy.y;
-            enemy = core.getEnemyInBombRange(enemy.x, enemy.y, tower.explode);
+            enemy = core.getEnemyInBombRange(nx, ny, tower.explode);
             // 爆炸攻击
             enemy.forEach(function(one) {
                 var now = core.status.enemys.enemys[one];
