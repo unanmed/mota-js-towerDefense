@@ -377,7 +377,7 @@ defense.prototype._action_doTower = function(x, y) {
 }
 
 ////// 全局初始化 在读档时调用 //////
-defense.prototype.globalInit = function() {
+defense.prototype.globalInit = function(fromLoad) {
     // 初始化怪物路线
     core.getEnemyRoute();
     // 初始化画布等
