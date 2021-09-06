@@ -2796,7 +2796,7 @@ declare class icons {
     /** 怪物与勇士战斗
      * @returns true: 勇士胜 false: 怪物胜 null: 不存在指定怪物或勇士
      */
-    doBatle(enemy: any, hero: any): boolean
+    doBattle(enemy: any, hero: any): boolean
 
     /** 绘制血条
      * @param enemy 绘制该怪物或勇士的血条，不填表示绘制所有勇士和怪物的血条

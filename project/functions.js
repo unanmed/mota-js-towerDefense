@@ -1802,6 +1802,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
             var e = core.clone(core.status.enemys.enemys[id]);
             if (!e) return;
             core.returnCanvas(id, 'enemy');
+            core.returnCanvas(id + '_healthBar', 'healthBar');
             var enemyId = id.split('_')[0];
             var enemy = core.material.enemys[enemyId];
             core.status.hero.money += e.money;

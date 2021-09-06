@@ -826,7 +826,7 @@ defense.prototype.drawEnemyRoute = function() {
 defense.prototype.acquireCanvas = function(name, type) {
     if (!core.batchCanvas) return;
     if (!core.batchDict) core.batchDict = {};
-    if (typeof name == 'string' && core.batchDict[name])
+    if (core.batchDict[name])
         return core.batchDict[name];
     type = type || 'enemy';
     var canvases = core.batchCanvas[type];
@@ -836,8 +836,10 @@ defense.prototype.acquireCanvas = function(name, type) {
             core.createCanvas(type, 0, 0, 416, 416, 35, 5);
         else if (type == 'mine')
             core.createCanvas(type, 0, 0, 32, 32, 34, 10);
+        else if (type == 'healthBar')
+            core.createCanvas(type, 0, 0, 28, 4, 36, 20);
         else
-            core.createCanvas(type, 0, 0, 32, 34, 35, 100);
+            core.createCanvas(type, 0, 0, 32, 32, 35, 100);
     }
     // 如果仍有空闲画布 则直接取用 并加入到dictionary中
     var canvas = canvases.shift();
@@ -884,6 +886,7 @@ defense.prototype.initDrawEnemys = function() {
         core.createCanvas('enemy', 0, 0, 32, 34, 35, 200);
         core.createCanvas('tower', 0, 0, 416, 416, 60, 5);
         core.createCanvas('mine', 0, 0, 32, 32, 34, 40);
+        core.createCanvas('healthBar', 0, 0, 28, 4, 36, 20);
     }
     core.drawAllEnemys();
     core.initAttack();
@@ -980,8 +983,10 @@ defense.prototype._drawAllEnemys_fromLoad = function() {
 
 defense.prototype._drawAllEnemys_drawEnemy = function(enemys, one, route) {
     var enemy = enemys[one];
-    if (!main.replayChecking)
+    if (!main.replayChecking) {
         var ctx = core.acquireCanvas(one);
+        var hpctx = core.acquireCanvas(one + '_healthBar', 'healthBar');
+    }
     // 位置移动
     var dx = route[enemy.to][0] - route[enemy.to - 1][0],
         dy = route[enemy.to][1] - route[enemy.to - 1][1];
@@ -995,12 +1000,14 @@ defense.prototype._drawAllEnemys_drawEnemy = function(enemys, one, route) {
         enemy.drown = true;
         core.drawBlock(core.getBlockById(one.split('_')[0]), core.status.globalAnimateStatus, one);
         // 血条
-        core.fillRect(ctx, 4, 0, 24, 2, '#333333');
-        core.fillRect(ctx, 4, 0, 24, 2, '#00ff00');
-        core.strokeRect(ctx, 3, 0, 26, 2, '#000000');
+        core.fillRect(hpctx, 1, 0, 28, 4, '#333333');
+        core.fillRect(hpctx, 1, 0, 28, 4, '#00ff00');
+        core.strokeRect(hpctx, 0, 0, 28, 4, '#000000', 2);
     }
-    if (!main.replayChecking)
-        core.relocateCanvas(ctx, enemy.x * 32, enemy.y * 32 - 1);
+    if (!main.replayChecking) {
+        core.relocateCanvas(hpctx, enemy.x * 32 + 2, enemy.y * 32);
+        core.relocateCanvas(ctx, enemy.x * 32, enemy.y * 32);
+    }
     // 改变目标方块
     dx = enemy.x - route[enemy.to][0];
     dy = enemy.y - route[enemy.to][1];
@@ -1124,20 +1131,23 @@ defense.prototype._drawAllEnemys_battle = function(enemys, enemy, one) {
         var dx = hero.x - enemy.x;
         var dy = hero.y - enemy.y;
         if (Math.abs(dx) <= 1 && Math.abs(dy) <= 1) {
-            var win = core.doBatle(enemy, hero);
+            var win = core.doBattle(one, id);
             if (win) return;
         }
     }
 }
 
 defense.prototype._drawAllEnemys_drawHero = function() {
-    var heroes = core.status.enemys.heroes || {};
+    var heroes = core.status.enemys.hero || {};
     for (var id in heroes) {
         if (id == 'cnt') continue;
         var hero = heroes[id];
-        if (!main.replayChecking)
+        if (!main.replayChecking) {
             var ctx = core.acquireCanvas(id);
+            var hpctx = core.acquireCanvas(id + '_healthBar', 'healthBar');
+        }
         // 位置移动
+        var route = core.status.thisMap.route;
         var dx = route[hero.to][0] - route[hero.to + 1][0],
             dy = route[hero.to][1] - route[hero.to + 1][1];
         var speedX = dx * hero.speed / 60,
@@ -1153,12 +1163,14 @@ defense.prototype._drawAllEnemys_drawHero = function() {
             }
             core.drawBlock(icon, core.status.globalAnimateStatus, ctx);
             // 血条
-            core.fillRect(ctx, 4, 0, 24, 2, '#333333');
-            core.fillRect(ctx, 4, 0, 24, 2, '#00ff00');
-            core.strokeRect(ctx, 3, 0, 26, 2, '#000000');
+            core.fillRect(hpctx, 1, 0, 28, 4, '#333333');
+            core.fillRect(hpctx, 1, 0, 28, 4, '#00ff00');
+            core.strokeRect(hpctx, 0, 0, 28, 4, '#000000', 2);
         }
-        if (!main.replayChecking)
-            core.relocateCanvas(ctx, hero.x * 32, hero.y * 32 - 1);
+        if (!main.replayChecking) {
+            core.relocateCanvas(hpctx, hero.x * 32 + 2, hero.y * 32);
+            core.relocateCanvas(ctx, hero.x * 32, hero.y * 32);
+        }
         // 改变目标方块
         dx = hero.x - route[hero.to][0];
         dy = hero.y - route[hero.to][1];
@@ -1176,10 +1188,10 @@ defense.prototype._drawAllEnemys_drawHero = function() {
 }
 
 ////// 怪物和勇士战斗 //////
-defense.prototype.doBattle = function(enemy, hero) {
+defense.prototype.doBattle = function(enemyId, heroId) {
     // 默认勇士战胜 
-    if (!(enemy instanceof Object)) enemy = core.status.enemys.enemys[enemy];
-    if (!(hero instanceof Object)) hero = core.status.enemys.hero[hero];
+    var enemy = core.status.enemys.enemys[enemyId];
+    var hero = core.status.enemys.hero[heroId];
     if (!enemy) return null;
     if (!hero) return null;
     if (typeof enemy.special == 'number') enemy.special = [enemy.special];
@@ -1194,16 +1206,16 @@ defense.prototype.doBattle = function(enemy, hero) {
         damageInfo = core.getDamageInfo(hero, enemy);
         enemy.hp -= damageInfo.damage;
         core.status.totalDamage += parseInt(damageInfo.damage || 0);
-        core.drawHealthBar(one);
+        core.drawHealthBar(enemyId);
         // 删除勇士
-        core.heroDie(id);
+        core.heroDie(heroId);
         return false;
     }
     // 勇士胜
-    core.enemyDie(one);
+    core.enemyDie(enemyId);
     hero.hp -= damageInfo.damage;
     core.status.totalDamage += parseInt(enemy.hp);
-    core.drawHealthBar(id);
+    core.drawHealthBar(heroId);
     return true;
 }
 
@@ -1246,21 +1258,22 @@ defense.prototype._drawMine = function(loc) {
     }
 }
 
+////// 绘制血条 //////
 defense.prototype.drawHealthBar = function(enemy) {
     if (main.replayChecking) return;
     if (!enemy) {
         for (var one in core.status.enemys.enemys) {
-            var ctx = core.getContextByName(one, true);
+            var ctx = core.acquireCanvas(one + '_healthBar', 'healthBar');
             enemy = core.status.enemys.enemys[one];
             var now = enemy.hp,
                 total = enemy.total;
             var color = [255 * 2 - now / total * 2 * 255, now / total * 2 * 255, 0, 1];
-            core.fillRect(ctx, 4, 0, 24, 2, '#333333');
-            core.fillRect(ctx, 4, 0, now / total * 24, 2, color);
-            core.strokeRect(ctx, 3, 0, 26, 2, '#000000');
+            core.fillRect(ctx, 1, 0, 28, 2, '#333333');
+            core.fillRect(ctx, 1, 0, now / total * 28, 2, color);
+            core.strokeRect(ctx, 0, 0, 28, 2, '#000000');
         }
         for (var one in core.status.enemys.hero) {
-            var ctx = core.getContextByName(one, true);
+            var ctx = core.acquireCanvas(one + '_healthBar', 'healthBar');
             enemy = core.status.enemys.hero[one];
             var now = enemy.hp,
                 total = enemy.total;
@@ -1271,15 +1284,15 @@ defense.prototype.drawHealthBar = function(enemy) {
         }
         return;
     }
-    var ctx = core.getContextByName(enemy, true);
+    var ctx = core.acquireCanvas(enemy + '_healthBar', 'healthBar');
     enemy = core.status.enemys.enemys[enemy] || core.status.enemys.hero[enemy];
     if (!enemy) return;
     var now = enemy.hp,
         total = enemy.total;
     var color = [255 * 2 - now / total * 2 * 255, now / total * 2 * 255, 0, 1];
-    core.fillRect(ctx, 4, 0, 24, 2, '#333333');
-    core.fillRect(ctx, 4, 0, now / total * 24, 2, color);
-    core.strokeRect(ctx, 3, 0, 26, 2, '#000000');
+    core.fillRect(ctx, 1, 0, 28, 4, '#333333');
+    core.fillRect(ctx, 1, 0, now / total * 28, 4, color);
+    core.strokeRect(ctx, 0, 0, 28, 4, '#000000', 2);
 }
 
 ////// 放置防御塔 //////
@@ -1960,6 +1973,7 @@ defense.prototype.getClosestEnemy = function(x, y, n) {
     var l = {};
     needCheck.forEach(function(one) {
         var enemy = all[one];
+        if (!enemy) return;
         var dx = enemy.x - route[enemy.to][0],
             dy = enemy.y - route[enemy.to][1];
         l[one] = dx * dx + dy * dy;
@@ -2110,6 +2124,7 @@ defense.prototype.getCanReachBlock = function(x, y) {
 ////// 勇士死亡 //////
 defense.prototype.heroDie = function(hero) {
     core.returnCanvas(hero);
+    core.returnCanvas(hero + '_healthBar', 'healthBar');
     delete core.status.enemys.hero[hero];
     core.status.enemys.hero.cnt--;
 }
