@@ -23,11 +23,11 @@ defense.prototype._init = function() {
     // ---- 注册batchCanvas的resize
     core.control.registerResize('_batchCanvas', this._resize_batchCanvas);
     // ---- 注册录像操作
-    core.registerReplayAction('placeTower', this._replay_placeTower);
-    core.registerReplayAction('upgradeTower', this._replay_upgradeTower);
-    core.registerReplayAction('sellTower', this._replay_sellTower);
-    core.registerReplayAction('nextWave', this._replay_nextWave);
-    core.registerReplayAction('wait', this._replay_wait);
+    core.control.registerReplayAction('placeTower', this._replay_placeTower);
+    core.control.registerReplayAction('upgradeTower', this._replay_upgradeTower);
+    core.control.registerReplayAction('sellTower', this._replay_sellTower);
+    core.control.registerReplayAction('nextWave', this._replay_nextWave);
+    core.control.registerReplayAction('wait', this._replay_wait);
 }
 
 ////// 初始化防御塔 ////// 
