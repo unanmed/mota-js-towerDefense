@@ -25,21 +25,7 @@ main.floors.MT0=
     [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
     [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,329]
 ],
-    "firstArrive": [
-        {
-            "type": "function",
-            "function": "function(){\ncore.startMonster('MT0', true);\n}"
-        },
-        {
-            "type": "setValue",
-            "name": "status:money",
-            "value": "200"
-        },
-        {
-            "type": "function",
-            "function": "function(){\nif (!main.replayChecking) {\n\tsetTimeout(function () { core.control.updateStatusBar(null, true) }, 5);\n}\n}"
-        }
-    ],
+    "firstArrive": [],
     "parallelDo": "",
     "events": {},
     "changeFloor": {},
@@ -69,5 +55,7 @@ main.floors.MT0=
     "height": 13,
     "autoEvent": {},
     "beforeBattle": {},
-    "cannotMoveIn": {}
+    "cannotMoveIn": {},
+    "eachArrive": [],
+    "bgm": "bgm.mp3"
 }

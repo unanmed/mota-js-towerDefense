@@ -1,4 +1,5 @@
-﻿html, body {
+﻿html,
+body {
     margin: 0;
     padding: 0;
     width: 100%;
@@ -98,12 +99,12 @@
 }
 
 #startBackground {
-    position:absolute;
-    top:50%;
-    left:50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
     height: 100%;
     width: auto;
-    transform:translate(-50%,-50%);
+    transform: translate(-50%, -50%);
     z-index: 260;
 }
 
@@ -214,22 +215,26 @@
     left: 0;
     padding: 3px;
 }
-#statusBar .status{
+
+#statusBar .status {
     position: relative;
     display: block;
     float: left;
     width: 100%;
 }
-.status img{
+
+.status img {
     vertical-align: middle;
     width: auto;
     height: 100%;
     max-height: 1.6em;
 }
-#statusBar span{
+
+#statusBar span {
     font: bold italic 1.1em Verdana;
     display: inline;
 }
+
 #statusBar p {
     display: inline-block;
     vertical-align: middle;
@@ -239,6 +244,7 @@
     font: bold italic 1.1em Verdana;
     white-space: nowrap;
 }
+
 #toolBar {
     position: absolute;
     background: url(project/materials/ground.png) repeat;
@@ -249,7 +255,8 @@
     display: none;
     padding: 3px;
 }
-#toolBar .tools{
+
+#toolBar .tools {
     position: relative;
     display: block;
     float: left;
@@ -266,7 +273,12 @@ p#hard {
     word-break: keep-all;
 }
 
-span#poison, span#weak, span#curse, span#pickaxe, span#bomb, span#fly {
+span#poison,
+span#weak,
+span#curse,
+span#pickaxe,
+span#bomb,
+span#fly {
     font-style: normal;
     font-size: 1em;
 }
@@ -348,7 +360,7 @@ p#name {
     position: fixed;
     top: 0;
     left: 0;
-    background: rgba(127,127,127,0.6);
+    background: rgba(127, 127, 127, 0.6);
     z-index: 2000
 }
 
@@ -384,24 +396,37 @@ p#name {
 }
 
 #inputNo {
-    float:right;
+    float: right;
     margin-right: 10%;
 }
 
-#_selector, ._uievent_selector {
+#_selector,
+._uievent_selector {
     animation: selector 2s ease-in-out 0s infinite normal none running;
 }
 
 @-webkit-keyframes selector {
-    0% { opacity: 0.95; }
-    50% { opacity: 0.55; }
-    100% { opacity: 0.95; }
+    0% {
+        opacity: 0.95;
+    }
+    50% {
+        opacity: 0.55;
+    }
+    100% {
+        opacity: 0.95;
+    }
 }
 
 @keyframes selector {
-    0% { opacity: 0.95; }
-    50% { opacity: 0.55; }
-    100% { opacity: 0.95; }
+    0% {
+        opacity: 0.95;
+    }
+    50% {
+        opacity: 0.55;
+    }
+    100% {
+        opacity: 0.95;
+    }
 }
 
 #next {
@@ -427,6 +452,7 @@ p#name {
         transform: rotate(45deg) translate(-3px, -3px);
     }
 }
+
 @keyframes next {
     100% {
         transform: rotate(45deg) translate(-3px, -3px);
@@ -465,15 +491,27 @@ p#name {
 }
 
 @-webkit-keyframes startImage {
-    0% { opacity: 0; }
-    60% { opacity: 1; }
-    100% { opacity: 0; }
+    0% {
+        opacity: 0;
+    }
+    60% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
 }
 
 @keyframes startImage {
-    0% { opacity: 0; }
-    60% { opacity: 1; }
-    100% { opacity: 0; }
+    0% {
+        opacity: 0;
+    }
+    60% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
 }
 
 .startImageDivAnimation {
@@ -482,28 +520,48 @@ p#name {
 }
 
 @-webkit-keyframes startImageDivDisappear {
-    0% { opacity: 1 }
-    100% { opacity: 0 }
+    0% {
+        opacity: 1
+    }
+    100% {
+        opacity: 0
+    }
 }
 
 @keyframes startImageDivDisappear {
-    0% { opacity: 1 }
-    100% { opacity: 0 }
+    0% {
+        opacity: 1
+    }
+    100% {
+        opacity: 0
+    }
 }
 
 @-webkit-keyframes startImageDivDisappear {
-    0% { opacity: 1 }
-    100% { opacity: 0 }
+    0% {
+        opacity: 1
+    }
+    100% {
+        opacity: 0
+    }
 }
 
 @keyframes rotate-odd {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(120deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(120deg);
+    }
 }
 
 @keyframes rotate-even {
-    100% { transform: rotate(0deg); }
-    100% { transform: rotate(120deg); }
+    100% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(120deg);
+    }
 }
 
 .rotate-odd {
@@ -517,15 +575,27 @@ p#name {
 }
 
 @keyframes blast-odd {
-    0% { transform: scale(1); }
-    10% { transform: scale(0.3); }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(1);
+    }
+    10% {
+        transform: scale(0.3);
+    }
+    100% {
+        transform: scale(1);
+    }
 }
 
 @keyframes blast-even {
-    0% { transform: scale(1); }
-    10% { transform: scale(0.3); }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(1);
+    }
+    10% {
+        transform: scale(0.3);
+    }
+    100% {
+        transform: scale(1);
+    }
 }
 
 .blast-odd {
@@ -536,4 +606,9 @@ p#name {
 .blast-even {
     -webkit-animation: blast-even 600ms ease-out 1;
     animation: blast-even 600ms ease-out 1;
+}
+
+.bossHealthBar {
+    -webkit-transition: width 500ms, background-color 500ms, opacity 1s, top 1s;
+    transition: width 500ms, background-color 500ms, opacity 1s, top 1s;
 }

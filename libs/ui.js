@@ -3609,7 +3609,7 @@ ui.prototype.createCanvas = function(name, x, y, width, height, z, n) {
 
 ////// canvas重定位 //////
 ui.prototype.relocateCanvas = function(name, x, y) {
-    var ctx = core.getContextByName(name);
+    var ctx = core.getContextByName(name) || core.getContextByName(name, true);
     if (!ctx) return null;
     if (x != null) {
         ctx.canvas.style.left = x * core.domStyle.scale + 'px';

@@ -162,6 +162,16 @@ var comment_c456ea59_6018_45ef_8bcc_211a24c627dc = {
 					"_type": "textarea",
 					"_data": "生命值"
 				},
+				"speed": {
+					"_leaf": true,
+					"_type": "textarea",
+					"_data": "移动速度"
+				},
+				"score": {
+					"_leaf": true,
+					"_type": "textarea",
+					"_data": "分数"
+				},
 				"atk": {
 					"_leaf": true,
 					"_type": "textarea",
@@ -206,6 +216,11 @@ var comment_c456ea59_6018_45ef_8bcc_211a24c627dc = {
 						}
 					},
 					"_data": "特殊属性"
+				},
+				"toEnemy": {
+					"_leaf": true,
+					"_type": "textarea",
+					"_docs": "重生成的怪物",
 				},
 				"value": {
 					"_leaf": true,

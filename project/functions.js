@@ -209,12 +209,12 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                 // 首次抵达楼层时执行的事件（后插入，先执行）
                 if (!core.hasVisitedFloor(floorId)) {
                     var todo = core.clone(core.floors[floorId].firstArrive);
-                    core.push(todo, [
+                    todo = core.push(todo, [
                         { "type": "function", "function": "function(){\ncore.startMonster('MT0', true);\n}" },
                         { "type": "setValue", "name": "status:money", "value": "200" },
                         { "type": "function", "function": "function(){\nif (!main.replayChecking) {\n\tsetTimeout(function () { core.control.updateStatusBar(null, true) }, 5);\n}\n}" },
                     ]);
-                    core.insertAction(core.floors[floorId].firstArrive);
+                    core.insertAction(todo);
                     core.visitFloor(floorId);
                 }
             }
@@ -1783,10 +1783,10 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
             if (floorId == 'MT0') {
                 // 第一关 前10波手动添加 之后由伪随机产生固定值 并存入缓存 计入存档
                 var enemys = [
-                    ['greenSlime', 10],
-                    ['greenSlime', 17],
-                    ['redSlime', 13],
-                    ['greenSlime', 21],
+                    ['bigBat', 1],
+                    ['bigBat', 1],
+                    ['bigBat', 1],
+                    ['bigBat', 1],
                     ['blackSlime', 9],
                     ['bat', 16],
                     ['redSlime', 15],
@@ -1803,6 +1803,8 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
             if (!e) return;
             core.returnCanvas(id, 'enemy');
             core.returnCanvas(id + '_healthBar', 'healthBar');
+            // boss血条要归零再消失
+            if (id.endsWith('boss')) core.defense._drawBossHealthBar_animate(id, 0);
             var enemyId = id.split('_')[0];
             var enemy = core.material.enemys[enemyId];
             core.status.hero.money += e.money;

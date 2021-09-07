@@ -2803,6 +2803,9 @@ declare class icons {
      */
     drawHealthBar(enemy?: string): void
 
+    /** 绘制Boss血条 */
+    drawBossHealthBar(id: string): void
+
     /** 初始化所有防御塔及相关内容 */
     initTowers(): void
 

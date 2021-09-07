@@ -14,6 +14,7 @@ defense.prototype._init = function() {
     this.batchCanvas = {};
     this.batchCanvasLength = {};
     this.batchDict = {};
+    this.bossList = [];
     this.defensedata = functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a.defense;
     core.batchCanvas = this.batchCanvas;
     core.batchCanvasLength = this.batchCanvasLength;
@@ -396,7 +397,10 @@ defense.prototype.globalInit = function(fromLoad) {
     core.initAttack();
     core.getChainLoc();
     core.getFreezeLoc();
-    core.control.updateStatusBar(null, true);
+    core.updateStatusBar(null, true);
+    core.unregisterAction('keyDown', '_sys_keyDown');
+    core.unregisterAction('onclick', '_sys_onclick');
+    core.registerAction('onclick', '_doTower', this._action_doTower, 150);
 }
 
 ////// 开始游戏的时候的初始化 在首次进入楼层时异步调用 //////
@@ -405,6 +409,7 @@ defense.prototype.initGameStart = function() {
     core.status.realTower = {};
     core.status.totalDamage = 0;
     core.status.totalKilled = 0;
+    flags.__starting__ = false;
     core.unregisterAction('keyDown', '_sys_keyDown');
     core.unregisterAction('onclick', '_sys_onclick');
     core.registerAction('onclick', '_doTower', this._action_doTower, 150);
@@ -721,6 +726,7 @@ defense.prototype._startMonster_addEnemy = function(enemy, total, now, startLoc)
     var wave = flags.__waves__;
     var hp = now.hp * (1 + wave * wave / 225);
     var id = core.getUnitId(enemy[0], core.status.enemys.enemys);
+    if (core.material.enemys[enemy[0]].notBomb) id += '_boss';
     // 添加怪物
     core.status.enemys.enemys[id] = {
         x: startLoc[0],
@@ -829,6 +835,7 @@ defense.prototype.acquireCanvas = function(name, type) {
     if (core.batchDict[name])
         return core.batchDict[name];
     type = type || 'enemy';
+    if (!core.batchCanvas[type]) core.batchCanvas[type] = [];
     var canvases = core.batchCanvas[type];
     // 如果空闲画布长度为0 则继续创建
     if (canvases.length == 0) {
@@ -838,6 +845,12 @@ defense.prototype.acquireCanvas = function(name, type) {
             core.createCanvas(type, 0, 0, 32, 32, 34, 10);
         else if (type == 'healthBar')
             core.createCanvas(type, 0, 0, 28, 4, 36, 20);
+        else if (type == 'bossHealth')
+            core.createCanvas(type, 0, 0, 352, 16, 60, 2);
+        else if (type == 'bossHealth_border')
+            core.createCanvas(type, 0, 0, 386, 34, 61, 2);
+        else if (type == 'bossHealth_back')
+            core.createCanvas(type, 0, 0, 352, 16, 59, 2);
         else
             core.createCanvas(type, 0, 0, 32, 32, 35, 100);
     }
@@ -971,7 +984,6 @@ defense.prototype._drawAllEnemys_fromLoad = function() {
         if (id == 'cnt') continue;
         var hero = heroes[id];
         var ctx = core.acquireCanvas(id);
-        this.drawHealthBar(id);
         core.relocateCanvas(ctx, hero.x * 32, hero.y * 32 - 1);
     }
     for (var pos in core.status.towers) {
@@ -985,7 +997,8 @@ defense.prototype._drawAllEnemys_drawEnemy = function(enemys, one, route) {
     var enemy = enemys[one];
     if (!main.replayChecking) {
         var ctx = core.acquireCanvas(one);
-        var hpctx = core.acquireCanvas(one + '_healthBar', 'healthBar');
+        if (!one.endsWith('boss'))
+            var hpctx = core.acquireCanvas(one + '_healthBar', 'healthBar');
     }
     // 位置移动
     var dx = route[enemy.to][0] - route[enemy.to - 1][0],
@@ -1000,12 +1013,11 @@ defense.prototype._drawAllEnemys_drawEnemy = function(enemys, one, route) {
         enemy.drown = true;
         core.drawBlock(core.getBlockById(one.split('_')[0]), core.status.globalAnimateStatus, one);
         // 血条
-        core.fillRect(hpctx, 1, 0, 28, 4, '#333333');
-        core.fillRect(hpctx, 1, 0, 28, 4, '#00ff00');
-        core.strokeRect(hpctx, 0, 0, 28, 4, '#000000', 2);
+        core.drawHealthBar(one);
     }
     if (!main.replayChecking) {
-        core.relocateCanvas(hpctx, enemy.x * 32 + 2, enemy.y * 32);
+        if (!one.endsWith('boss'))
+            core.relocateCanvas(hpctx, enemy.x * 32 + 2, enemy.y * 32);
         core.relocateCanvas(ctx, enemy.x * 32, enemy.y * 32);
     }
     // 改变目标方块
@@ -1048,6 +1060,7 @@ defense.prototype._drawAllEnemys_reachBase = function(enemys, enemy, one) {
     core.status.hero.hp--;
     if (core.material.enemys[one.split('_')[0]].notBomb)
         core.status.hero.hp -= 9;
+    core.updateStatusBar();
     if (core.status.hero.hp <= 0) {
         if (!core.isReplaying()) {
             flags.__pause__ = true;
@@ -1070,6 +1083,7 @@ defense.prototype._drawAllEnemys_reachBase = function(enemys, enemy, one) {
     delete enemys[one];
     // 归还画布
     core.returnCanvas(one);
+    core.returnCanvas(one + '_healthBar', 'healthBar');
     return true;
 }
 
@@ -1228,14 +1242,14 @@ defense.prototype._drawMine = function(loc) {
         }
         return;
     }
-    if (mine[loc].cnt) {
+    if (mine[loc]) {
         var ctx = core.acquireCanvas('mine_' + loc, 'mine');
         core.clearMap(ctx);
         ctx.shadowColor = '#000';
         ctx.shadowBlur = 2;
-        for (var j = 0; j < mine[enemy.to].cnt; j++) {
+        for (var j = 0; j < mine[loc].cnt; j++) {
             if (!mine[loc][j + 1]) continue;
-            var level = mine[enemy.to][j + 1].level;
+            var level = mine[loc][j + 1].level;
             var color2 = [34 + level / 30 * 221, 221 - level / 30 * 221, 68];
             var color1 = [68 + level / 30 * 187, 255 - level / 30 * 155, 119];
             if (j == 0) {
@@ -1263,27 +1277,32 @@ defense.prototype.drawHealthBar = function(enemy) {
     if (main.replayChecking) return;
     if (!enemy) {
         for (var one in core.status.enemys.enemys) {
+            if (one.endsWith('boss')) continue;
             var ctx = core.acquireCanvas(one + '_healthBar', 'healthBar');
             enemy = core.status.enemys.enemys[one];
             var now = enemy.hp,
                 total = enemy.total;
+            core.relocateCanvas(ctx, enemy.x * 32 + 2, enemy.y * 32);
             var color = [255 * 2 - now / total * 2 * 255, now / total * 2 * 255, 0, 1];
-            core.fillRect(ctx, 1, 0, 28, 2, '#333333');
-            core.fillRect(ctx, 1, 0, now / total * 28, 2, color);
-            core.strokeRect(ctx, 0, 0, 28, 2, '#000000');
+            core.fillRect(ctx, 1, 0, 28, 4, '#333333');
+            core.fillRect(ctx, 1, 0, now / total * 28, 4, color);
+            core.strokeRect(ctx, 0, 0, 28, 4, '#000000', 2);
         }
         for (var one in core.status.enemys.hero) {
+            if (one == 'cnt') continue;
             var ctx = core.acquireCanvas(one + '_healthBar', 'healthBar');
             enemy = core.status.enemys.hero[one];
             var now = enemy.hp,
                 total = enemy.total;
+            core.relocateCanvas(ctx, enemy.x * 32 + 2, enemy.y * 32);
             var color = [255 * 2 - now / total * 2 * 255, now / total * 2 * 255, 0, 1];
-            core.fillRect(ctx, 4, 0, 24, 2, '#333333');
-            core.fillRect(ctx, 4, 0, now / total * 24, 2, color);
-            core.strokeRect(ctx, 3, 0, 26, 2, '#000000');
+            core.fillRect(ctx, 1, 0, 28, 4, '#333333');
+            core.fillRect(ctx, 1, 0, now / total * 24, 4, color);
+            core.strokeRect(ctx, 0, 0, 28, 4, '#000000', 2);
         }
         return;
     }
+    if (enemy.endsWith('boss')) return this._drawBossHealthBar_animate(enemy, core.status.enemys.enemys[enemy].hp);
     var ctx = core.acquireCanvas(enemy + '_healthBar', 'healthBar');
     enemy = core.status.enemys.enemys[enemy] || core.status.enemys.hero[enemy];
     if (!enemy) return;
@@ -1293,6 +1312,85 @@ defense.prototype.drawHealthBar = function(enemy) {
     core.fillRect(ctx, 1, 0, 28, 4, '#333333');
     core.fillRect(ctx, 1, 0, now / total * 28, 4, color);
     core.strokeRect(ctx, 0, 0, 28, 4, '#000000', 2);
+}
+
+////// 绘制boss血条 瞬间改成当前血量 没有动画 //////
+defense.prototype.drawBossHealthBar = function(id) {
+    if (main.replayChecking) return;
+    if (!id.endsWith('boss')) return core.drawTip('这不是boss！');
+    var boss = core.status.enemys.enemys[id];
+    var now = boss.hp,
+        total = boss.total;
+    var index = this.bossList.indexOf(id);
+    if (index === -1) {
+        this.bossList.push(id);
+        index = this.bossList.length - 1;
+    }
+    var borderCtx = core.acquireCanvas(id + '_border', 'bossHealth_border'),
+        barCtx = core.acquireCanvas(id + '_bar', 'bossHealth'),
+        backCtx = core.acquireCanvas(id + '_back', 'bossHealth_back');
+    core.relocateCanvas(borderCtx, 15, index * 36 + 4);
+    core.relocateCanvas(barCtx, 49, index * 36 + 5);
+    core.relocateCanvas(backCtx, 49, index * 36 + 5);
+    core.clearMap(borderCtx);
+    var color = core.arrayToRGB([255 * 2 - now / total * 2 * 255, now / total * 2 * 255, 0, 1]);
+    barCtx.canvas.style.backgroundColor = color;
+    backCtx.canvas.style.backgroundColor = '#333';
+    borderCtx.shadowBlur = 3;
+    borderCtx.shadowColor = '#000';
+    core.strokeRect(borderCtx, 34, 2, 350, 14, '#eee', 2);
+    var e = id.split('_')[0];
+    var name = core.material.enemys[e].name;
+    core.fillPolygon(borderCtx, [
+        [1, 1],
+        [1, 30],
+        [50 + 14 * name.length, 30],
+        [66 + 14 * name.length, 17],
+        [385, 17],
+        [385, 15],
+        [35, 15],
+        [35, 1]
+    ], '#eee');
+    core.drawIcon(borderCtx, e, 0, 0, 32, 32);
+    core.fillBoldText(borderCtx, name, 34, 28, '#eee', '#333', '13px Arial');
+    barCtx.canvas.className = 'bossHealthBar';
+    borderCtx.canvas.className = 'bossHealthBar';
+    backCtx.canvas.className = 'bossHealthBar';
+    borderCtx.canvas.style.opacity = '1';
+    barCtx.canvas.addEventListener('transitionend', function() {
+        if (parseInt(barCtx.canvas.style.width) <= 0) {
+            borderCtx.canvas.style.top = (parseInt(borderCtx.canvas.style.top) - 36) + 'px';
+            borderCtx.canvas.style.opacity = '0';
+            backCtx.canvas.style.top = (parseInt(backCtx.canvas.style.top) - 36) + 'px';
+            backCtx.canvas.style.opacity = '0';
+            core.defense.bossList.forEach(function(one, i) {
+                if (one == id) return;
+                var bc = core.acquireCanvas(one + '_border', 'bossHealth_border');
+                var bac = core.acquireCanvas(one + '_bar', 'bossHealth');
+                var barc = core.acquireCanvas(one + '_back', 'bossHealth_back');
+                core.relocateCanvas(bc, 16, i * 36 - 32);
+                core.relocateCanvas(bac, 49, i * 36 - 31);
+                core.relocateCanvas(barc, 49, i * 36 - 31);
+            });
+        }
+    });
+    borderCtx.canvas.addEventListener('transitionend', function() {
+        if (borderCtx.canvas.style.opacity === '0') {
+            core.returnCanvas(id + '_border', 'bossHealth_border');
+            core.returnCanvas(id + '_bar', 'bossHealth');
+            core.returnCanvas(id + '_back', 'bossHealth_back');
+        }
+    });
+}
+
+defense.prototype._drawBossHealthBar_animate = function(id, to) {
+    if (main.replayChecking) return;
+    if (this.bossList.indexOf(id) === -1) return core.drawBossHealthBar(id);
+    var ctx = core.acquireCanvas(id + '_bar', 'bossHealth');
+    var total = core.status.enemys.enemys[id].total;
+    var toColor = core.arrayToRGB([255 * 2 - to / total * 2 * 255, to / total * 2 * 255, 0, 1]);
+    ctx.canvas.style.backgroundColor = toColor;
+    ctx.canvas.style.width = 352 * to / total * core.domStyle.scale + 'px';
 }
 
 ////// 放置防御塔 //////
@@ -1979,7 +2077,7 @@ defense.prototype.getClosestEnemy = function(x, y, n) {
         l[one] = dx * dx + dy * dy;
     });
     needCheck.sort(function(a, b) { return l[a] - l[b]; });
-    var x = enemy.filter(function(v) { return all[v].to < need });
+    var x = enemy.filter(function(v) { return all[v].to > need });
     return x.concat(needCheck.splice(0, n - x.length));
 }
 
@@ -1987,7 +2085,7 @@ defense.prototype.getClosestEnemy = function(x, y, n) {
 defense.prototype.getSortedEnemy = function(canReach) {
     var all = core.status.enemys.enemys;
     if (this.sortedEnemy) return this.sortedEnemy.filter(function(one) {
-        return (all[one].to - 1) in canReach;
+        return (((all[one] || {}).to || 0) - 1) in canReach;
     });
     this.sortedEnemy = Object.keys(all).sort(function(a, b) { return all[b].to - all[a].to; });
     return this.sortedEnemy.filter(function(one) {

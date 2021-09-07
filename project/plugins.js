@@ -1369,21 +1369,21 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 }
                 // 特殊处理属性
                 if (one == 'cnt' || one == 'chain' || one == 'rate') {
-                    toStatus[one] = upgrades[now.type](next, one);
+                    toStatus[one] = core.defense.upgrades[now.type](next, one);
                     continue;
                 }
                 // 特殊处理的塔
                 if (now.type == 'barrack' && one == 'hero') {
                     toStatus.hero = {};
                     for (var i in now.hero) {
-                        toStatus.hero[i] = upgrades[now.type](next, i, 'hero') * towers[now.type].hero[i];
+                        toStatus.hero[i] = core.defense.upgrades[now.type](next, i, 'hero') * core.defense.towers[now.type].hero[i];
                     }
                     continue;
                 }
                 if (now.type == 'mine' && one == 'mine') {
                     toStatus.mine = {};
                     for (var i in now.mine) {
-                        toStatus.mine[i] = upgrades[now.type](next, i) * towers[now.type].mine[i];
+                        toStatus.mine[i] = core.defense.upgrades[now.type](next, i) * core.defense.towers[now.type].mine[i];
                     }
                     continue;
                 }
@@ -1738,7 +1738,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             for (var loc in core.status.realTower) {
                 var tower = core.status.realTower[loc];
                 if (tower.type == 'freeze') {
-                    if (!tower.canReach) this.getCanReachBlock(loc.split(',')[0], loc.split(',')[1]);
+                    if (!tower.canReach) core.getCanReachBlock(loc.split(',')[0], loc.split(',')[1]);
                     for (var i in tower.canReach) {
                         if (!freeze[i]) freeze[i] = 0;
                         if (freeze[i] < tower.rate)
