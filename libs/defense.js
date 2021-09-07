@@ -1314,7 +1314,7 @@ defense.prototype.drawHealthBar = function(enemy) {
     core.strokeRect(ctx, 0, 0, 28, 4, '#000000', 2);
 }
 
-////// 绘制boss血条 瞬间改成当前血量 没有动画 //////
+////// 绘制boss血条 //////
 defense.prototype.drawBossHealthBar = function(id) {
     if (main.replayChecking) return;
     if (!id.endsWith('boss')) return core.drawTip('这不是boss！');
