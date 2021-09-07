@@ -54,27 +54,6 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                 core.unregisterAnimationFrame("forceEnemy");
                 core.unregisterAnimationFrame("startEnemy");
             }
-            core.registerAction('keyDown', 'pause', function(keycode) {
-                var id = core.status.event.id
-                if (id && id != 'checkTower' && id != 'enemyDetail' && !id.endsWith('confirm') &&
-                    !id.startsWith('confirm') && id != 'placeTower') return false;
-                if (keycode == 32) {
-                    if (!flags.__pause__) {
-                        flags.__pause__ = true;
-                        core.drawTip('游戏暂停');
-                        core.updateStatusBar('score');
-                    } else {
-                        for (var one in core.status.towers) {
-                            core.status.towers[one].pauseBuild = false;
-                            core.status.realTower[one].pauseBuild = false;
-                        }
-                        flags.__pause__ = false;
-                        core.drawTip('继续游戏');
-                        core.updateStatusBar();
-                    }
-                    return true;
-                }
-            }, 1000);
             flags.__pause__ = true;
             if (core.isReplaying()) flags.__pause__ = false;
         },
@@ -803,13 +782,15 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                     if (!flags.__pause__) {
                         flags.__pause__ = true;
                         core.drawTip('游戏暂停');
-                        core.updateStatusBar('score');
+                        core.defense._drawBossHealthBar_transparent('add');
+                        core.updateStatusBar();
                     } else {
                         for (var one in core.status.towers) {
                             core.status.towers[one].pauseBuild = false;
                         }
                         flags.__pause__ = false;
                         core.drawTip('继续游戏');
+                        core.defense._drawBossHealthBar_transparent('remove');
                         core.updateStatusBar();
                     }
                 }
@@ -1040,6 +1021,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                         if (!flags.__pause__) {
                             flags.__pause__ = true;
                             core.drawTip('游戏暂停');
+                            core.defense._drawBossHealthBar_transparent('add');
                             core.updateStatusBar();
                         } else {
                             for (var one in core.status.towers) {
@@ -1047,6 +1029,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                             }
                             flags.__pause__ = false;
                             core.drawTip('继续游戏');
+                            core.defense._drawBossHealthBar_transparent('remove');
                             core.updateStatusBar();
                         }
                     }
@@ -1089,15 +1072,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                 'version': core.firstData.version,
                 'guid': core.getGuid(),
                 "time": new Date().getTime(),
-                'towers': core.clone(core.status.towers),
-                'realTower': core.clone(core.status.realTower),
-                'enemys': core.clone(core.status.enemys),
-                'enemyList': core.status.maps[core.status.floorId].enemys,
-                'chain': core.status.maps[core.status.floorId].chain,
-                'score': core.status.score,
-                'damage': core.status.totalDamage,
-                'killed': core.status.totalKilled,
-                'currTime': core.status.currTime,
+                'defense': core.saveDefense()
             };
 
             return data;
@@ -1129,7 +1104,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
             core.setFlag('__fromLoad__', true);
 
             // TODO：增加自己的一些读档处理
-
+            flags.__save_starting__ = flags.__starting__;
             // 切换到对应的楼层
             core.changeFloor(data.floorId, null, data.hero.loc, 0, function() {
                 // TODO：可以在这里设置读档后播放BGM
@@ -1137,77 +1112,9 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                     core.playBgm(core.getFlag("__bgm__"));
                 }
                 core.removeFlag('__fromLoad__');
-                // 开始读档
+                // 读档
                 try {
-                    // 出怪列表 夹击位点
-                    core.status.thisMap.enemys = core.clone(data.enemyList);
-                    core.status.thisMap.chain = core.clone(data.chain);
-                    // 防御塔、怪物
-                    core.status.towers = core.clone(data.towers);
-                    core.status.realTower = core.clone(data.realTower);
-                    core.status.enemys = core.clone(data.enemys);
-                    core.status.thisMap.chain = core.clone(data.chain);
-                    core.status.score = data.score;
-                    core.status.totalDamage = data.damage;
-                    core.status.totalKilled = data.killed;
-                    core.status.currTime = data.currTime;
-                    // 全局初始化
-                    core.globalInit(true);
-                    // 绘制地雷
-                    for (var i in core.status.thisMap.mine || {}) {
-                        var mine = core.status.thisMap.mine;
-                        if (mine[i].cnt) {
-                            var loc = core.status.thisMap.route[i];
-                            var nx = loc[0] * 32,
-                                ny = loc[1] * 32;
-                            var ctx = core.acquireCanvas('mine_' + i, 'mine');
-                            core.relocateCanvas(ctx, nx, ny);
-                            ctx.shadowColor = '#000';
-                            ctx.shadowBlur = 2;
-                            for (var j = 0; j < mine[i].cnt; j++) {
-                                if (!mine[i][j + 1]) continue;
-                                var level = mine[i][j + 1].level;
-                                var color2 = [34 + level / 30 * 221, 221 - level / 30 * 221, 68];
-                                var color1 = [68 + level / 30 * 187, 255 - level / 30 * 155, 119];
-                                if (j == 0) {
-                                    core.fillCircle(ctx, 8, 8, 4, color1);
-                                    core.fillCircle(ctx, 8, 8, 2, color2);
-                                }
-                                if (j == 1) {
-                                    core.fillCircle(ctx, 24, 8, 4, color1);
-                                    core.fillCircle(ctx, 24, 8, 2, color2);
-                                }
-                                if (j == 2) {
-                                    core.fillCircle(ctx, 8, 24, 4, color1);
-                                    core.fillCircle(ctx, 8, 24, 2, color2);
-                                }
-                                if (j == 3) {
-                                    core.fillCircle(ctx, 24, 24, 4, color1);
-                                    core.fillCircle(ctx, 24, 24, 2, color2);
-                                }
-                            }
-                        }
-                    }
-                    // 出怪相关
-                    if (flags.__starting__)
-                        core.startMonster(flags.__waves__, false, true);
-                    core.control.updateStatusBar(false, true);
-                    if (core.defense.forceInterval) {
-                        core.registerAnimationFrame('forceEnemy', true, function() {
-                            if (flags.__pause__) return;
-                            core.defense.forceInterval -= 16.67;
-                            if (core.defense.forceInterval < core.defense.nowInterval * 1000) {
-                                core.defense.nowInterval--;
-                                core.updateStatusBar('interval');
-                            }
-                            if (core.defense.forceInterval <= 0) {
-                                delete core.defense.forceInterval;
-                                delete core.defense.nowInterval;
-                                core.unregisterAnimationFrame('forceEnemy');
-                                core.startMonster(core.status.floorId);
-                            }
-                        });
-                    }
+                    core.loadDefense(data.defense);
                 } catch (e) {
                     core.drawTip('读档失败，请在怪物手册或控制台查看错误信息');
                     console.log(e);

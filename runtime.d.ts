@@ -2778,6 +2778,12 @@ declare class icons {
     /** 游戏开始的时候初始化 */
     initGameStart(): void
 
+    /** 保存defense相关内容 */
+    saveDefense(): object
+
+    /** 读取defense存档 */
+    loadDefense(data: object): void
+
     /** 绘制地图路线 */
     drawEnemyRoute(): void
 

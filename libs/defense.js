@@ -393,7 +393,6 @@ defense.prototype.globalInit = function(fromLoad) {
     if (core.status.enemys.enemys) core.drawHealthBar();
     core.deleteTowerEffect();
     // 初始化防御塔相关
-    core.initTowers();
     core.initAttack();
     core.getChainLoc();
     core.getFreezeLoc();
@@ -401,6 +400,7 @@ defense.prototype.globalInit = function(fromLoad) {
     core.unregisterAction('keyDown', '_sys_keyDown');
     core.unregisterAction('onclick', '_sys_onclick');
     core.registerAction('onclick', '_doTower', this._action_doTower, 150);
+    core.registerAction('keyDown', 'pause', this._action_pause_keyDown, 1000);
 }
 
 ////// 开始游戏的时候的初始化 在首次进入楼层时异步调用 //////
@@ -413,7 +413,97 @@ defense.prototype.initGameStart = function() {
     core.unregisterAction('keyDown', '_sys_keyDown');
     core.unregisterAction('onclick', '_sys_onclick');
     core.registerAction('onclick', '_doTower', this._action_doTower, 150);
+    core.registerAction('keyDown', 'pause', this._action_pause_keyDown, 1000);
     core.updateStatusBar(null, true);
+}
+
+defense.prototype._action_pause_keyDown = function(keycode) {
+    var id = core.status.event.id
+    if (id && id != 'checkTower' && id != 'enemyDetail' && !id.endsWith('confirm') &&
+        !id.startsWith('confirm') && id != 'placeTower') return false;
+    if (keycode == 32) {
+        if (!flags.__pause__) {
+            flags.__pause__ = true;
+            core.drawTip('游戏暂停');
+            core.defense._drawBossHealthBar_transparent('add');
+            core.updateStatusBar();
+        } else {
+            for (var one in core.status.towers) {
+                core.status.towers[one].pauseBuild = false;
+                core.status.realTower[one].pauseBuild = false;
+            }
+            flags.__pause__ = false;
+            core.drawTip('继续游戏');
+            core.defense._drawBossHealthBar_transparent('remove');
+            core.updateStatusBar();
+        }
+        return true;
+    }
+}
+
+////// 保存defense相关内容//////
+defense.prototype.saveDefense = function() {
+    var toSave = {};
+    // 1.保存防御塔
+    toSave.towers = core.clone(core.status.towers);
+    toSave.realTower = core.clone(core.status.realTower);
+    // 2.保存当前怪物列表
+    toSave.enemys = core.clone(core.status.enemys);
+    toSave.enemyList = core.clone(core.status.thisMap.enemys);
+    // 3.保存当前统计信息
+    toSave.score = core.status.score;
+    toSave.damege = core.status.totalDamage;
+    toSave.killed = core.status.totalKilled;
+    toSave.currTime = core.status.currTime;
+    toSave.nowInterval = this.nowInterval;
+    toSave.forceInterval = this.forceInterval;
+    return toSave;
+}
+
+////// 读取defense相关内容 ////// 
+defense.prototype.loadDefense = function(data) {
+    // 1.读取防御塔
+    core.status.towers = core.clone(data.towers);
+    core.status.realTower = core.clone(data.realTower);
+    // 2.读取怪物
+    core.status.enemys = core.clone(data.enemys);
+    core.status.thisMap.enemys = core.clone(data.enemyList);
+    // 3.读取统计信息
+    core.status.score = data.score;
+    core.status.totalDamage = data.damage;
+    core.status.totalKilled = data.killed;
+    core.status.currTime = data.currTime;
+    this.nowInterval = data.nowInterval;
+    this.forceInterval = data.forceInterval;
+    this.bossList = [];
+    // 处理信息 进行初始化 及相关内容
+    core.unregisterAnimationFrame('_drawCanvases');
+    core.unregisterAnimationFrame('_startMonster');
+    core.unregisterAnimationFrame('_forceEnemy');
+    core.unregisterAnimationFrame('_attack');
+    core.unregisterAnimationFrame('_deleteEffect');
+    this.globalInit(true);
+    this._drawMine();
+    flags.__starting__ = flags.__save_starting__;
+    delete flags.__save_starting__;
+    if (flags.__starting__) core.startMonster(flags.__waves__, false, true);
+    if (core.defense.forceInterval) core.registerAnimationFrame('_forceEnemy', true, force);
+    core.control.updateStatusBar(false, true);
+
+    function force() {
+        if (flags.__pause__) return;
+        core.defense.forceInterval -= 16.67;
+        if (core.defense.forceInterval < core.defense.nowInterval * 1000) {
+            core.defense.nowInterval--;
+            core.updateStatusBar('interval');
+        }
+        if (core.defense.forceInterval <= 0) {
+            delete core.defense.forceInterval;
+            delete core.defense.nowInterval;
+            core.unregisterAnimationFrame('forceEnemy');
+            core.startMonster(core.status.floorId);
+        }
+    }
 }
 
 ////// 初始化防御塔攻击效果 //////
@@ -457,7 +547,7 @@ defense.prototype.initAttack = function() {
 
 ////// 删除攻击特效 //////
 defense.prototype.deleteTowerEffect = function() {
-    core.registerAnimationFrame('deleteEffect', true, function() {
+    core.registerAnimationFrame('_deleteEffect', true, function() {
         if (main.replayChecking) return;
         if (flags.__pause__) return;
         for (var one in core.batchDict) {
@@ -924,10 +1014,13 @@ defense.prototype.drawAllEnemys = function(fromLoad) {
         var enemys = core.status.enemys.enemys;
         var route = core.status.thisMap.route;
         if (!route) core.getEnemyRoute();
+        flags.__transparented__ = false;
         Object.keys(enemys).forEach(function(one) {
             core.defense._drawAllEnemys_drawEnemy(enemys, one, route);
         });
         core.defense._drawAllEnemys_drawHero();
+        if (!flags.__transparented__) core.defense._drawBossHealthBar_transparent('remove');
+        else core.defense._drawBossHealthBar_transparent('add');
     }
 }
 
@@ -1008,6 +1101,12 @@ defense.prototype._drawAllEnemys_drawEnemy = function(enemys, one, route) {
     enemy.x += speedX;
     enemy.y += speedY;
     if (core.hasSpecial(enemy.special, 6)) enemy.speed += 0.02;
+    // boss血条半透明化
+    if (this.bossList.length > 0) {
+        if (enemy.y * 32 < this.bossList.length * 36 + 10) {
+            flags.__transparented__ = true;
+        }
+    }
     // 如果还没有画过 进行绘制
     if (!enemy.drown && !main.replayChecking) {
         enemy.drown = true;
@@ -1080,10 +1179,11 @@ defense.prototype._drawAllEnemys_reachBase = function(enemys, enemy, one) {
         core.updateStatusBar();
         return;
     }
-    delete enemys[one];
     // 归还画布
     core.returnCanvas(one);
     core.returnCanvas(one + '_healthBar', 'healthBar');
+    if (one.endsWith('boss')) core.defense._drawBossHealthBar_animate(one, 0);
+    delete enemys[one];
     return true;
 }
 
@@ -1168,6 +1268,12 @@ defense.prototype._drawAllEnemys_drawHero = function() {
             speedY = dy * hero.speed / 60;
         hero.x += speedX;
         hero.y += speedY;
+        // boss血条半透明
+        if (this.bossList.length > 0) {
+            if (hero.y * 32 < this.bossList.length * 36 + 10) {
+                flags.__transparented__ = true;
+            }
+        }
         // 如果还没有画过 进行绘制
         if (!hero.drown && !main.replayChecking) {
             hero.drown = true;
@@ -1277,7 +1383,10 @@ defense.prototype.drawHealthBar = function(enemy) {
     if (main.replayChecking) return;
     if (!enemy) {
         for (var one in core.status.enemys.enemys) {
-            if (one.endsWith('boss')) continue;
+            if (one.endsWith('boss')) {
+                this.drawBossHealthBar(one);
+                continue;
+            }
             var ctx = core.acquireCanvas(one + '_healthBar', 'healthBar');
             enemy = core.status.enemys.enemys[one];
             var now = enemy.hp,
@@ -1333,9 +1442,10 @@ defense.prototype.drawBossHealthBar = function(id) {
     core.relocateCanvas(barCtx, 49, index * 36 + 5);
     core.relocateCanvas(backCtx, 49, index * 36 + 5);
     core.clearMap(borderCtx);
-    var color = core.arrayToRGB([255 * 2 - now / total * 2 * 255, now / total * 2 * 255, 0, 1]);
+    var color = 'rgba(' + (1 - now / total * 2 * 255) + ',' + (now / total * 2 * 255) + '0,1)';
+    barCtx.canvas.style.width = 352 * now / total * core.domStyle.scale + 'px'
     barCtx.canvas.style.backgroundColor = color;
-    backCtx.canvas.style.backgroundColor = '#333';
+    backCtx.canvas.style.backgroundColor = 'rgba(51,51,51,1)';
     borderCtx.shadowBlur = 3;
     borderCtx.shadowColor = '#000';
     core.strokeRect(borderCtx, 34, 2, 350, 14, '#eee', 2);
@@ -1357,30 +1467,35 @@ defense.prototype.drawBossHealthBar = function(id) {
     borderCtx.canvas.className = 'bossHealthBar';
     backCtx.canvas.className = 'bossHealthBar';
     borderCtx.canvas.style.opacity = '1';
-    barCtx.canvas.addEventListener('transitionend', function() {
+    var barEvent = function() {
         if (parseInt(barCtx.canvas.style.width) <= 0) {
             borderCtx.canvas.style.top = (parseInt(borderCtx.canvas.style.top) - 36) + 'px';
             borderCtx.canvas.style.opacity = '0';
             backCtx.canvas.style.top = (parseInt(backCtx.canvas.style.top) - 36) + 'px';
             backCtx.canvas.style.opacity = '0';
+            core.defense.bossList.splice(core.defense.bossList.indexOf(id), 1);
             core.defense.bossList.forEach(function(one, i) {
                 if (one == id) return;
                 var bc = core.acquireCanvas(one + '_border', 'bossHealth_border');
                 var bac = core.acquireCanvas(one + '_bar', 'bossHealth');
                 var barc = core.acquireCanvas(one + '_back', 'bossHealth_back');
-                core.relocateCanvas(bc, 16, i * 36 - 32);
-                core.relocateCanvas(bac, 49, i * 36 - 31);
-                core.relocateCanvas(barc, 49, i * 36 - 31);
+                core.relocateCanvas(bc, 16, i * 36 + 4);
+                core.relocateCanvas(bac, 49, i * 36 + 5);
+                core.relocateCanvas(barc, 49, i * 36 + 5);
             });
         }
-    });
-    borderCtx.canvas.addEventListener('transitionend', function() {
+    };
+    var borderEvent = function() {
         if (borderCtx.canvas.style.opacity === '0') {
+            barCtx.canvas.removeEventListener('transitionend', barEvent);
+            borderCtx.canvas.removeEventListener('transitionend', borderEvent);
             core.returnCanvas(id + '_border', 'bossHealth_border');
             core.returnCanvas(id + '_bar', 'bossHealth');
             core.returnCanvas(id + '_back', 'bossHealth_back');
         }
-    });
+    }
+    barCtx.canvas.addEventListener('transitionend', barEvent, true);
+    borderCtx.canvas.addEventListener('transitionend', borderEvent, true);
 }
 
 defense.prototype._drawBossHealthBar_animate = function(id, to) {
@@ -1388,9 +1503,28 @@ defense.prototype._drawBossHealthBar_animate = function(id, to) {
     if (this.bossList.indexOf(id) === -1) return core.drawBossHealthBar(id);
     var ctx = core.acquireCanvas(id + '_bar', 'bossHealth');
     var total = core.status.enemys.enemys[id].total;
-    var toColor = core.arrayToRGB([255 * 2 - to / total * 2 * 255, to / total * 2 * 255, 0, 1]);
+    var toColor = 'rgba(' + (1 - to / total * 2 * 255) + ',' + (to / total * 2 * 255) + '0,1)';
     ctx.canvas.style.backgroundColor = toColor;
     ctx.canvas.style.width = 352 * to / total * core.domStyle.scale + 'px';
+}
+
+defense.prototype._drawBossHealthBar_transparent = function(type) {
+    this.bossList.forEach(function(one) {
+        var bc = core.acquireCanvas(one + '_border', 'bossHealth_border');
+        var bac = core.acquireCanvas(one + '_bar', 'bossHealth');
+        var barc = core.acquireCanvas(one + '_back', 'bossHealth_back');
+        var color = bac.canvas.style.backgroundColor.split(',');
+        if (type == 'add') {
+            bc.canvas.style.opacity = '0.3';
+            bac.canvas.style.backgroundColor = color[0] + ',' + color[1] + ',0,0.3)';
+            barc.canvas.style.backgroundColor = 'rgba(51,51,51,0.3)';
+        }
+        if (type == 'remove') {
+            bc.canvas.style.opacity = '1';
+            bac.canvas.style.backgroundColor = color[0] + ',' + color[1] + ',0,1)';
+            barc.canvas.style.backgroundColor = 'rgba(51,51,51,1)';
+        }
+    });
 }
 
 ////// 放置防御塔 //////
