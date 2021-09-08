@@ -17,6 +17,7 @@ defense.prototype._init = function() {
     this.bossList = [];
     this.mapIndex = 0;
     this.floorId = '';
+    this.enemyCnt = [];
     this.defensedata = functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a.defense;
     core.batchCanvas = this.batchCanvas;
     core.batchCanvasLength = this.batchCanvasLength;
@@ -459,6 +460,7 @@ defense.prototype.saveDefense = function() {
     toSave.currTime = core.status.currTime;
     toSave.nowInterval = this.nowInterval;
     toSave.forceInterval = this.forceInterval;
+    toSave.enemyCnt = this.enemyCnt;
     return toSave;
 }
 
@@ -477,6 +479,7 @@ defense.prototype.loadDefense = function(data) {
     core.status.currTime = data.currTime;
     this.nowInterval = data.nowInterval;
     this.forceInterval = data.forceInterval;
+    this.enemyCnt = data.enemyCnt;
     this.bossList = [];
     // 处理信息 进行初始化 及相关内容
     core.unregisterAnimationFrame('_drawCanvases');
@@ -649,7 +652,7 @@ defense.prototype._randomMonster = function(start, number) {
                 x++;
                 // 防卡死
                 if (x >= 100) {
-                    for (var j = Math.abs(((next * 523569)) ^ 5250624) % length; true; j++) {
+                    for (var j = Math.abs(((next * 52356)) ^ 52524) % length; true; j++) {
                         if (j == all.length) j = 0;
                         if (!enemys[all[j]].notBomb) {
                             next = j;
@@ -686,7 +689,7 @@ defense.prototype._randomMonster = function(start, number) {
                 x++;
                 // 防卡死
                 if (x >= 100) {
-                    for (var j = Math.abs(((next ^ 5236) * 1523569) | 15325) % length; true; j++) {
+                    for (var j = Math.abs(((next ^ 5236) * 1569) | 15325) % length; true; j++) {
                         if (j == all.length) j = 0;
                         if (enemys[all[j]].notBomb) {
                             next = j;
@@ -704,7 +707,7 @@ defense.prototype._randomMonster = function(start, number) {
             var n = 1;
             if (core.status.floorId == 'MT1') n *= 4;
             now.push([all[next], n]);
-            next = (((~(next * 82461) ^ 561290) & 451290) ^ start) ^ (~~totalHp);
+            next = (((~(next * 82461) ^ 56290) & 45190) ^ start) ^ (~~totalHp);
             next = Math.abs(~~next);
             next %= length;
         }
@@ -726,6 +729,13 @@ defense.prototype.startMonster = function(floorId, start, fromLoad) {
     if (!list) return;
     var startLoc = core.getEnemyRoute()[0];
     var enemy = list[flags.__waves__];
+    var total;
+    if (this.enemyCnt[flags.__waves__]) {
+        total = this.enemyCnt[flags.__waves__];
+    } else {
+        total = enemy[1];
+        this.enemyCnt[flags.__waves__] = total;
+    }
     if (!enemy) {
         core.drawTip('怪物清空了！');
         return false;
@@ -746,7 +756,7 @@ defense.prototype.startMonster = function(floorId, start, fromLoad) {
         if (!core.isReplaying())
             core.pushActionToRoute('nextWave');
     }
-    this._startMonster_doStart(enemy, startLoc);
+    this._startMonster_doStart(enemy, startLoc, total);
     return true;
 }
 
@@ -786,13 +796,12 @@ defense.prototype._startMonster_init = function() {
     }
 }
 
-defense.prototype._startMonster_doStart = function(enemy, startLoc) {
+defense.prototype._startMonster_doStart = function(enemy, startLoc, total) {
     core.autosave();
     delete this.forceInterval;
     delete this.nowInterval;
     core.unregisterAnimationFrame('_forceEnemy');
     var first = true;
-    var total = enemy[1];
     core.defense.interval = 0;
     // 帧动画
     function animate() {
@@ -1453,7 +1462,7 @@ defense.prototype.drawBossHealthBar = function(id) {
     core.relocateCanvas(barCtx, 49, index * 36 + 5);
     core.relocateCanvas(backCtx, 49, index * 36 + 5);
     core.clearMap(borderCtx);
-    var color = 'rgba(' + (1 - now / total * 2 * 255) + ',' + (now / total * 2 * 255) + '0,1)';
+    var color = 'rgba(' + ((1 - now / total) * 2 * 255) + ',' + (now / total * 2 * 255) + '0,1)';
     barCtx.canvas.style.width = 352 * now / total * core.domStyle.scale + 'px'
     barCtx.canvas.style.backgroundColor = color;
     backCtx.canvas.style.backgroundColor = 'rgba(51,51,51,1)';
@@ -1514,7 +1523,7 @@ defense.prototype._drawBossHealthBar_animate = function(id, to) {
     if (this.bossList.indexOf(id) === -1) return core.drawBossHealthBar(id);
     var ctx = core.acquireCanvas(id + '_bar', 'bossHealth');
     var total = core.status.enemys.enemys[id].total;
-    var toColor = 'rgba(' + (1 - to / total * 2 * 255) + ',' + (to / total * 2 * 255) + '0,1)';
+    var toColor = 'rgba(' + ((1 - to / total) * 2 * 255) + ',' + (to / total * 2 * 255) + '0,1)';
     ctx.canvas.style.backgroundColor = toColor;
     ctx.canvas.style.width = 352 * to / total * core.domStyle.scale + 'px';
 }

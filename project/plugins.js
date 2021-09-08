@@ -2018,7 +2018,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var pos = x + ',' + y;
             // 攻击所有怪物
             var all = core.status.enemys.enemys;
-            if (!tower.canReach) this.getCanReachBlock(x, y);
+            if (!tower.canReach) core.getCanReachBlock(x, y);
             var canReach = tower.canReach;
             for (var one in all) {
                 var now = all[one];
