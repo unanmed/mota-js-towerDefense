@@ -1370,6 +1370,8 @@ defense.prototype._drawMine = function(loc) {
     }
     if (mine[loc]) {
         var ctx = core.acquireCanvas('mine_' + loc, 'mine');
+        var route = core.status.thisMap.route;
+        core.relocateCanvas(ctx, route[loc][0] * 32, route[loc][1] * 32);
         core.clearMap(ctx);
         ctx.shadowColor = '#000';
         ctx.shadowBlur = 2;
@@ -1481,8 +1483,8 @@ defense.prototype.drawBossHealthBar = function(id) {
         [35, 15],
         [35, 1]
     ], '#eee');
-    core.drawIcon(borderCtx, e, 0, 0, 32, 32);
-    core.fillBoldText(borderCtx, name, 34, 28, '#eee', '#333', '13px Arial');
+    core.drawIcon(borderCtx, e, 1, 0, 32, 32);
+    core.fillBoldText(borderCtx, name, 38, 28, '#eee', '#333', '13px Arial');
     barCtx.canvas.className = 'bossHealthBar';
     borderCtx.canvas.className = 'bossHealthBar';
     backCtx.canvas.className = 'bossHealthBar';
@@ -1492,7 +1494,7 @@ defense.prototype.drawBossHealthBar = function(id) {
             borderCtx.canvas.style.top = (parseInt(borderCtx.canvas.style.top) - 36) + 'px';
             borderCtx.canvas.style.opacity = '0';
             backCtx.canvas.style.top = (parseInt(backCtx.canvas.style.top) - 36) + 'px';
-            backCtx.canvas.style.opacity = '0';
+            backCtx.canvas.style.backgroundColor = 'rgba(51,51,51,0)';
             core.defense.bossList.splice(core.defense.bossList.indexOf(id), 1);
             core.defense.bossList.forEach(function(one, i) {
                 if (one == id) return;
@@ -2093,7 +2095,7 @@ defense.prototype._drawConstructor_drawHorizon = function(ctx, type) {
                     var now = allEnemy[wave];
                     var enemy = core.material.enemys[now[0]];
                     var hp = enemy.hp * (1 + wave * wave / 225);
-                    var money = enemy.money * (1 + wave * wave / 4900);
+                    var money = enemy.money * (1 + wave * wave / 4900) * (2 - flags.hard);
                     if (core.status.floorId == 'MT1') {
                         money /= 2;
                         hp /= 4;
@@ -2173,7 +2175,7 @@ defense.prototype._drawConstructor_drawVertical = function(ctx, type) {
                 var now = allEnemy[wave];
                 var enemy = core.material.enemys[now[0]];
                 var hp = enemy.hp * (1 + wave * wave / 225);
-                var money = enemy.money * (1 + wave * wave / 4900);
+                var money = enemy.money * (1 + wave * wave / 4900) * (2 - flags.hard);
                 if (core.status.floorId == 'MT1') {
                     money /= 2;
                     hp /= 4;
@@ -2408,8 +2410,8 @@ defense.prototype._replay_placeTower = function(action) {
     var x = detail[1],
         y = detail[2];
     try {
-        if (core.status.hero.money < towers[tower].cost) return false;
-        core.status.towers[x + ',' + y] = core.clone(towers[tower]);
+        if (core.status.hero.money < core.defense.towers[tower].cost) return false;
+        core.status.towers[x + ',' + y] = core.clone(core.defense.towers[tower]);
         var now = core.status.towers[x + ',' + y];
         now.x = x;
         now.y = y;
@@ -2419,7 +2421,7 @@ defense.prototype._replay_placeTower = function(action) {
         now.expLevel = 0;
         now.exp = 0;
         now.type = tower;
-        now.haveCost = towers[tower].cost;
+        now.haveCost = core.defense.towers[tower].cost;
         if (flags.__pause__) now.pauseBuild = true;
         core.status.hero.money -= now.cost;
         core.status.event.data = null;
@@ -2571,6 +2573,7 @@ defense.prototype.getAllMaps = function() {
 }
 
 defense.prototype._drawAllMaps_draw = function() {
+    if (main.replayChecking) return;
     var all = this.getAllMaps();
     var ctx = core.createCanvas('back', 0, 0, 416, 416, 150);
     var mapTextCtx = core.createCanvas('mapTextCtx', 0, 0, 208 + Object.keys(all).length * 150, 30, 160);
@@ -2591,6 +2594,7 @@ defense.prototype._drawAllMaps_draw = function() {
 }
 
 defense.prototype._drawAllMaps_drawText = function() {
+    if (main.replayChecking) return;
     core.clearMap('mapCtx');
     core.clearMap('mapTextCtx');
     var index = this.mapIndex;
