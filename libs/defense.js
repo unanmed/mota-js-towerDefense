@@ -816,7 +816,6 @@ defense.prototype._startMonster_addEnemy = function(enemy, total, now, startLoc)
     var wave = flags.__waves__;
     var hp = now.hp * (1 + wave * wave / 225);
     var id = core.getUnitId(enemy[0], core.status.enemys.enemys);
-    if (core.material.enemys[enemy[0]].notBomb) id += '_boss';
     // 添加怪物
     core.status.enemys.enemys[id] = {
         x: startLoc[0],
@@ -890,6 +889,7 @@ defense.prototype.getUnitId = function(start, parent) {
     var id;
     while (true) {
         id = start + '_' + Math.round(Date.now() * Math.random());
+        if ((core.material.enemys[start] || {}).notBomb) id += '_boss';
         if (!parent) return null;
         if (!(id in parent)) return id;
     }
@@ -1588,7 +1588,7 @@ defense.prototype.placeTower = function(x, y) {
 ////// 添加防御塔 //////
 defense.prototype._addTower = function(x, y, tower) {
     if (core.status.hero.money < core.defense.towers[tower].cost) {
-        if (!core.isReplaying)
+        if (!core.isReplaying())
             console.error('金钱不足却执行了添加防御塔！');
         return false;
     }
@@ -2388,7 +2388,7 @@ defense.prototype._replay_placeTower = function(action) {
         core.status.event.id = null;
         core.unlockControl();
         core.saveRealStatusInCache(x, y);
-        core.plugin.initTowerSprite(now);
+        core.initTowerSprite(now);
         core.getChainLoc();
         core.getFreezeLoc();
         core.replay();

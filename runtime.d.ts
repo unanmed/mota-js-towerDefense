@@ -48,8 +48,8 @@ type ResolvedMap = {
     mine: Mine
     chain: { [key: number]: number[] }
     freeze: { [key: number]: number }
-    enemys: [][]
-    route: [][]
+    enemys: (string | number)[][]
+    route: number[][]
 }
 
 type Enemy = {
@@ -248,7 +248,7 @@ type AllMonster = {
     cnt: number
 
     enemys: { [key: string]: Monster }
-    hero: { [key: string]: Braver }
+    hero: { cnt: number, [key: string]: Braver }
     mine: { [key: number]: Mine }
 }
 
@@ -289,6 +289,27 @@ type Mine = {
             atk: number
             level: number
         }
+    }
+}
+
+type Tower = {
+    atk: number
+    cost: number
+    speed: number
+    range: number
+    max: number
+    explode: number
+    chain: number
+    cnt: number
+    rate: number
+    maxAttack: number
+    square: boolean
+    mine: { atk: number }
+    hero: {
+        hp: number
+        atk: number
+        def: number
+        speed: number
     }
 }
 
@@ -2154,7 +2175,7 @@ declare class ui {
      * 根据画布名找到一个画布的context；支持系统画布和自定义画布。如果不存在画布返回null。
      * 也可以传画布的context自身，则返回自己。
      */
-    getContextByName(canvas: CtxRefer): CanvasRenderingContext2D
+    getContextByName(canvas: CtxRefer, batch?: boolean): CanvasRenderingContext2D
 
     /**
      * 清空某个画布图层
@@ -2199,7 +2220,7 @@ declare class ui {
      * zIndex为创建的纵向高度（关系到画布之间的覆盖），z值高的将覆盖z值低的；系统画布的z值可在个性化中查看。
      * 返回创建的画布的context，也可以通过core.dymCanvas[name]调用
      */
-    createCanvas(name: string, x: number, y: number, width: number, height: number, zIndex: number): CanvasRenderingContext2D
+    createCanvas(name: string, x: number, y: number, width: number, height: number, zIndex: number, n?: number): CanvasRenderingContext2D
 
     /** 重新定位一个自定义画布 */
     relocateCanvas(name: string, x: number, y: number): void
@@ -2815,6 +2836,12 @@ declare class icons {
     /** 初始化所有防御塔及相关内容 */
     initTowers(): void
 
+    /** 初始化防御塔sprite */
+    initTowerSprite(tower: object): void
+
+    /** 更新防御塔sprite */
+    updateTowerSprite(tower: object): void
+
     /** 放置防御塔，塔信息保存在core.status.event.data */
     placeTower(x: number, y: number): void
 
@@ -2903,6 +2930,32 @@ declare class icons {
 
     /** 向录像中添加操作 */
     pushActionToRoute(action: string): void
+
+    /** boss列表 */
+    bossList: string[]
+
+    /** 防御塔 */
+    towers: { [key: string]: Tower }
+    towerIcons: {
+        [key: string]: {
+            [key: string]: string
+        }
+    }
+    upgrades: { [key: string]: (level: number, name: string, father?: string) => number }
+    towerLabel: { [key: string]: string | ((type: string) => string) }
+    towerName: { [key: string]: string }
+    statusNumber: { [key: string]: number }
+
+    /** 画布 */
+    batchCanvas: { [key: string]: CanvasRenderingContext2D[] }
+    batchDict: { [key: string]: CanvasRenderingContext2D }
+    batchCanvasLength: { [key: string]: number }
+
+    /** 出怪相关 */
+    nowInterval: number
+    forceInterval: number
+
+    defensedata: { [key: string]: () => any }
 }
 
 declare class plugin {
