@@ -2,7 +2,8 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 {
 	"main": {
 		"floorIds": [
-			"MT0"
+			"MT0",
+			"MT1"
 		],
 		"floorPartitions": [],
 		"images": [
@@ -95,7 +96,7 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			"hand",
 			"sword",
 			"zone",
-			"update",
+			"update"
 		],
 		"bgms": [
 			"bgm.mp3"
@@ -128,7 +129,7 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			"sniper.mp3",
 			"tesla.mp3",
 			"zone.mp3",
-			"155-Support13.ogg",
+			"155-Support13.ogg"
 		],
 		"fonts": [],
 		"nameMap": {
@@ -612,7 +613,7 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 			},
 			{
 				"type": "function",
-				"function": "function(){\ncore.initGameStart();\n}"
+				"function": "function(){\ncore.initGameStart();\ncore.openAllMaps();\n}"
 			}
 		],
 		"shops": [

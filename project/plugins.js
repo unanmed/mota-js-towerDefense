@@ -1798,7 +1798,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var pos = x + ',' + y;
             // 打距离基地最近的
             var atk = tower.atk;
-            var enemy = this.getClosestEnemy(x, y)[0];
+            var enemy = core.getClosestEnemy(x, y)[0];
             if (!enemy) return;
             var id = enemy;
             enemy = core.status.enemys.enemys[enemy];

@@ -86,7 +86,7 @@ events.prototype._startGame_setHard = function() {
 
 events.prototype._startGame_afterStart = function(callback) {
     core.ui.closePanel();
-    core.changeFloor(core.firstData.floorId, null, core.firstData.hero.loc, null, function() {
+    core.changeFloor(core.defense.floorId, null, core.firstData.hero.loc, null, function() {
         // 插入一个空事件避免直接回放录像出错
         core.insertAction([]);
         if (callback) callback();

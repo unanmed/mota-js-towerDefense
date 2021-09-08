@@ -452,6 +452,12 @@ var comment_c456ea59_6018_45ef_8bcc_211a24c627dc = {
 							"_docs": "楼层名",
 							"_data": "楼层中文名，将在切换楼层和浏览地图时显示"
 						},
+						"description": {
+							"_leaf": true,
+							"_type": "textarea",
+							"_docs": "地图说明",
+							"_string": true,
+						},
 						"name": {
 							"_leaf": true,
 							"_type": "textarea",

@@ -2955,7 +2955,7 @@ declare class icons {
     nowInterval: number
     forceInterval: number
 
-    defensedata: { [key: string]: () => any }
+    defensedata: { [key: string]: (...params: any) => any }
 }
 
 declare class plugin {

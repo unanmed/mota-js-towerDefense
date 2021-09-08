@@ -3608,14 +3608,22 @@ ui.prototype.createCanvas = function(name, x, y, width, height, z, n) {
 }
 
 ////// canvas重定位 //////
-ui.prototype.relocateCanvas = function(name, x, y) {
-    var ctx = core.getContextByName(name) || core.getContextByName(name, true);
+ui.prototype.relocateCanvas = function(name, x, y, useDelta) {
+    var ctx = core.getContextByName(name);
     if (!ctx) return null;
     if (x != null) {
+        // 增量模式
+        if (useDelta) {
+            x += parseFloat(ctx.canvas.getAttribute("_left")) || 0;
+        }
         ctx.canvas.style.left = x * core.domStyle.scale + 'px';
         ctx.canvas.setAttribute("_left", x);
     }
     if (y != null) {
+        // 增量模式
+        if (useDelta) {
+            y += parseFloat(ctx.canvas.getAttribute("_top")) || 0;
+        }
         ctx.canvas.style.top = y * core.domStyle.scale + 'px';
         ctx.canvas.setAttribute("_top", y);
     }
@@ -3645,19 +3653,20 @@ ui.prototype.rotateCanvas = function(name, angle, centerX, centerY) {
 
 ////// canvas重置 //////
 ui.prototype.resizeCanvas = function(name, width, height, styleOnly) {
-        var ctx = core.getContextByName(name);
-        if (!ctx) return null;
-        if (width != null) {
-            if (!styleOnly) core.maps._setHDCanvasSize(ctx, width, null);
-            ctx.canvas.style.width = width * core.domStyle.scale + 'px';
-        }
-        if (height != null) {
-            if (!styleOnly) core.maps._setHDCanvasSize(ctx, null, height);
-            ctx.canvas.style.height = height * core.domStyle.scale + 'px';
-        }
-        return ctx;
+    var ctx = core.getContextByName(name);
+    if (!ctx) return null;
+    if (width != null) {
+        if (!styleOnly) core.maps._setHDCanvasSize(ctx, width, null);
+        ctx.canvas.style.width = width * core.domStyle.scale + 'px';
     }
-    ////// canvas删除 //////
+    if (height != null) {
+        if (!styleOnly) core.maps._setHDCanvasSize(ctx, null, height);
+        ctx.canvas.style.height = height * core.domStyle.scale + 'px';
+    }
+    return ctx;
+}
+
+////// canvas删除 //////
 ui.prototype.deleteCanvas = function(name) {
     if (name instanceof Function) {
         Object.keys(core.dymCanvas).forEach(function(one) {

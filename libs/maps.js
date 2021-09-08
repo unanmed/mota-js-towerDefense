@@ -1878,15 +1878,6 @@ maps.prototype._drawThumbnail_realDrawTempCanvas = function(floorId, blocks, opt
     this.drawBg(floorId, options);
     // 缩略图：事件
     this.drawEvents(floorId, blocks, options);
-    // 缩略图：勇士
-    if (options.heroLoc) {
-        options.heroIcon = options.heroIcon || core.status.hero.image || 'hero.png';
-        options.heroIcon = core.getMappedName(options.heroIcon);
-        var icon = core.material.icons.hero[options.heroLoc.direction];
-        var height = core.material.images.images[options.heroIcon].height / 4;
-        core.drawImage(options.ctx, core.material.images.images[options.heroIcon], icon.stop * 32, icon.loc * height, 32, height,
-            32 * options.heroLoc.x, 32 * options.heroLoc.y + 32 - height, 32, height);
-    }
     // 缩略图：前景
     this.drawFg(floorId, options);
     // 缩略图：显伤

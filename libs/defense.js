@@ -15,6 +15,8 @@ defense.prototype._init = function() {
     this.batchCanvasLength = {};
     this.batchDict = {};
     this.bossList = [];
+    this.mapIndex = 0;
+    this.floorId = '';
     this.defensedata = functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a.defense;
     core.batchCanvas = this.batchCanvas;
     core.batchCanvasLength = this.batchCanvasLength;
@@ -672,6 +674,7 @@ defense.prototype._randomMonster = function(start, number) {
             var totalHp = 600 * (1 + i * i / 225);
             var n = Math.max(10, totalHp / one + totalHp % 10 + ((~~((next ^ 215673) * totalHp) | one) % 15));
             n = Math.round(n);
+            if (core.status.floorId == 'MT1') n *= 4;
             // 添加怪物
             now.push([all[next], n]);
             next = ((~(next * 82461) >> 5) ^ 12460 * number) ^ (~~totalHp);
@@ -698,7 +701,9 @@ defense.prototype._randomMonster = function(start, number) {
             }
             // 添加怪物
             var totalHp = 300 * (1 + i * i / 225);
-            now.push([all[next], 1]);
+            var n = 1;
+            if (core.status.floorId == 'MT1') n *= 4;
+            now.push([all[next], n]);
             next = (((~(next * 82461) ^ 561290) & 451290) ^ start) ^ (~~totalHp);
             next = Math.abs(~~next);
             next %= length;
@@ -815,6 +820,11 @@ defense.prototype._startMonster_addEnemy = function(enemy, total, now, startLoc)
     core.updateStatusBar();
     var wave = flags.__waves__;
     var hp = now.hp * (1 + wave * wave / 225);
+    var money = now.money * (1 + wave * wave / 4900) * (2 - flags.hard);
+    if (core.status.floorId == 'MT1') {
+        money /= 2;
+        hp /= 4;
+    }
     var id = core.getUnitId(enemy[0], core.status.enemys.enemys);
     // 添加怪物
     core.status.enemys.enemys[id] = {
@@ -828,7 +838,7 @@ defense.prototype._startMonster_addEnemy = function(enemy, total, now, startLoc)
         def: now.def * (1 + wave * wave / 900),
         to: 1,
         drown: false,
-        money: Math.floor(now.money * (1 + wave * wave / 4900)) * (2 - flags.hard),
+        money: Math.floor(money),
         freeze: 1,
         wave: wave,
         special: core.clone(now.special) || []
@@ -846,8 +856,8 @@ defense.prototype._startMonster_addEnemy = function(enemy, total, now, startLoc)
                     core.defense.forceInterval = 60000;
                     core.defense.nowInterval = 60;
                 } else {
-                    core.defense.forceInterval = 15000;
-                    core.defense.nowInterval = 15;
+                    core.defense.forceInterval = core.status.floorId == 'MT1' ? 25000 : 15000;
+                    core.defense.nowInterval = core.status.floorId == 'MT1' ? 25 : 15;
                 }
             }
             core.startMonster(core.status.floorId);
@@ -1161,13 +1171,14 @@ defense.prototype._drawAllEnemys_reachBase = function(enemys, enemy, one) {
         core.status.hero.hp -= 9;
     core.updateStatusBar();
     if (core.status.hero.hp <= 0) {
+        var all = this.getAllMaps();
         if (!core.isReplaying()) {
             flags.__pause__ = true;
             core.status.route[core.status.route.length - 1] =
                 (parseInt(core.status.route[core.status.route.length - 1]) + 1000).toString();
         }
         core.status.hero.hp = core.status.score;
-        core.win('第' + (core.floorIds.indexOf(core.status.floorId) + 1) + '关结束  v0.1版');
+        core.win(all[core.status.floorId].split('_')[0] + '结束  ' + main.version + '版');
         core.unregisterAnimationFrame('_drawCanvases');
         core.unregisterAnimationFrame('_startMonster');
         core.unregisterAnimationFrame('_forceEnemy');
@@ -2059,7 +2070,9 @@ defense.prototype._drawConstructor_drawHorizon = function(ctx, type) {
                 core.fillText(ctx, '×' + now[1], 35, 172 + 30 * (i - wave), '#fff', '13px Arial');
                 // 生命值
                 core.setTextAlign(ctx, 'center');
-                var hp = core.formatBigNumber(core.material.enemys[now[0]].hp * (1 + i * i / 225));
+                var hp = core.material.enemys[now[0]].hp * (1 + i * i / 225);
+                if (core.status.floorId == 'MT1') hp /= 4;
+                hp = core.formatBigNumber(hp);
                 core.fillText(ctx, hp, 90, 172 + 30 * (i - wave), '#fff', '13px Arial');
                 core.setTextAlign(ctx, 'left');
             }
@@ -2070,16 +2083,23 @@ defense.prototype._drawConstructor_drawHorizon = function(ctx, type) {
                 if (wave >= 0) {
                     var now = allEnemy[wave];
                     var enemy = core.material.enemys[now[0]];
+                    var hp = enemy.hp * (1 + wave * wave / 225);
+                    var money = enemy.money * (1 + wave * wave / 4900);
+                    if (core.status.floorId == 'MT1') {
+                        money /= 2;
+                        hp /= 4;
+                    }
+                    hp = core.formatBigNumber(hp);
                     core.setTextAlign(ctx, 'center');
                     core.fillText(ctx, '第' + (wave + 1) + '波', 64, 133, '#fff', '16px Arial');
                     core.drawIcon(ctx, now[0], 32, 135, 32, 32);
                     core.setTextAlign(ctx, 'left');
                     core.fillText(ctx, '×' + now[1], 64, 158, '#fff', '16px Arial');
-                    core.fillText(ctx, '生命：' + core.formatBigNumber(enemy.hp * (1 + wave * wave / 225)), 5, 180, '#fff', '14px Arial');
+                    core.fillText(ctx, '生命：' + hp, 5, 180, '#fff', '14px Arial');
                     core.fillText(ctx, '攻击：' + (enemy.atk * (1 + wave * wave / 900)).toFixed(2), 5, 200, '#fff', '14px Arial');
                     core.fillText(ctx, '防御：' + (enemy.def * (1 + wave * wave / 900)).toFixed(2), 5, 220, '#fff', '14px Arial');
                     core.fillText(ctx, '移速：' + enemy.speed, 5, 240, '#fff', '14px Arial');
-                    core.fillText(ctx, '金币：' + Math.round((flags.hard == 0 ? enemy.money * 2 : enemy.money) * (1 + wave * wave / 4900)), 5, 260, '#fff', '14px Arial');
+                    core.fillText(ctx, '金币：' + Math.round(money), 5, 260, '#fff', '14px Arial');
                 }
             }
         }
@@ -2130,7 +2150,9 @@ defense.prototype._drawConstructor_drawVertical = function(ctx, type) {
             core.fillText(ctx, '×' + now[1], 35 + Math.floor((i - wave) / 2) * 120, 92 + 30 * ((i - wave) % 2), '#fff', '13px Arial');
             // 生命值
             core.setTextAlign(ctx, 'center');
-            var hp = core.formatBigNumber(core.material.enemys[now[0]].hp * (1 + i * i / 225));
+            var hp = core.material.enemys[now[0]].hp * (1 + i * i / 225);
+            if (core.status.floorId == 'MT1') hp /= 4;
+            hp = core.formatBigNumber(hp);
             core.fillText(ctx, hp, 90 + Math.floor((i - wave) / 2) * 120, 92 + 30 * ((i - wave) % 2), '#fff', '13px Arial');
             core.setTextAlign(ctx, 'left');
         }
@@ -2141,16 +2163,23 @@ defense.prototype._drawConstructor_drawVertical = function(ctx, type) {
             if (wave >= 0) {
                 var now = allEnemy[wave];
                 var enemy = core.material.enemys[now[0]];
+                var hp = enemy.hp * (1 + wave * wave / 225);
+                var money = enemy.money * (1 + wave * wave / 4900);
+                if (core.status.floorId == 'MT1') {
+                    money /= 2;
+                    hp /= 4;
+                }
+                hp = core.formatBigNumber(hp);
                 core.setTextAlign(ctx, 'center');
                 core.fillText(ctx, '第' + (wave + 1) + '波', 64, 50, '#fff', '16px Arial');
                 core.drawIcon(ctx, now[0], 140, 28, 32, 32);
                 core.setTextAlign(ctx, 'left');
                 core.fillText(ctx, '×' + now[1], 175, 50, '#fff', '16px Arial');
-                core.fillText(ctx, '生命：' + core.formatBigNumber(enemy.hp * (1 + wave * wave / 225)), 5, 75, '#fff', '14px Arial');
+                core.fillText(ctx, '生命：' + hp, 5, 75, '#fff', '14px Arial');
                 core.fillText(ctx, '攻击：' + (enemy.atk * (1 + wave * wave / 900)).toFixed(2), 5, 95, '#fff', '14px Arial');
                 core.fillText(ctx, '防御：' + (enemy.def * (1 + wave * wave / 900)).toFixed(2), 5, 115, '#fff', '14px Arial');
                 core.fillText(ctx, '移速：' + enemy.speed, 130, 75, '#fff', '14px Arial');
-                core.fillText(ctx, '金币：' + Math.round((flags.hard == 0 ? enemy.money * 2 : enemy.money) * (1 + wave * wave / 4900)), 130, 95, '#fff', '14px Arial');
+                core.fillText(ctx, '金币：' + Math.round(money), 130, 95, '#fff', '14px Arial');
             }
         }
     }
@@ -2506,5 +2535,115 @@ defense.prototype.pushActionToRoute = function(action) {
         else core.status.route.push('1');
     } else {
         core.status.route.push(action);
+    }
+}
+
+////////////  绘制选关界面  ////////////
+defense.prototype.openAllMaps = function() {
+    this._drawAllMaps_draw();
+    core.insertAction([{
+            "type": "while",
+            "condition": "true",
+            "data": [
+                { "type": "function", "function": "function () { core.defense._drawAllMaps_drawText(); }" },
+                { "type": "wait" },
+                { "type": "function", "function": "function() { core.defense._drawAllMaps_actions(); }" }
+            ]
+        },
+        {
+            "type": "function",
+            "function": "function () { core.deleteCanvas('back'); core.deleteCanvas('mapCtx'); core.deleteCanvas('mapTextCtx'); }"
+        }
+    ]);
+}
+
+defense.prototype.getAllMaps = function() {
+    return this.defensedata.getAllMaps();
+}
+
+defense.prototype._drawAllMaps_draw = function() {
+    var all = this.getAllMaps();
+    var ctx = core.createCanvas('back', 0, 0, 416, 416, 150);
+    var mapTextCtx = core.createCanvas('mapTextCtx', 0, 0, 208 + Object.keys(all).length * 150, 30, 160);
+    var mapCtx = core.createCanvas('mapCtx', 20, 35, 376, 376, 155);
+    core.clearMap(ctx);
+    core.drawWindowSkin('winskin.png', ctx, 0, 0, 416, 30);
+    core.drawWindowSkin('winskin.png', ctx, 0, 30, 416, 386);
+    // 绘制所有关卡名
+    mapTextCtx.canvas.className = 'chooseMap';
+    mapTextCtx.shadowColor = '#000';
+    mapTextCtx.shadowBlur = 2;
+    mapTextCtx.shadowOffsetX = 1;
+    mapTextCtx.shadowOffsetY = 1;
+    core.setTextAlign(mapTextCtx, 'center');
+    // 绘制地图缩略图
+    mapCtx.shadowColor = '#fff';
+    mapCtx.shadowBlur = 5;
+}
+
+defense.prototype._drawAllMaps_drawText = function() {
+    core.clearMap('mapCtx');
+    core.clearMap('mapTextCtx');
+    var index = this.mapIndex;
+    var all = this.getAllMaps();
+    var maps = Object.keys(all).sort(function(a, b) { return all[a].split('_')[1] - all[b].split('_')[1]; });
+    maps.forEach(function(map, i) {
+        var text = all[map].split('_')[0];
+        if (i == index) text = '<  ' + text + '  >';
+        core.fillText('mapTextCtx', text, 208 + 150 * i, 23, '#fff', '20px Arial');
+    });
+    core.drawThumbnail(maps[index], null, { x: 5, y: 5, ctx: 'mapCtx', size: 366 });
+}
+
+defense.prototype._drawAllMaps_actions_keyboard = function(keycode) {
+    var all = this.getAllMaps();
+    switch (keycode) {
+        case 37:
+            this._drawAllMaps_changeMap('left');
+            break;
+        case 39:
+            this._drawAllMaps_changeMap('right');
+            break;
+        case 32:
+        case 13:
+            this.floorId = Object.keys(all)[this.mapIndex];
+            core.insertAction([{ "type": "break", "n": 1 }]);
+            break;
+    }
+}
+
+defense.prototype._drawAllMaps_actions_click = function(px, py) {
+    if (py <= 30 && px >= 208) {
+        this._drawAllMaps_changeMap('right');
+        return;
+    }
+    if (py <= 30 && px <= 208) {
+        this._drawAllMaps_changeMap('left');
+        return;
+    }
+    this.floorId = Object.keys(all)[this.mapIndex];
+    core.insertAction([{ "type": "break", "n": 1 }]);
+    return;
+}
+
+defense.prototype._drawAllMaps_actions = function() {
+    if (flags.type === 0) return this._drawAllMaps_actions_keyboard(flags.keycode);
+    return this._drawAllMaps_actions_click(flags.px, flags.py);
+}
+
+defense.prototype._drawAllMaps_changeMap = function(dir) {
+    if (dir === 'right') {
+        if (this.mapIndex < Object.keys(this.getAllMaps()).length - 1) {
+            this.mapIndex++;
+            core.relocateCanvas('mapTextCtx', -150, 0, true);
+            this._drawAllMaps_drawText();
+        }
+    }
+    if (dir === 'left') {
+        if (this.mapIndex > 0) {
+            this.mapIndex--;
+            core.relocateCanvas('mapTextCtx', 150, 0, true);
+            this._drawAllMaps_drawText();
+        }
     }
 }

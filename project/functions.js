@@ -1687,19 +1687,36 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
     },
     "defense": {
         "initMonster": function(floorId) {
+            // 前10波手动添加 之后由伪随机产生固定值 并存入缓存 计入存档
             if (floorId == 'MT0') {
-                // 第一关 前10波手动添加 之后由伪随机产生固定值 并存入缓存 计入存档
                 var enemys = [
-                    ['bigBat', 1],
-                    ['bigBat', 1],
-                    ['bigBat', 1],
-                    ['bigBat', 1],
+                    ['greenSlime', 10],
+                    ['greenSlime', 17],
+                    ['redSlime', 15],
+                    ['greenSlime', 25],
                     ['blackSlime', 9],
                     ['bat', 16],
                     ['redSlime', 15],
                     ['greenSlime', 13],
                     ['bat', 14],
                     ['bigBat', 1],
+                ];
+                core.status.maps[floorId].enemys = enemys;
+                return enemys;
+            }
+            if (floorId == 'MT1') {
+                // 第二关 爽关 怪物数量*4 血量/4
+                var enemys = [
+                    ['greenSlime', 40],
+                    ['greenSlime', 52],
+                    ['redSlime', 52],
+                    ['greenSlime', 60],
+                    ['blackSlime', 32],
+                    ['bat', 36],
+                    ['redSlime', 52],
+                    ['greenSlime', 60],
+                    ['greenSlime', 64],
+                    ['blueGateKeeper', 4],
                 ];
                 core.status.maps[floorId].enemys = enemys;
                 return enemys;
@@ -1748,6 +1765,14 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                 };
             }
             core.updateStatusBar();
+        },
+        "getAllMaps": function() {
+            // 在这里写上你所有的地图 以及地图名
+            // 地图名后面要写上 _加数字 用于关卡排序
+            return {
+                'MT0': '第一关_0',
+                'MT1': '第二关_1'
+            }
         }
     }
 }

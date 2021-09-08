@@ -612,3 +612,8 @@ p#name {
     -webkit-transition: width 500ms, background-color 500ms, opacity 1s, top 1s;
     transition: width 500ms, background-color 500ms, opacity 1s, top 1s;
 }
+
+.chooseMap {
+    -webkit-transition: left 500ms ease-out;
+    transition: left 500ms ease-out;
+}
