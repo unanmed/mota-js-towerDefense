@@ -482,15 +482,8 @@ defense.prototype.loadDefense = function(data) {
     this.enemyCnt = data.enemyCnt;
     this.bossList = [];
     // 处理信息 进行初始化 及相关内容
-    core.unregisterAnimationFrame('_drawCanvases');
-    core.unregisterAnimationFrame('_startMonster');
-    core.unregisterAnimationFrame('_forceEnemy');
-    core.unregisterAnimationFrame('_attack');
-    core.unregisterAnimationFrame('_deleteEffect');
     this.globalInit(true);
     this._drawMine();
-    flags.__starting__ = flags.__save_starting__;
-    delete flags.__save_starting__;
     if (flags.__starting__) core.startMonster(flags.__waves__, false, true);
     if (core.defense.forceInterval) core.registerAnimationFrame('_forceEnemy', true, force);
     core.control.updateStatusBar(false, true);
@@ -2581,14 +2574,12 @@ defense.prototype._drawAllMaps_draw = function() {
     core.clearMap(ctx);
     core.drawWindowSkin('winskin.png', ctx, 0, 0, 416, 30);
     core.drawWindowSkin('winskin.png', ctx, 0, 30, 416, 386);
-    // 绘制所有关卡名
     mapTextCtx.canvas.className = 'chooseMap';
     mapTextCtx.shadowColor = '#000';
     mapTextCtx.shadowBlur = 2;
     mapTextCtx.shadowOffsetX = 1;
     mapTextCtx.shadowOffsetY = 1;
     core.setTextAlign(mapTextCtx, 'center');
-    // 绘制地图缩略图
     mapCtx.shadowColor = '#fff';
     mapCtx.shadowBlur = 5;
 }

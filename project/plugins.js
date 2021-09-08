@@ -1359,7 +1359,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var skipped = [
                 'level', 'type', 'damage', 'max',
                 'haveCost', 'killed', 'exp', 'expLevel',
-                'square', 'attackInterval', 'x', 'y'
+                'square', 'attackInterval', 'x', 'y', 'pauseBuild'
             ];
             for (var one in now) {
                 // 跳过属性

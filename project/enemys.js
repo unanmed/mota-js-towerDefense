@@ -6,7 +6,7 @@ var enemys_fcae963b_31c9_42b4_b48c_bb48d09f3f80 =
 	"slimelord": {"name":"怪王","hp":1000,"atk":30,"def":10,"money":30,"exp":0,"point":0,"special":[1],"notBomb":true,"speed":1.2,"score":1000,"toEnemy":"silverSlimelord"},
 	"bat": {"name":"小蝙蝠","hp":12,"atk":6,"def":2,"money":7,"exp":0,"point":0,"special":[3,6],"speed":4,"score":10},
 	"bigBat": {"name":"大蝙蝠","hp":200,"atk":20,"def":5,"money":20,"exp":0,"point":0,"special":[3,6],"notBomb":true,"speed":1.5,"score":700},
-	"redBat": {"name":"红蝙蝠","hp":400,"atk":30,"def":5,"money":25,"exp":0,"point":0,"special":[1,2],"notBomb":true,"speed":5,"score":1000,"toEnemy":"bigBat"},
+	"redBat": {"name":"红蝙蝠","hp":350,"atk":30,"def":5,"money":25,"exp":0,"point":0,"special":[1,2],"notBomb":true,"speed":3,"score":1000,"toEnemy":"bigBat"},
 	"vampire": {"name":"冥灵魔王","hp":3000,"atk":50,"def":10,"money":60,"exp":0,"point":0,"special":[],"n":8,"notBomb":true,"speed":0.5,"score":2000},
 	"skeleton": {"name":"骷髅人","hp":30,"atk":8,"def":4,"money":5,"exp":0,"point":0,"special":0,"speed":1.5,"score":10},
 	"skeletonCaptain": {"name":"骷髅队长","hp":800,"atk":40,"def":15,"money":40,"exp":0,"point":0,"special":0,"notBomb":true,"speed":1.5,"score":1200},

@@ -1104,7 +1104,11 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
             core.setFlag('__fromLoad__', true);
 
             // TODO：增加自己的一些读档处理
-            flags.__save_starting__ = flags.__starting__;
+            core.unregisterAnimationFrame('_drawCanvases');
+            core.unregisterAnimationFrame('_startMonster');
+            core.unregisterAnimationFrame('_forceEnemy');
+            core.unregisterAnimationFrame('_attack');
+            core.unregisterAnimationFrame('_deleteEffect');
             // 切换到对应的楼层
             core.changeFloor(data.floorId, null, data.hero.loc, 0, function() {
                 // TODO：可以在这里设置读档后播放BGM
