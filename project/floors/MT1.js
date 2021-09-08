@@ -12,7 +12,7 @@ main.floors.MT1=
     "images": [],
     "ratio": 1,
     "defaultGround": "grass",
-    "bgm": "bgm.mp3",
+    "bgm": "Funky_Stars.mp3",
     "firstArrive": [],
     "eachArrive": [],
     "parallelDo": "",

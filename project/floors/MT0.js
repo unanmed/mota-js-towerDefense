@@ -57,6 +57,6 @@ main.floors.MT0=
     "beforeBattle": {},
     "cannotMoveIn": {},
     "eachArrive": [],
-    "bgm": "bgm.mp3",
+    "bgm": "Vlog.mp3",
     "description": "最最最最普通的地图，没有任何特殊的地方"
 }
