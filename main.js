@@ -738,16 +738,24 @@ main.prototype.listen = function() {
             var canvas = document.createElement('canvas');
             canvas.setAttribute("_left", 0);
             canvas.setAttribute("_top", 0);
-            canvas.style.width = 554 * main.core.domStyle.scale + 'px';
-            canvas.style.height = 463 * main.core.domStyle.scale + 'px';
+            if (!core.domStyle.isVertical) {
+                canvas.style.width = 554 * main.core.domStyle.scale + 'px';
+                canvas.style.height = 463 * main.core.domStyle.scale + 'px';
+            } else {
+                canvas.style.width = 422 * main.core.domStyle.scale + 'px';
+                canvas.style.height = 580 * main.core.domStyle.scale + 'px';
+            }
             canvas.style.left = '0px';
             canvas.style.top = '0px';
             canvas.style.zIndex = '999';
             canvas.style.position = 'absolute';
             canvas.style.backgroundColor = '#222';
-            core.maps._setHDCanvasSize(canvas.getContext('2d'), 553, 463);
+            if (!core.domStyle.isVertical)
+                core.maps._setHDCanvasSize(canvas.getContext('2d'), 553, 463);
+            else
+                core.maps._setHDCanvasSize(canvas.getContext('2d'), 422, 580);
             main.dom.gameGroup.appendChild(canvas);
-            var text = '                                              游戏玩法说明\n\n' +
+            var text = '                                       游戏玩法说明\n\n' +
                 '1.防御塔：防御塔有很多基础属性，大多数的属性都是一目了然的。这里单独说明一下以下属性：\n' +
                 '  ①金币等级和经验等级：金币等级就是用金币可以升的等级，属性栏的显示为 等级 经验等级就是打怪或其他操作' +
                 '可以升的等级，一般情况下，每级增加1%的原始属性，夹击塔增加5%，士兵塔增加5%，属性栏显示为 lv.\n' +
@@ -760,7 +768,10 @@ main.prototype.listen = function() {
                 '3.boss：一般情况下，每10波会出现一个boss，血量会在上方显示，如果boss死了以后血条仍长时间未消失，请存档后再读这个存档\n\n' +
                 '4.存档：你可以在任意时候暂停游戏来存档，也可以读档，注意，读档会很耗时间，请尽量不要频繁读档\n\n' +
                 '5.暂停：电脑端可以随时按空格暂停游戏，或者点击状态栏最上方的分数位置暂停游戏，手机端有专门的按钮可以暂停游戏。'
-            core.drawTextContent(canvas.getContext('2d'), text, { maxWidth: 553, fontSize: 14 });
+            if (!core.domStyle.isVertical)
+                core.drawTextContent(canvas.getContext('2d'), text, { maxWidth: 553, fontSize: 14 });
+            else
+                core.drawTextContent(canvas.getContext('2d'), text, { maxWidth: 422, fontSize: 14 });
             canvas.onclick = function() {
                 main.dom.gameGroup.removeChild(canvas);
             }

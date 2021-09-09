@@ -749,7 +749,7 @@ defense.prototype.startMonster = function(floorId, start, fromLoad) {
             var forceMoney = core.defense.forceInterval / 1000 * (1 + flags.__waves__ * flags.__waves__ / 2250);
             core.status.hero.money += Math.floor(forceMoney);
         }
-        if (!core.isReplaying())
+        if (!core.isReplaying() && !fromLoad)
             core.pushActionToRoute('nextWave');
     }
     this._startMonster_doStart(enemy, startLoc, total, fromLoad);
@@ -1197,7 +1197,7 @@ defense.prototype._drawAllEnemys_reachBase = function(enemys, enemy, one) {
                 (parseInt(core.status.route[core.status.route.length - 1]) + 1000).toString();
         }
         core.status.hero.hp = core.status.score;
-        core.win(all[core.status.floorId].split('_')[0] + '结束  ' + main.version + '版');
+        core.win(all[core.status.floorId].split('_')[0] + '结束  v0.1版');
         core.unregisterAnimationFrame('_drawCanvases');
         core.unregisterAnimationFrame('_startMonster');
         core.unregisterAnimationFrame('_forceEnemy');
@@ -2366,10 +2366,10 @@ defense.prototype.getClosestEnemyInRange = function(x, y, range, ignore) {
 defense.prototype.getBarrackBlock = function(x, y) {
     // 检测四周
     var canLoc = [];
-    if (core.getBgNumber(x - 1, y) == '300') canLoc.push([x - 1, y]);
-    if (core.getBgNumber(x + 1, y) == '300') canLoc.push([x + 1, y]);
-    if (core.getBgNumber(x, y - 1) == '300') canLoc.push([x, y - 1]);
-    if (core.getBgNumber(x, y + 1) == '300') canLoc.push([x, y + 1]);
+    if (x - 1 > 0 && core.getBgNumber(x - 1, y) == '300') canLoc.push([x - 1, y]);
+    if (x + 1 < 13 && core.getBgNumber(x + 1, y) == '300') canLoc.push([x + 1, y]);
+    if (y - 1 > 0 && core.getBgNumber(x, y - 1) == '300') canLoc.push([x, y - 1]);
+    if (y + 1 < 13 && core.getBgNumber(x, y + 1) == '300') canLoc.push([x, y + 1]);
     if (canLoc.length == 0) return null;
     // 转换成索引形式
     var route = core.status.thisMap.route;
@@ -2650,6 +2650,7 @@ defense.prototype._drawAllMaps_actions_keyboard = function(keycode) {
 }
 
 defense.prototype._drawAllMaps_actions_click = function(px, py) {
+    var all = this.getAllMaps();
     if (py <= 30 && px >= 208) {
         this._drawAllMaps_changeMap('right');
         return;
