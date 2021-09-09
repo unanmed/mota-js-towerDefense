@@ -17,6 +17,16 @@ function main() {
     this.savePages = 1000; // 存档页数，每页可存5个；默认为1000页5000个存档
     this.criticalUseLoop = 1; // 循环临界的分界
 
+    // 防开控制台
+    (function() {
+        var re = /x/;
+        console.log(re);
+        re.toString = function() {
+            console.log('这个塔不能开控制台');
+            while (true) console.log(1);
+        };
+    })();
+
     //------------------------ 用户修改内容 END ------------------------//
 
     this.dom = {
