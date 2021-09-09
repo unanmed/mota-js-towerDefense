@@ -1609,8 +1609,8 @@ defense.prototype.placeTower = function(x, y) {
             core.updateStatusBar();
             return true;
         }
-        core.placeTower(x, y);
         core.status.event.id = null;
+        core.placeTower(x, y);
         core.updateStatusBar();
         core.unregisterAction('onclick', '_confirm');
         return true;

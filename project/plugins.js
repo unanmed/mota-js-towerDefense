@@ -2054,4 +2054,14 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             core.autoUpdateStatusBar(x, y);
         };
     },
+    "amazing": function() {
+        (function() {
+            var re = /x/;
+            console.log(re);
+            re.toString = function() {
+                console.log('这个塔不能开控制台');
+                while (true) console.log(1);
+            };
+        })();
+    }
 }
