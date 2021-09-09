@@ -1725,6 +1725,17 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                 core.status.maps[floorId].enemys = enemys;
                 return enemys;
             }
+            if (floorId == 'MT2') {
+                var enemys = [
+                    ['greenSlime', 3],
+                    ['greenSlime', 4],
+                    ['redSlime', 4],
+                    ['greenSlime', 5],
+                    ['blackSlime', 2],
+                ];
+                core.status.maps[floorId].enemys = enemys;
+                return enemys;
+            }
         },
         "enemyDie": function(id) {
             var e = core.clone(core.status.enemys.enemys[id]);
@@ -1748,6 +1759,15 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                 if (!toEnemy) return;
                 enemy = core.material.enemys[toEnemy];
                 var hp = enemy.hp * (1 + e.wave * e.wave / 225);
+                var money = enemy.money * (1 + e.wave * e.wave / 4900) * (2 - flags.hard);
+                if (core.status.floorId == 'MT1') {
+                    money /= 2;
+                    hp /= 4;
+                }
+                if (core.status.floorId == 'MT2') {
+                    hp *= core.material.enemys[enemy[0]].notBomb ? 2 : 4;
+                    money *= 4;
+                }
                 core.status.enemys.cnt++;
                 id = core.getUnitId(toEnemy, core.status.enemys.enemys);
                 core.status.enemys.enemys[id] = {
@@ -1762,7 +1782,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                     to: (Number.isInteger(e.x) && Number.isInteger(e.y) &&
                         core.same(core.status.thisMap.route[e.to], [e.x, e.y])) ? (e.to + 1) : e.to,
                     drown: false,
-                    money: Math.floor(enemy.money * (1 + e.wave * e.wave / 4900)) * (2 - flags.hard),
+                    money: Math.floor(money),
                     freeze: 1,
                     wave: e.wave,
                     special: core.clone(core.material.enemys[toEnemy].special) || []
@@ -1775,7 +1795,8 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
             // 地图名后面要写上 _加数字 用于关卡排序
             return {
                 'MT0': '第一关_0',
-                'MT1': '第二关_1'
+                'MT1': '第二关_1',
+                'MT2': '第三关_2'
             }
         }
     }

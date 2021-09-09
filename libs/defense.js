@@ -38,7 +38,7 @@ defense.prototype._init = function() {
 defense.prototype.initTowers = function() {
     this.towers = {
         basic: { atk: 6, cost: 30, speed: 0.6, range: 2, max: 20 },
-        gun: { atk: 4, cost: 100, speed: 0.2, range: 3, max: 20 },
+        gun: { atk: 4, cost: 100, speed: 0.17, range: 3, max: 20 },
         bomb: { atk: 10, cost: 100, speed: 1.2, range: 3, explode: 0.75, max: 20 },
         laser: { atk: 10, cost: 100, range: 3, speed: 1.25, max: 20 },
         tesla: { atk: 6, cost: 130, speed: 1.25, range: 3, chain: 3, max: 20 },
@@ -455,11 +455,12 @@ defense.prototype.saveDefense = function() {
     toSave.enemyList = core.clone(core.status.thisMap.enemys);
     // 3.保存当前统计信息
     toSave.score = core.status.score;
-    toSave.damege = core.status.totalDamage;
+    toSave.damage = core.status.totalDamage;
     toSave.killed = core.status.totalKilled;
     toSave.currTime = core.status.currTime;
     toSave.nowInterval = this.nowInterval;
     toSave.forceInterval = this.forceInterval;
+    toSave.interval = this.interval;
     toSave.enemyCnt = this.enemyCnt;
     return toSave;
 }
@@ -479,6 +480,7 @@ defense.prototype.loadDefense = function(data) {
     core.status.currTime = data.currTime;
     this.nowInterval = data.nowInterval;
     this.forceInterval = data.forceInterval;
+    this.interval = data.interval;
     this.enemyCnt = data.enemyCnt;
     this.bossList = [];
     // 处理信息 进行初始化 及相关内容
@@ -671,6 +673,7 @@ defense.prototype._randomMonster = function(start, number) {
             var n = Math.max(10, totalHp / one + totalHp % 10 + ((~~((next ^ 215673) * totalHp) | one) % 15));
             n = Math.round(n);
             if (core.status.floorId == 'MT1') n *= 4;
+            if (core.status.floorId == 'MT2') n = Math.ceil(n / 4);
             // 添加怪物
             now.push([all[next], n]);
             next = ((~(next * 82461) >> 5) ^ 12460 * number) ^ (~~totalHp);
@@ -749,7 +752,7 @@ defense.prototype.startMonster = function(floorId, start, fromLoad) {
         if (!core.isReplaying())
             core.pushActionToRoute('nextWave');
     }
-    this._startMonster_doStart(enemy, startLoc, total);
+    this._startMonster_doStart(enemy, startLoc, total, fromLoad);
     return true;
 }
 
@@ -789,13 +792,14 @@ defense.prototype._startMonster_init = function() {
     }
 }
 
-defense.prototype._startMonster_doStart = function(enemy, startLoc, total) {
+defense.prototype._startMonster_doStart = function(enemy, startLoc, total, fromLoad) {
     core.autosave();
     delete this.forceInterval;
     delete this.nowInterval;
     core.unregisterAnimationFrame('_forceEnemy');
     var first = true;
-    core.defense.interval = 0;
+    if (!fromLoad)
+        core.defense.interval = 0;
     // 帧动画
     function animate() {
         flags.__starting__ = true;
@@ -823,9 +827,15 @@ defense.prototype._startMonster_addEnemy = function(enemy, total, now, startLoc)
     var wave = flags.__waves__;
     var hp = now.hp * (1 + wave * wave / 225);
     var money = now.money * (1 + wave * wave / 4900) * (2 - flags.hard);
+    var speed = now.speed;
     if (core.status.floorId == 'MT1') {
         money /= 2;
         hp /= 4;
+    }
+    if (core.status.floorId == 'MT2') {
+        hp *= now.notBomb ? 2 : 4;
+        money *= 4;
+        if (now.notBomb) speed /= 2;
     }
     var id = core.getUnitId(enemy[0], core.status.enemys.enemys);
     // 添加怪物
@@ -833,7 +843,7 @@ defense.prototype._startMonster_addEnemy = function(enemy, total, now, startLoc)
         x: startLoc[0],
         y: startLoc[1],
         id: enemy[0],
-        speed: now.speed,
+        speed: speed,
         hp: hp,
         total: hp,
         atk: now.atk * (1 + wave * wave / 900),
@@ -1208,7 +1218,7 @@ defense.prototype._drawAllEnemys_reachMine = function(enemys, enemy, one, mine) 
             core.playSound('bomb.mp3');
         played = true;
         enemy.hp -= mine[enemy.to][i].atk;
-        core.status.totalDamage += mine[enemy.to][i].atk;
+        core.status.totalDamage += parseInt(mine[enemy.to][i].atk);
         // 把这个地雷删了
         delete mine[enemy.to][i];
         mine[enemy.to].cnt--;
@@ -2076,6 +2086,7 @@ defense.prototype._drawConstructor_drawHorizon = function(ctx, type) {
                 core.setTextAlign(ctx, 'center');
                 var hp = core.material.enemys[now[0]].hp * (1 + i * i / 225);
                 if (core.status.floorId == 'MT1') hp /= 4;
+                if (core.status.floorId == 'MT2') hp *= core.material.enemys[now[0]].notBomb ? 2 : 4;
                 hp = core.formatBigNumber(hp);
                 core.fillText(ctx, hp, 90, 172 + 30 * (i - wave), '#fff', '13px Arial');
                 core.setTextAlign(ctx, 'left');
@@ -2089,9 +2100,15 @@ defense.prototype._drawConstructor_drawHorizon = function(ctx, type) {
                     var enemy = core.material.enemys[now[0]];
                     var hp = enemy.hp * (1 + wave * wave / 225);
                     var money = enemy.money * (1 + wave * wave / 4900) * (2 - flags.hard);
+                    var speed = enemy.speed;
                     if (core.status.floorId == 'MT1') {
                         money /= 2;
                         hp /= 4;
+                    }
+                    if (core.status.floorId == 'MT2') {
+                        hp *= enemy.notBomb ? 2 : 4;
+                        money *= 4;
+                        if (enemy.notBomb) speed /= 2;
                     }
                     hp = core.formatBigNumber(hp);
                     core.setTextAlign(ctx, 'center');
@@ -2102,7 +2119,7 @@ defense.prototype._drawConstructor_drawHorizon = function(ctx, type) {
                     core.fillText(ctx, '生命：' + hp, 5, 180, '#fff', '14px Arial');
                     core.fillText(ctx, '攻击：' + (enemy.atk * (1 + wave * wave / 900)).toFixed(2), 5, 200, '#fff', '14px Arial');
                     core.fillText(ctx, '防御：' + (enemy.def * (1 + wave * wave / 900)).toFixed(2), 5, 220, '#fff', '14px Arial');
-                    core.fillText(ctx, '移速：' + enemy.speed, 5, 240, '#fff', '14px Arial');
+                    core.fillText(ctx, '移速：' + speed, 5, 240, '#fff', '14px Arial');
                     core.fillText(ctx, '金币：' + Math.round(money), 5, 260, '#fff', '14px Arial');
                 }
             }
@@ -2156,6 +2173,7 @@ defense.prototype._drawConstructor_drawVertical = function(ctx, type) {
             core.setTextAlign(ctx, 'center');
             var hp = core.material.enemys[now[0]].hp * (1 + i * i / 225);
             if (core.status.floorId == 'MT1') hp /= 4;
+            if (core.status.floorId == 'MT2') hp *= core.material.enemys[now[0]].notBomb ? 2 : 4;
             hp = core.formatBigNumber(hp);
             core.fillText(ctx, hp, 90 + Math.floor((i - wave) / 2) * 120, 92 + 30 * ((i - wave) % 2), '#fff', '13px Arial');
             core.setTextAlign(ctx, 'left');
@@ -2169,9 +2187,15 @@ defense.prototype._drawConstructor_drawVertical = function(ctx, type) {
                 var enemy = core.material.enemys[now[0]];
                 var hp = enemy.hp * (1 + wave * wave / 225);
                 var money = enemy.money * (1 + wave * wave / 4900) * (2 - flags.hard);
+                var speed = enemy.speed;
                 if (core.status.floorId == 'MT1') {
                     money /= 2;
                     hp /= 4;
+                }
+                if (core.status.floorId == 'MT2') {
+                    hp *= enemy.notBomb ? 2 : 4;
+                    money *= 4;
+                    if (enemy.notBomb) speed /= 2;
                 }
                 hp = core.formatBigNumber(hp);
                 core.setTextAlign(ctx, 'center');
@@ -2182,7 +2206,7 @@ defense.prototype._drawConstructor_drawVertical = function(ctx, type) {
                 core.fillText(ctx, '生命：' + hp, 5, 75, '#fff', '14px Arial');
                 core.fillText(ctx, '攻击：' + (enemy.atk * (1 + wave * wave / 900)).toFixed(2), 5, 95, '#fff', '14px Arial');
                 core.fillText(ctx, '防御：' + (enemy.def * (1 + wave * wave / 900)).toFixed(2), 5, 115, '#fff', '14px Arial');
-                core.fillText(ctx, '移速：' + enemy.speed, 130, 75, '#fff', '14px Arial');
+                core.fillText(ctx, '移速：' + speed, 130, 75, '#fff', '14px Arial');
                 core.fillText(ctx, '金币：' + Math.round(money), 130, 95, '#fff', '14px Arial');
             }
         }
