@@ -483,11 +483,11 @@ defense.prototype.loadDefense = function(data) {
     this.interval = data.interval;
     this.enemyCnt = data.enemyCnt;
     this.bossList = [];
-    // 处理信息 进行初始化 及相关内容
+    // 4.处理信息 进行初始化及相关内容
     this.globalInit(true);
     this._drawMine();
     if (flags.__starting__) core.startMonster(flags.__waves__, false, true);
-    if (core.defense.forceInterval) core.registerAnimationFrame('_forceEnemy', true, force);
+    if (core.defense.forceInterval || core.defense.forceInterval === 0) core.registerAnimationFrame('_forceEnemy', true, force);
     core.control.updateStatusBar(false, true);
 
     function force() {
@@ -744,7 +744,7 @@ defense.prototype.startMonster = function(floorId, start, fromLoad) {
         else core.drawTip('现在处于暂停阶段，取消暂停后将开始出怪');
     }
     // 提前出怪金币奖励
-    if (this.forceInterval) {
+    if (this.forceInterval && !fromLoad) {
         if (flags.__waves__ != 0) {
             var forceMoney = core.defense.forceInterval / 1000 * (1 + flags.__waves__ * flags.__waves__ / 2250);
             core.status.hero.money += Math.floor(forceMoney);
@@ -793,7 +793,6 @@ defense.prototype._startMonster_init = function() {
 }
 
 defense.prototype._startMonster_doStart = function(enemy, startLoc, total, fromLoad) {
-    core.autosave();
     delete this.forceInterval;
     delete this.nowInterval;
     core.unregisterAnimationFrame('_forceEnemy');
@@ -878,6 +877,7 @@ defense.prototype._startMonster_addEnemy = function(enemy, total, now, startLoc)
                     core.defense.forceInterval = core.status.floorId == 'MT1' ? 25000 : 15000;
                     core.defense.nowInterval = core.status.floorId == 'MT1' ? 25 : 15;
                 }
+                core.autosave();
             }
             core.startMonster(core.status.floorId);
             core.updateStatusBar();
@@ -1568,6 +1568,16 @@ defense.prototype.placeTower = function(x, y) {
         core.unlockControl();
         core.updateStatusBar();
         return true;
+    }
+    if (core.status.event.data == 'destory') {
+        // 震荡塔只能放在5级炸弹塔上
+        var tower = core.status.towers[x + ',' + y];
+        if (!tower || !(tower.type == 'bomb' && tower.level >= 5)) {
+            core.drawTip('震荡塔只能放在5级以上的炸弹塔上！');
+            core.status.event.id = null;
+            core.updateStatusBar();
+            return;
+        }
     }
     core.updateStatusBar();
     var tower = core.status.event.data;

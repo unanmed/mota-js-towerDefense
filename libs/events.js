@@ -141,7 +141,7 @@ events.prototype.gameOver = function(ending, fromReplay, norank) {
     else if (core.hasFlag("debug")) reason = "\t[系统提示]调试模式下无法上传成绩";
 
     if (reason != null)
-        core.drawText(reason, location.reload);
+        core.drawText(reason, function() { location.reload(); });
     else
         this._gameOver_confirmUpload(ending, norank);
 }
