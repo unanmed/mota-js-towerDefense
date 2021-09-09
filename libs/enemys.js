@@ -462,7 +462,8 @@ enemys.prototype._getCurrentEnemys_addEnemy = function(enemyId, enemys, used, x,
             continue;
         }
         if (v == 'speed') {
-            e.speed = core.material.enemys[enemy.id.split('_')[0]].speed;
+            e.speed = enemyInfo.speed;
+            if (!Number.isInteger(e.speed)) e.speed = e.speed.toFixed(2);
             continue;
         }
         e[v] = enemyInfo[v];

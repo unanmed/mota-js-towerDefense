@@ -828,6 +828,7 @@ defense.prototype._startMonster_addEnemy = function(enemy, total, now, startLoc)
     var hp = now.hp * (1 + wave * wave / 225);
     var money = now.money * (1 + wave * wave / 4900) * (2 - flags.hard);
     var speed = now.speed;
+    var special = core.clone(now.special) || [];
     if (core.status.floorId == 'MT1') {
         money /= 2;
         hp /= 4;
@@ -835,7 +836,13 @@ defense.prototype._startMonster_addEnemy = function(enemy, total, now, startLoc)
     if (core.status.floorId == 'MT2') {
         hp *= now.notBomb ? 2 : 4;
         money *= 4;
-        if (now.notBomb) speed /= 2;
+        if (now.notBomb) speed /= 1.5;
+        for (var i = 0; i < special.length; i++) {
+            if (special[i] === 4) {
+                special.splice(i, 1);
+                i--;
+            }
+        }
     }
     var id = core.getUnitId(enemy[0], core.status.enemys.enemys);
     // 添加怪物
@@ -853,7 +860,7 @@ defense.prototype._startMonster_addEnemy = function(enemy, total, now, startLoc)
         money: Math.floor(money),
         freeze: 1,
         wave: wave,
-        special: core.clone(now.special) || []
+        special: special
     };
     if (core.status.thisMap.enemys[wave][1] <= 0) {
         delete core.defense.interval;
@@ -1530,7 +1537,7 @@ defense.prototype._drawBossHealthBar_animate = function(id, to) {
     var total = core.status.enemys.enemys[id].total;
     var toColor = 'rgba(' + ((1 - to / total) * 2 * 255) + ',' + (to / total * 2 * 255) + '0,1)';
     ctx.canvas.style.backgroundColor = toColor;
-    ctx.canvas.style.width = 352 * to / total * core.domStyle.scale + 'px';
+    ctx.canvas.style.width = Math.ceil(352 * to / total * core.domStyle.scale) + 'px';
 }
 
 defense.prototype._drawBossHealthBar_transparent = function(type) {
@@ -2108,7 +2115,8 @@ defense.prototype._drawConstructor_drawHorizon = function(ctx, type) {
                     if (core.status.floorId == 'MT2') {
                         hp *= enemy.notBomb ? 2 : 4;
                         money *= 4;
-                        if (enemy.notBomb) speed /= 2;
+                        if (enemy.notBomb) speed /= 1.5;
+                        if (!Number.isInteger(speed)) speed = speed.toFixed(2);
                     }
                     hp = core.formatBigNumber(hp);
                     core.setTextAlign(ctx, 'center');
@@ -2195,7 +2203,8 @@ defense.prototype._drawConstructor_drawVertical = function(ctx, type) {
                 if (core.status.floorId == 'MT2') {
                     hp *= enemy.notBomb ? 2 : 4;
                     money *= 4;
-                    if (enemy.notBomb) speed /= 2;
+                    if (enemy.notBomb) speed /= 1.5;
+                    if (!Number.isInteger(speed)) speed = speed.toFixed(2);
                 }
                 hp = core.formatBigNumber(hp);
                 core.setTextAlign(ctx, 'center');

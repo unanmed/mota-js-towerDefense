@@ -137,11 +137,11 @@ events.prototype.gameOver = function(ending, fromReplay, norank) {
     }
 
     var reason = null;
-    if (fromReplay) reason = "录像回放完毕！";
+    if (fromReplay) reason = "录像回放完毕！下面会刷新页面";
     else if (core.hasFlag("debug")) reason = "\t[系统提示]调试模式下无法上传成绩";
 
     if (reason != null)
-        core.drawText(reason, core.restart);
+        core.drawText(reason, location.reload);
     else
         this._gameOver_confirmUpload(ending, norank);
 }
@@ -255,12 +255,12 @@ events.prototype._gameOver_askRate = function(ending) {
     core.ui.drawConfirmBox("恭喜通关！你想进行评分吗？", function() {
         if (core.platform.isPC) {
             window.open("/score.php?name=" + core.firstData.name, "_blank");
-            core.restart();
+            location.reload();
         } else {
             window.location.href = "/score.php?name=" + core.firstData.name;
         }
     }, function() {
-        core.restart();
+        location.reload();
     });
 }
 
@@ -274,15 +274,8 @@ events.prototype.restart = function() {
 events.prototype.confirmRestart = function() {
     core.playSound('打开界面');
     core.status.event.selection = 1;
-    core.ui.drawConfirmBox("你确定要返回标题页面吗？", function() {
-        core.playSound('确定');
-        core.ui.closePanel();
-        core.unregisterAnimationFrame('startMonster');
-        core.unregisterAnimationFrame('forceEnemy');
-        core.unregisterAnimationFrame('attack');
-        core.unregisterAnimationFrame('deleteEffect');
-        core.initDrawEnemys();
-        core.restart();
+    core.ui.drawConfirmBox("你确定要刷新页面来返回标题吗？", function() {
+        location.reload();
     }, function() {
         core.playSound('取消');
         core.ui.closePanel();

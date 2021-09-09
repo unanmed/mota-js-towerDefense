@@ -1765,7 +1765,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                     hp /= 4;
                 }
                 if (core.status.floorId == 'MT2') {
-                    hp *= core.material.enemys[enemy[0]].notBomb ? 2 : 4;
+                    hp *= enemy.notBomb ? 2 : 4;
                     money *= 4;
                 }
                 core.status.enemys.cnt++;
