@@ -2499,8 +2499,7 @@ defense.prototype._replay_sellTower = function(action) {
 defense.prototype._replay_nextWave = function(action) {
     if (action != 'nextWave') return false;
     try {
-        var success = core.startMonster(core.status.floorId);
-        if (!success) return false;
+        core.startMonster(core.status.floorId);
         core.replay();
     } catch (e) {
         main.log(e);
