@@ -1351,6 +1351,16 @@ control.prototype.chooseReplayFile = function() {
 ////// 开始播放 //////
 control.prototype.startReplay = function(list) {
     if (!core.isPlaying()) return;
+    if (main.replayChecking) {
+        core.unregisterAnimationFrame('totalTime');
+        core.unregisterAnimationFrame('autoSave');
+        core.unregisterAnimationFrame('animate');
+        core.unregisterAnimationFrame('heroMoving');
+        core.unregisterAnimationFrame('weather');
+        core.unregisterAnimationFrame('tip');
+        core.unregisterAnimationFrame('parallelDo');
+        core.unregisterAnimationFrame('globalAnimate');
+    }
     core.status.replay.replaying = true;
     core.status.replay.pausing = true;
     core.status.replay.speed = 1.0;
@@ -1581,6 +1591,7 @@ control.prototype.isReplaying = function() {
 control.prototype.replay = function(force) {
     if (core.isReplaying())
         flags.__pause__ = false;
+    console.log(core.isPlaying(), core.isReplaying(), core.status.replay.animate, core.status.event.id, core.status.replay.pausing);
     if (!core.isPlaying() || !core.isReplaying() ||
         core.status.replay.animate || core.status.event.id) return;
     if (core.status.replay.pausing && !force) return;

@@ -500,7 +500,7 @@ defense.prototype.loadDefense = function(data) {
         if (core.defense.forceInterval <= 0) {
             delete core.defense.forceInterval;
             delete core.defense.nowInterval;
-            core.unregisterAnimationFrame('forceEnemy');
+            core.unregisterAnimationFrame('_forceEnemy');
             core.startMonster(core.status.floorId);
         }
     }
@@ -874,8 +874,8 @@ defense.prototype._startMonster_addEnemy = function(enemy, total, now, startLoc)
                     core.defense.forceInterval = 60000;
                     core.defense.nowInterval = 60;
                 } else {
-                    core.defense.forceInterval = core.status.floorId == 'MT1' ? 25000 : 15000;
-                    core.defense.nowInterval = core.status.floorId == 'MT1' ? 25 : 15;
+                    core.defense.forceInterval = 15000;
+                    core.defense.nowInterval = 15;
                 }
                 core.autosave();
             }
@@ -889,11 +889,12 @@ defense.prototype._startMonster_addEnemy = function(enemy, total, now, startLoc)
             if (!core.defense.forceInterval) {
                 if (wave % 10 == 0) {
                     core.defense.forceInterval = 60000;
-                    core.defense.nowInterval = 59;
+                    core.defense.nowInterval = 60;
                 } else {
                     core.defense.forceInterval = 15000;
-                    core.defense.nowInterval = 14;
+                    core.defense.nowInterval = 15;
                 }
+                core.autosave();
             }
             core.defense.forceInterval -= 16.67;
             if (core.defense.forceInterval < core.defense.nowInterval * 1000) {
@@ -1630,7 +1631,7 @@ defense.prototype.placeTower = function(x, y) {
 defense.prototype._addTower = function(x, y, tower) {
     if (core.status.hero.money < core.defense.towers[tower].cost) {
         if (!core.isReplaying())
-            console.error('金钱不足却执行了添加防御塔！');
+            core.drawTip('金钱不足却执行了添加防御塔！');
         return false;
     }
     core.status.towers[x + ',' + y] = core.clone(core.defense.towers[tower]);
@@ -1661,6 +1662,11 @@ defense.prototype._addTower = function(x, y, tower) {
 ////// 升级防御塔 ////// 
 defense.prototype.upgradeTower = function(x, y) {
     var now = core.clone(core.status.towers[x + ',' + y]);
+    if (!now) {
+        core.status.event.id = null;
+        core.drawTip('不存在防御塔！');
+        return false;
+    }
     // 检查最大等级
     if (now.max && now.level >= now.max) {
         core.drawTip('当前塔已满级！');
@@ -1668,10 +1674,6 @@ defense.prototype.upgradeTower = function(x, y) {
     }
     if (now.cost > core.status.hero.money) {
         core.drawTip('金钱不足！');
-        return false;
-    }
-    if (!now) {
-        console.error('不存在防御塔！');
         return false;
     }
     core.status.hero.money -= now.cost;
@@ -1697,7 +1699,7 @@ defense.prototype.upgradeTower = function(x, y) {
 ////// 经验升级 //////
 defense.prototype.expLevelUp = function(x, y) {
     var tower = core.status.towers[x + ',' + y];
-    if (!tower) return console.error('不存在防御塔！');
+    if (!tower) return core.drawTip('不存在防御塔！');
     var exp = tower.exp;
     var need = this.expLevelUpNeed(tower.expLevel)
     if (exp >= need) {
@@ -1722,7 +1724,9 @@ defense.prototype.sellTower = function(x, y) {
     var pos = x + ',' + y;
     var tower = core.status.realTower[pos];
     if (!tower) {
-        console.error('不存在防御塔！');
+        core.status.event.id = null;
+        core.status.event.data = null;
+        core.drawTip('不存在防御塔！');
         return false;
     }
     core.status.hero.money += tower.pauseBuild ? tower.haveCost : tower.haveCost * 0.6;
@@ -2266,7 +2270,7 @@ defense.prototype.setTowerEffect = function(ctx, speed) {
 defense.prototype.getClosestEnemy = function(x, y, n) {
     n = n || 1;
     var tower = core.status.realTower[x + ',' + y];
-    if (!tower) return console.error('不存在的防御塔！');
+    if (!tower) return core.drawTip('不存在的防御塔！');
     if (!tower.canReach) core.getCanReachBlock(x, y);
     var canReach = tower.canReach;
     var enemy = this.getSortedEnemy(canReach);
@@ -2445,27 +2449,48 @@ defense.prototype._replay_placeTower = function(action) {
     var x = detail[1],
         y = detail[2];
     try {
-        if (core.status.hero.money < core.defense.towers[tower].cost) return false;
-        core.status.towers[x + ',' + y] = core.clone(core.defense.towers[tower]);
-        var now = core.status.towers[x + ',' + y];
-        now.x = parseInt(x);
-        now.y = parseInt(y);
-        now.level = 1;
-        now.killed = 0;
-        now.damage = 0;
-        now.expLevel = 0;
-        now.exp = 0;
-        now.type = tower;
-        now.haveCost = core.defense.towers[tower].cost;
-        now.pauseBuild = true;
-        core.status.hero.money -= now.cost;
-        core.status.event.data = null;
-        core.status.event.id = null;
-        core.unlockControl();
-        core.saveRealStatusInCache(x, y);
-        core.initTowerSprite(now);
-        core.getChainLoc();
-        core.getFreezeLoc();
+        var success = place(x, y);
+        if (!success) {
+            var x = 0;
+            while (true) {
+                x++;
+                core.defense._replay_doAnimationFrame();
+                success = place(x, y);
+                if (success) break;
+                if (x > 1000) break;
+            }
+        }
+
+        function place(x, y) {
+            if (core.status.hero.money < core.defense.towers[tower].cost) return false;
+            if (tower == 'destroy') {
+                var t = core.status.towers[x + ',' + y];
+                if (!t) return false;
+                if (t.type != 'bomb') return false;
+                if (t.level < 5) return false;
+            }
+            core.status.towers[x + ',' + y] = core.clone(core.defense.towers[tower]);
+            var now = core.status.towers[x + ',' + y];
+            now.x = parseInt(x);
+            now.y = parseInt(y);
+            now.level = 1;
+            now.killed = 0;
+            now.damage = 0;
+            now.expLevel = 0;
+            now.exp = 0;
+            now.type = tower;
+            now.haveCost = core.defense.towers[tower].cost;
+            now.pauseBuild = true;
+            core.status.hero.money -= now.cost;
+            core.status.event.data = null;
+            core.status.event.id = null;
+            core.unlockControl();
+            core.saveRealStatusInCache(x, y);
+            core.initTowerSprite(now);
+            core.getChainLoc();
+            core.getFreezeLoc();
+            return true;
+        }
         core.replay();
     } catch (e) {
         main.log(e);
@@ -2481,7 +2506,16 @@ defense.prototype._replay_upgradeTower = function(action) {
         y = detail[2];
     try {
         var success = core.upgradeTower(x, y);
-        if (!success) return false;
+        if (!success) {
+            var x = 0;
+            while (true) {
+                x++;
+                core.defense._replay_doAnimationFrame();
+                success = core.upgradeTower(x, y);
+                if (success) break;
+                if (x > 1000) break;
+            }
+        };
         core.replay();
     } catch (e) {
         main.log(e);
@@ -2497,7 +2531,16 @@ defense.prototype._replay_sellTower = function(action) {
         y = detail[2];
     try {
         var success = core.sellTower(x, y);
-        if (!success) return false;
+        if (!success) {
+            var x = 0;
+            while (true) {
+                x++;
+                core.defense._replay_doAnimationFrame();
+                success = core.sellTower(x, y);
+                if (success) break;
+                if (x > 1000) break;
+            }
+        };
         core.replay();
     } catch (e) {
         main.log(e);
