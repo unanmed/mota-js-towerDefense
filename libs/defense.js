@@ -2578,7 +2578,7 @@ defense.prototype.pushActionToRoute = function(action) {
     // 检测当前录像最后一项的类型
     var last = core.status.route[core.status.route.length - 1];
     if (action == 'wait') {
-        if (parseInt(last))
+        if (parseInt(last) && parseInt(last) < 60)
             core.status.route[core.status.route.length - 1] =
             (parseInt(core.status.route[core.status.route.length - 1]) + 1).toString();
         else core.status.route.push('1');

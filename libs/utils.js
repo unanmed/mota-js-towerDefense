@@ -10,27 +10,27 @@ utils.js 工具类
 function utils() {
     this._init();
     this.scan = {
-        'up': {'x': 0, 'y': -1},
-        'left': {'x': -1, 'y': 0},
-        'down': {'x': 0, 'y': 1},
-        'right': {'x': 1, 'y': 0}
+        'up': { 'x': 0, 'y': -1 },
+        'left': { 'x': -1, 'y': 0 },
+        'down': { 'x': 0, 'y': 1 },
+        'right': { 'x': 1, 'y': 0 }
     };
     this.scan2 = {
-        'up': {'x': 0, 'y': -1},
-        'left': {'x': -1, 'y': 0},
-        'down': {'x': 0, 'y': 1},
-        'right': {'x': 1, 'y': 0},
-        'leftup': {'x': -1, 'y': -1},
-        'leftdown': {'x': -1, 'y': 1},
-        'rightup': {'x': 1, 'y': -1},
-        'rightdown': {'x': 1, 'y': 1}
+        'up': { 'x': 0, 'y': -1 },
+        'left': { 'x': -1, 'y': 0 },
+        'down': { 'x': 0, 'y': 1 },
+        'right': { 'x': 1, 'y': 0 },
+        'leftup': { 'x': -1, 'y': -1 },
+        'leftdown': { 'x': -1, 'y': 1 },
+        'rightup': { 'x': 1, 'y': -1 },
+        'rightdown': { 'x': 1, 'y': 1 }
     };
 }
 
-utils.prototype._init = function () {
+utils.prototype._init = function() {
     // 定义Object.assign
     if (typeof Object.assign != "function") {
-        Object.assign = function (target, varArgs) { // .length of function is 2
+        Object.assign = function(target, varArgs) { // .length of function is 2
             if (target == null) { // TypeError if undefined or null
                 throw new TypeError('Cannot convert undefined or null to object');
             }
@@ -53,7 +53,7 @@ utils.prototype._init = function () {
         };
     }
     if (typeof String.prototype.endsWith != "function") {
-        String.prototype.endsWith = function (search, this_len) {
+        String.prototype.endsWith = function(search, this_len) {
             if (this_len === undefined || this_len > this.length) {
                 this_len = this.length;
             }
@@ -61,7 +61,7 @@ utils.prototype._init = function () {
         };
     }
     if (typeof String.prototype.startsWith != "function") {
-        String.prototype.startsWith = function (search, this_len) {
+        String.prototype.startsWith = function(search, this_len) {
             if (this_len === undefined || this_len > this.length) {
                 this_len = this.length;
             }
@@ -69,7 +69,7 @@ utils.prototype._init = function () {
         }
     }
     if (typeof Array.prototype.fill != "function") {
-        Array.prototype.fill = function (value) {
+        Array.prototype.fill = function(value) {
             for (var i = 0; i < this.length; ++i)
                 if (this[i] == null)
                     this[i] = value;
@@ -77,40 +77,41 @@ utils.prototype._init = function () {
         }
     }
     if (typeof Array.prototype.includes != "function") {
-        Array.prototype.includes = function (value) {
+        Array.prototype.includes = function(value) {
             return this.indexOf(value) >= 0;
         }
     }
     if (typeof String.prototype.includes != "function") {
-        String.prototype.includes = function (value) {
+        String.prototype.includes = function(value) {
             return this.indexOf(value) >= 0;
         }
     }
     if (typeof Object.values != "function") {
-        Object.values = function (obj) {
-            return Object.keys(obj).map(function (one) { return obj[one]; });
+        Object.values = function(obj) {
+            return Object.keys(obj).map(function(one) { return obj[one]; });
         }
     }
 }
 
 ////// 将文字中的${和}（表达式）进行替换 //////
-utils.prototype.replaceText = function (text, prefix) {
+utils.prototype.replaceText = function(text, prefix) {
     if (typeof text != 'string') return text;
     var index = text.indexOf("${");
     if (index < 0) return text;
-    var cnt = 0, curr = index;
+    var cnt = 0,
+        curr = index;
     while (++curr < text.length) {
         if (text.charAt(curr) == '{') cnt++;
         if (text.charAt(curr) == '}') cnt--;
         if (cnt == 0) break;
     }
     if (cnt != 0) return text;
-    var value = core.calValue(text.substring(index+2, curr), prefix);
+    var value = core.calValue(text.substring(index + 2, curr), prefix);
     if (value == null) value = "";
     return text.substring(0, index) + value + core.replaceText(text.substring(curr + 1), prefix);
 }
 
-utils.prototype.replaceValue = function (value) {
+utils.prototype.replaceValue = function(value) {
     if (typeof value == "string" && (value.indexOf(":") >= 0 || value.indexOf("flag：") >= 0 || value.indexOf('global：') >= 0)) {
         if (value.indexOf('status:') >= 0)
             value = value.replace(/status:([a-zA-Z0-9_]+)/g, "core.getStatus('$1')");
@@ -124,24 +125,24 @@ utils.prototype.replaceValue = function (value) {
         //    value = value.replace(/switch:([a-zA-Z0-9_]+)/g, "core.getFlag('" + (prefix || ":f@x@y") + "@$1', 0)");
         if (value.indexOf('global:') >= 0 || value.indexOf('global：') >= 0)
             value = value.replace(/global[:：]([a-zA-Z0-9_\u4E00-\u9FCC\u3040-\u30FF\u2160-\u216B\u0391-\u03C9]+)/g, "core.getGlobal('$1', 0)");
-        if (value.indexOf('enemy:')>=0)
+        if (value.indexOf('enemy:') >= 0)
             value = value.replace(/enemy:([a-zA-Z0-9_]+)[\.:]([a-zA-Z0-9_]+)/g, "core.material.enemys['$1'].$2");
-        if (value.indexOf('blockId:')>=0)
+        if (value.indexOf('blockId:') >= 0)
             value = value.replace(/blockId:(\d+),(\d+)/g, "core.getBlockId($1, $2)");
-        if (value.indexOf('blockNumber:')>=0)
+        if (value.indexOf('blockNumber:') >= 0)
             value = value.replace(/blockNumber:(\d+),(\d+)/g, "core.getBlockNumber($1, $2)");
-        if (value.indexOf('blockCls:')>=0)
+        if (value.indexOf('blockCls:') >= 0)
             value = value.replace(/blockCls:(\d+),(\d+)/g, "core.getBlockCls($1, $2)");
-        if (value.indexOf('equip:')>=0)
+        if (value.indexOf('equip:') >= 0)
             value = value.replace(/equip:(\d)/g, "core.getEquip($1)");
-        if (value.indexOf('temp:')>=0)
+        if (value.indexOf('temp:') >= 0)
             value = value.replace(/temp:([a-zA-Z0-9_]+)/g, "core.getFlag('@temp@$1', 0)");
     }
     return value;
 }
 
 ////// 计算表达式的值 //////
-utils.prototype.calValue = function (value, prefix) {
+utils.prototype.calValue = function(value, prefix) {
     if (!core.isset(value)) return null;
     if (typeof value === 'string') {
         if (value.indexOf(':') >= 0 || value.indexOf("flag：") >= 0 || value.indexOf('global：') >= 0) {
@@ -158,60 +159,53 @@ utils.prototype.calValue = function (value, prefix) {
 }
 
 ////// 向某个数组前插入另一个数组或元素 //////
-utils.prototype.unshift = function (a, b) {
+utils.prototype.unshift = function(a, b) {
     if (!(a instanceof Array) || b == null) return;
     if (b instanceof Array) {
-        core.clone(b).reverse().forEach(function (e) {
+        core.clone(b).reverse().forEach(function(e) {
             a.unshift(e);
         });
-    }
-    else a.unshift(b);
+    } else a.unshift(b);
     return a;
 }
 
 ////// 向某个数组后插入另一个数组或元素 //////
-utils.prototype.push = function (a, b) {
+utils.prototype.push = function(a, b) {
     if (!(a instanceof Array) || b == null) return;
     if (b instanceof Array) {
-        core.clone(b).forEach(function (e) {
+        core.clone(b).forEach(function(e) {
             a.push(e);
         });
-    }
-    else a.push(b);
+    } else a.push(b);
     return a;
 }
 
-utils.prototype.decompress = function (value) {
+utils.prototype.decompress = function(value) {
     try {
         var output = lzw_decode(value);
         if (output) return JSON.parse(output);
-    }
-    catch (e) {
-    }
+    } catch (e) {}
     try {
         var output = LZString.decompress(value);
         if (output) return JSON.parse(output);
-    }
-    catch (e) {
-    }
+    } catch (e) {}
     try {
         return JSON.parse(value);
-    }
-    catch (e) {
+    } catch (e) {
         main.log(e);
     }
     return null;
 }
 
 ////// 设置本地存储 //////
-utils.prototype.setLocalStorage = function (key, value) {
+utils.prototype.setLocalStorage = function(key, value) {
     try {
         if (value == null) {
             this.removeLocalStorage(key);
             return;
         }
 
-        var str = JSON.stringify(value).replace(/[\u007F-\uFFFF]/g, function (chr) {
+        var str = JSON.stringify(value).replace(/[\u007F-\uFFFF]/g, function(chr) {
             return "\\u" + ("0000" + chr.charCodeAt(0).toString(16)).substr(-4)
         });
         localStorage.setItem(core.firstData.name + "_" + key, str);
@@ -220,15 +214,14 @@ utils.prototype.setLocalStorage = function (key, value) {
         else if (/^save\d+$/.test(key)) core.saves.ids[parseInt(key.substring(4))] = true;
 
         return true;
-    }
-    catch (e) {
+    } catch (e) {
         main.log(e);
         return false;
     }
 }
 
 ////// 获得本地存储 //////
-utils.prototype.getLocalStorage = function (key, defaultValue) {
+utils.prototype.getLocalStorage = function(key, defaultValue) {
     try {
         var value = JSON.parse(localStorage.getItem(core.firstData.name + "_" + key));
         if (value == null) return defaultValue;
@@ -239,27 +232,26 @@ utils.prototype.getLocalStorage = function (key, defaultValue) {
 }
 
 ////// 移除本地存储 //////
-utils.prototype.removeLocalStorage = function (key) {
+utils.prototype.removeLocalStorage = function(key) {
     localStorage.removeItem(core.firstData.name + "_" + key);
     if (key == 'autoSave') delete core.saves.ids[0];
     else if (/^save\d+$/.test(key)) delete core.saves.ids[parseInt(key.substring(4))];
 }
 
-utils.prototype.setLocalForage = function (key, value, successCallback, errorCallback) {
+utils.prototype.setLocalForage = function(key, value, successCallback, errorCallback) {
     if (value == null) {
         this.removeLocalForage(key);
         return;
     }
 
     var name = core.firstData.name + "_" + key;
-    var str = JSON.stringify(value).replace(/[\u007F-\uFFFF]/g, function (chr) {
+    var str = JSON.stringify(value).replace(/[\u007F-\uFFFF]/g, function(chr) {
         return "\\u" + ("0000" + chr.charCodeAt(0).toString(16)).substr(-4)
     });
-    var callback = function (err) {
+    var callback = function(err) {
         if (err) {
             if (errorCallback) errorCallback(err);
-        }
-        else {
+        } else {
             if (key == 'autoSave') core.saves.ids[0] = true;
             else if (/^save\d+$/.test(key)) core.saves.ids[parseInt(key.substring(4))] = true;
             if (successCallback) successCallback();
@@ -268,7 +260,7 @@ utils.prototype.setLocalForage = function (key, value, successCallback, errorCal
     this._setLocalForage_set(name, str, callback);
 }
 
-utils.prototype._setLocalForage_set = function (name, str, callback) {
+utils.prototype._setLocalForage_set = function(name, str, callback) {
     if (window.jsinterface && window.jsinterface.setLocalForage) {
         var id = setTimeout(null);
         core['__callback' + id] = callback;
@@ -281,13 +273,12 @@ utils.prototype._setLocalForage_set = function (name, str, callback) {
     }
 }
 
-utils.prototype.getLocalForage = function (key, defaultValue, successCallback, errorCallback) {
+utils.prototype.getLocalForage = function(key, defaultValue, successCallback, errorCallback) {
     var name = core.firstData.name + "_" + key;
-    var callback = function (err, value) {
+    var callback = function(err, value) {
         if (err) {
             if (errorCallback) errorCallback(err);
-        }
-        else {
+        } else {
             core.saves.cache[name] = value;
             if (!successCallback) return;
             if (value != null) {
@@ -304,7 +295,7 @@ utils.prototype.getLocalForage = function (key, defaultValue, successCallback, e
     this._getLocalForage_get(name, callback);
 }
 
-utils.prototype._getLocalForage_get = function (name, callback) {
+utils.prototype._getLocalForage_get = function(name, callback) {
     if (window.jsinterface && window.jsinterface.getLocalForage) {
         var id = setTimeout(null);
         core['__callback' + id] = callback;
@@ -314,13 +305,12 @@ utils.prototype._getLocalForage_get = function (name, callback) {
     }
 }
 
-utils.prototype.removeLocalForage = function (key, successCallback, errorCallback) {
+utils.prototype.removeLocalForage = function(key, successCallback, errorCallback) {
     var name = core.firstData.name + "_" + key;
-    var callback = function (err) {
+    var callback = function(err) {
         if (err) {
             if (errorCallback) errorCallback(err);
-        }
-        else {
+        } else {
             if (key == 'autoSave') delete core.saves.ids[0];
             else if (/^save\d+$/.test(key)) delete core.saves.ids[parseInt(key.substring(4))];
             if (successCallback) successCallback();
@@ -330,7 +320,7 @@ utils.prototype.removeLocalForage = function (key, successCallback, errorCallbac
     this._removeLocalForage_remove(name, callback);
 }
 
-utils.prototype._removeLocalForage_remove = function (name, callback) {
+utils.prototype._removeLocalForage_remove = function(name, callback) {
     if (window.jsinterface && window.jsinterface.removeLocalForage) {
         var id = setTimeout(null);
         core['__callback' + id] = callback;
@@ -340,7 +330,7 @@ utils.prototype._removeLocalForage_remove = function (name, callback) {
     }
 }
 
-utils.prototype.clearLocalForage = function (callback) {
+utils.prototype.clearLocalForage = function(callback) {
     core.saves.cache = {};
     if (window.jsinterface && window.jsinterface.clearLocalForage) {
         var id = setTimeout(null);
@@ -351,7 +341,7 @@ utils.prototype.clearLocalForage = function (callback) {
     }
 }
 
-utils.prototype.iterateLocalForage = function (iter, callback) {
+utils.prototype.iterateLocalForage = function(iter, callback) {
     if (window.jsinterface && window.jsinterface.iterateLocalForage) {
         var id = setTimeout(null);
         core['__iter' + id] = iter;
@@ -362,7 +352,7 @@ utils.prototype.iterateLocalForage = function (iter, callback) {
     }
 }
 
-utils.prototype.keysLocalForage = function (callback) {
+utils.prototype.keysLocalForage = function(callback) {
     if (window.jsinterface && window.jsinterface.keysLocalForage) {
         var id = setTimeout(null);
         core['__callback' + id] = callback;
@@ -372,7 +362,7 @@ utils.prototype.keysLocalForage = function (callback) {
     }
 }
 
-utils.prototype.lengthLocalForage = function (callback) {
+utils.prototype.lengthLocalForage = function(callback) {
     if (window.jsinterface && window.jsinterface.lengthLocalForage) {
         var id = setTimeout(null);
         core['__callback' + id] = callback;
@@ -382,12 +372,12 @@ utils.prototype.lengthLocalForage = function (callback) {
     }
 }
 
-utils.prototype.setGlobal = function (key, value) {
+utils.prototype.setGlobal = function(key, value) {
     if (core.isReplaying()) return;
     core.setLocalStorage(key, value);
 }
 
-utils.prototype.getGlobal = function (key, defaultValue) {
+utils.prototype.getGlobal = function(key, defaultValue) {
     var value;
     if (core.isReplaying()) {
         // 不考虑key不一致的情况
@@ -396,15 +386,13 @@ utils.prototype.getGlobal = function (key, defaultValue) {
             value = JSON.parse(core.decodeBase64(action.substring(7)));
             core.setFlag('__global__' + key, value);
             core.status.route.push("input2:" + core.encodeBase64(JSON.stringify(value)));
-        }
-        else {
+        } else {
             // 录像兼容性：尝试从flag和localStorage获得
             // 注意这里不再二次记录 input2: 到录像
             core.status.replay.toReplay.unshift(action);
             value = core.getFlag('__global__' + key, core.getLocalStorage(key, defaultValue));
         }
-    }
-    else {
+    } else {
         value = core.getLocalStorage(key, defaultValue);
         core.setFlag('__global__' + key, value);
         core.status.route.push("input2:" + core.encodeBase64(JSON.stringify(value)));
@@ -413,7 +401,7 @@ utils.prototype.getGlobal = function (key, defaultValue) {
 }
 
 ////// 深拷贝一个对象 //////
-utils.prototype.clone = function (data, filter, recursion) {
+utils.prototype.clone = function(data, filter, recursion) {
     if (!core.isset(data)) return null;
     // date
     if (data instanceof Date) {
@@ -426,7 +414,7 @@ utils.prototype.clone = function (data, filter, recursion) {
         var copy = [];
         for (var i in data) {
             if (!filter || filter(i, data[i]))
-                copy[i] = core.clone(data[i], recursion?filter:null, recursion);
+                copy[i] = core.clone(data[i], recursion ? filter : null, recursion);
         }
         return copy;
     }
@@ -439,7 +427,7 @@ utils.prototype.clone = function (data, filter, recursion) {
         var copy = {};
         for (var i in data) {
             if (data.hasOwnProperty(i) && (!filter || filter(i, data[i])))
-                copy[i] = core.clone(data[i], recursion?filter:null, recursion);
+                copy[i] = core.clone(data[i], recursion ? filter : null, recursion);
         }
         return copy;
     }
@@ -447,17 +435,17 @@ utils.prototype.clone = function (data, filter, recursion) {
 }
 
 ////// 深拷贝1D/2D数组优化 //////
-utils.prototype.cloneArray = function (data) {
+utils.prototype.cloneArray = function(data) {
     if (!(data instanceof Array)) return this.clone(data);
     if (data[0] instanceof Array) {
-        return data.map(function (one) { return one.slice(); });
+        return data.map(function(one) { return one.slice(); });
     } else {
         return data.slice();
     }
 }
 
 ////// 裁剪图片 //////
-utils.prototype.splitImage = function (image, width, height) {
+utils.prototype.splitImage = function(image, width, height) {
     if (typeof image == "string") {
         image = core.getMappedName(image);
         image = core.material.images.images[image];
@@ -470,8 +458,10 @@ utils.prototype.splitImage = function (image, width, height) {
     var ans = [];
     for (var j = 0; j < image.height; j += height) {
         for (var i = 0; i < image.width; i += width) {
-            var w = Math.min(width, image.width - i), h = Math.min(height, image.height - j);
-            canvas.width = w; canvas.height = h;
+            var w = Math.min(width, image.width - i),
+                h = Math.min(height, image.height - j);
+            canvas.width = w;
+            canvas.height = h;
             core.drawImage(ctx, image, i, j, w, h, 0, 0, w, h);
             var img = new Image();
             img.src = canvas.toDataURL("image/png");
@@ -482,53 +472,53 @@ utils.prototype.splitImage = function (image, width, height) {
 }
 
 ////// 格式化时间为字符串 //////
-utils.prototype.formatDate = function (date) {
+utils.prototype.formatDate = function(date) {
     if (!date) date = new Date();
-    return "" + date.getFullYear() + "-" + core.setTwoDigits(date.getMonth() + 1) + "-" + core.setTwoDigits(date.getDate()) + " "
-        + core.setTwoDigits(date.getHours()) + ":" + core.setTwoDigits(date.getMinutes()) + ":" + core.setTwoDigits(date.getSeconds());
+    return "" + date.getFullYear() + "-" + core.setTwoDigits(date.getMonth() + 1) + "-" + core.setTwoDigits(date.getDate()) + " " +
+        core.setTwoDigits(date.getHours()) + ":" + core.setTwoDigits(date.getMinutes()) + ":" + core.setTwoDigits(date.getSeconds());
 }
 
 ////// 格式化时间为最简字符串 //////
-utils.prototype.formatDate2 = function (date) {
+utils.prototype.formatDate2 = function(date) {
     if (!date) date = new Date();
-    return "" + date.getFullYear() + core.setTwoDigits(date.getMonth() + 1) + core.setTwoDigits(date.getDate())
-        + core.setTwoDigits(date.getHours()) + core.setTwoDigits(date.getMinutes()) + core.setTwoDigits(date.getSeconds());
+    return "" + date.getFullYear() + core.setTwoDigits(date.getMonth() + 1) + core.setTwoDigits(date.getDate()) +
+        core.setTwoDigits(date.getHours()) + core.setTwoDigits(date.getMinutes()) + core.setTwoDigits(date.getSeconds());
 }
 
-utils.prototype.formatTime = function (time) {
-    return core.setTwoDigits(parseInt(time/3600000))
-        +":"+core.setTwoDigits(parseInt(time/60000)%60)
-        +":"+core.setTwoDigits(parseInt(time/1000)%60);
+utils.prototype.formatTime = function(time) {
+    return core.setTwoDigits(parseInt(time / 3600000)) +
+        ":" + core.setTwoDigits(parseInt(time / 60000) % 60) +
+        ":" + core.setTwoDigits(parseInt(time / 1000) % 60);
 }
 
 ////// 两位数显示 //////
-utils.prototype.setTwoDigits = function (x) {
+utils.prototype.setTwoDigits = function(x) {
     return parseInt(x) < 10 ? "0" + x : x;
 }
 
-utils.prototype.formatSize = function (size) {
+utils.prototype.formatSize = function(size) {
     if (size < 1024) return size + 'B';
-    else if (size < 1024 * 1024) return (size/1024).toFixed(2) + "KB";
-    else return (size/1024/1024).toFixed(2) + "MB";
+    else if (size < 1024 * 1024) return (size / 1024).toFixed(2) + "KB";
+    else return (size / 1024 / 1024).toFixed(2) + "MB";
 }
 
-utils.prototype.formatBigNumber = function (x, digits) {
-	if (digits === true) digits = 5; // 兼容旧版onMap参数
-	if (!digits || digits < 5) digits = 6; // 连同负号、小数点和后缀字母在内的总位数，至少需为5，默认为6
-	x = Math.trunc(parseFloat(x)); // 尝试识别为小数，然后向0取整
-	if (x == null || !Number.isFinite(x)) return '???'; // 无法识别的数或正负无穷大，显示'???'
-	var units = [ // 单位及其后缀字母，可自定义，如改成千进制下的K、M、G、T、P
-		{ "val": 1e4, "suffix": "w" },
-		{ "val": 1e8, "suffix": "e" },
-		{ "val": 1e12, "suffix": "z" },
-		{ "val": 1e16, "suffix": "j" },
-		{ "val": 1e20, "suffix": "g" },
-	];
-	if (Math.abs(x) > 1e20 * Math.pow(10, digits - 2))
-		return x.toExponential(0); // 绝对值过大以致于失去精度的数，直接使用科学记数法，系数只保留整数
-	var sign = x < 0 ? '-' : '';
-	if (sign) --digits; // 符号位单独处理，负号要占一位
-	x = Math.abs(x);
+utils.prototype.formatBigNumber = function(x, digits) {
+    if (digits === true) digits = 5; // 兼容旧版onMap参数
+    if (!digits || digits < 5) digits = 6; // 连同负号、小数点和后缀字母在内的总位数，至少需为5，默认为6
+    x = Math.trunc(parseFloat(x)); // 尝试识别为小数，然后向0取整
+    if (x == null || !Number.isFinite(x)) return '???'; // 无法识别的数或正负无穷大，显示'???'
+    var units = [ // 单位及其后缀字母，可自定义，如改成千进制下的K、M、G、T、P
+        { "val": 1e4, "suffix": "w" },
+        { "val": 1e8, "suffix": "e" },
+        { "val": 1e12, "suffix": "z" },
+        { "val": 1e16, "suffix": "j" },
+        { "val": 1e20, "suffix": "g" },
+    ];
+    if (Math.abs(x) > 1e20 * Math.pow(10, digits - 2))
+        return x.toExponential(0); // 绝对值过大以致于失去精度的数，直接使用科学记数法，系数只保留整数
+    var sign = x < 0 ? '-' : '';
+    if (sign) --digits; // 符号位单独处理，负号要占一位
+    x = Math.abs(x);
 
     if (x < Math.pow(10, digits)) return sign + x;
 
@@ -539,7 +529,7 @@ utils.prototype.formatBigNumber = function (x, digits) {
         u = u.substring(0, u[u.length - 2] == '.' ? u.length - 2 : u.length - 1);
         return sign + u + each.suffix;
     }
-	return sign + x.toExponential(0);
+    return sign + x.toExponential(0);
 }
 
 ////// 变速移动 //////
@@ -568,26 +558,31 @@ utils.prototype.applyEasing = function(name) {
 }
 
 ////// 数组转RGB //////
-utils.prototype.arrayToRGB = function (color) {
+utils.prototype.arrayToRGB = function(color) {
     if (!(color instanceof Array)) return color;
-    var nowR = this.clamp(parseInt(color[0]), 0, 255), nowG = this.clamp(parseInt(color[1]), 0, 255),
+    var nowR = this.clamp(parseInt(color[0]), 0, 255),
+        nowG = this.clamp(parseInt(color[1]), 0, 255),
         nowB = this.clamp(parseInt(color[2]), 0, 255);
     return "#" + ((1 << 24) + (nowR << 16) + (nowG << 8) + nowB).toString(16).slice(1);
 }
 
-utils.prototype.arrayToRGBA = function (color) {
+utils.prototype.arrayToRGBA = function(color) {
     if (!(color instanceof Array)) return color;
     if (color[3] == null) color[3] = 1;
-    var nowR = this.clamp(parseInt(color[0]), 0, 255), nowG = this.clamp(parseInt(color[1]), 0, 255),
-        nowB = this.clamp(parseInt(color[2]), 0, 255), nowA = this.clamp(parseFloat(color[3]), 0, 1);
+    var nowR = this.clamp(parseInt(color[0]), 0, 255),
+        nowG = this.clamp(parseInt(color[1]), 0, 255),
+        nowB = this.clamp(parseInt(color[2]), 0, 255),
+        nowA = this.clamp(parseFloat(color[3]), 0, 1);
     return "rgba(" + nowR + "," + nowG + "," + nowB + "," + nowA + ")";
 }
 
 ////// 加密路线 //////
-utils.prototype.encodeRoute = function (route) {
-    var ans = "", lastMove = "", cnt = 0;
+utils.prototype.encodeRoute = function(route) {
+    var ans = "",
+        lastMove = "",
+        cnt = 0;
 
-    route.forEach(function (t) {
+    route.forEach(function(t) {
         if (t == 'up' || t == 'down' || t == 'left' || t == 'right') {
             if (t != lastMove && cnt > 0) {
                 ans += lastMove.substring(0, 1).toUpperCase();
@@ -596,8 +591,7 @@ utils.prototype.encodeRoute = function (route) {
             }
             lastMove = t;
             cnt++;
-        }
-        else {
+        } else {
             if (cnt > 0) {
                 ans += lastMove.substring(0, 1).toUpperCase();
                 if (cnt > 1) ans += cnt;
@@ -613,12 +607,12 @@ utils.prototype.encodeRoute = function (route) {
     return LZString.compressToBase64(ans);
 }
 
-utils.prototype._encodeRoute_id2number = function (id) {
+utils.prototype._encodeRoute_id2number = function(id) {
     var number = core.maps.getNumberById(id);
     return number == 0 ? id : number;
 }
 
-utils.prototype._encodeRoute_encodeOne = function (t) {
+utils.prototype._encodeRoute_encodeOne = function(t) {
     if (t.indexOf('item:') == 0)
         return "I" + this._encodeRoute_id2number(t.substring(5)) + ":";
     else if (t.indexOf('unEquip:') == 0)
@@ -659,11 +653,11 @@ utils.prototype._encodeRoute_encodeOne = function (t) {
         return 'k' + t.substring(6);
     else if (t.indexOf('random:') == 0)
         return 'X' + t.substring(7);
-    return '('+t+')';
+    return '(' + t + ')';
 }
 
 ////// 解密路线 //////
-utils.prototype.decodeRoute = function (route) {
+utils.prototype.decodeRoute = function(route) {
     if (!route) return route;
 
     // 解压缩
@@ -673,17 +667,29 @@ utils.prototype.decodeRoute = function (route) {
             if (v != "" || route.length < 8)
                 route = v;
         }
-    } catch (e) {
-    }
+    } catch (e) {}
 
-    var decodeObj = {route: route, index: 0, ans: []};
+    var decodeObj = { route: route, index: 0, ans: [] };
     while (decodeObj.index < decodeObj.route.length) {
         this._decodeRoute_decodeOne(decodeObj, decodeObj.route.charAt(decodeObj.index++));
+    }
+    var l = decodeObj.ans.length;
+    for (var i = 0; i < l; i++) {
+        var one = decodeObj.ans[i];
+        if (parseInt(one)) {
+            var n = parseInt(one);
+            if (n > 60) {
+                var m = Math.ceil(n / 60);
+                for (var j = 0; j < m; j++) {
+                    decodeObj.ans.push('1');
+                }
+            }
+        }
     }
     return decodeObj.ans;
 }
 
-utils.prototype._decodeRoute_getNumber = function (decodeObj, noparse) {
+utils.prototype._decodeRoute_getNumber = function(decodeObj, noparse) {
     var num = "";
     var first = true;
     while (true) {
@@ -698,7 +704,7 @@ utils.prototype._decodeRoute_getNumber = function (decodeObj, noparse) {
     return noparse ? num : parseInt(num);
 }
 
-utils.prototype._decodeRoute_getString = function (decodeObj) {
+utils.prototype._decodeRoute_getString = function(decodeObj) {
     var str = "";
     while (decodeObj.index < decodeObj.route.length && decodeObj.route.charAt(decodeObj.index) != ':') {
         str += decodeObj.route.charAt(decodeObj.index++);
@@ -707,7 +713,7 @@ utils.prototype._decodeRoute_getString = function (decodeObj) {
     return str;
 }
 
-utils.prototype._decodeRoute_number2id = function (number) {
+utils.prototype._decodeRoute_number2id = function(number) {
     if (/^\d+$/.test(number)) {
         var info = core.maps.blocksInfo[number];
         if (info) return info.id;
@@ -715,7 +721,7 @@ utils.prototype._decodeRoute_number2id = function (number) {
     return number;
 }
 
-utils.prototype._decodeRoute_decodeOne = function (decodeObj, c) {
+utils.prototype._decodeRoute_decodeOne = function(decodeObj, c) {
     // --- 特殊处理自定义项
     if (c == '(') {
         var idx = decodeObj.route.indexOf(')', decodeObj.index);
@@ -728,7 +734,7 @@ utils.prototype._decodeRoute_decodeOne = function (decodeObj, c) {
     var nxt = (c == 'I' || c == 'e' || c == 'F' || c == 'S' || c == 'Q' || c == 't') ?
         this._decodeRoute_getString(decodeObj) : this._decodeRoute_getNumber(decodeObj);
 
-    var mp = {"U": "up", "D": "down", "L": "left", "R": "right"};
+    var mp = { "U": "up", "D": "down", "L": "left", "R": "right" };
 
     switch (c) {
         case "U":
@@ -797,7 +803,7 @@ utils.prototype._decodeRoute_decodeOne = function (decodeObj, c) {
             var px = this._decodeRoute_getNumber(decodeObj);
             ++decodeObj.index;
             var py = this._decodeRoute_getNumber(decodeObj);
-            decodeObj.ans.push("click:"+nxt+":"+px+":"+py);
+            decodeObj.ans.push("click:" + nxt + ":" + px + ":" + py);
             break;
         case "X":
             decodeObj.ans.push("random:" + nxt);
@@ -806,12 +812,12 @@ utils.prototype._decodeRoute_decodeOne = function (decodeObj, c) {
 }
 
 ////// 判断某对象是否不为null也不为NaN //////
-utils.prototype.isset = function (val) {
+utils.prototype.isset = function(val) {
     return val != null && !(typeof val == 'number' && isNaN(val));
 }
 
 ////// 获得子数组 //////
-utils.prototype.subarray = function (a, b) {
+utils.prototype.subarray = function(a, b) {
     if (!(a instanceof Array) || !(b instanceof Array) || a.length < b.length)
         return null;
     for (var i = 0; i < b.length; ++i) {
@@ -820,22 +826,23 @@ utils.prototype.subarray = function (a, b) {
     return a.slice(b.length);
 }
 
-utils.prototype.inArray = function (array, element) {
+utils.prototype.inArray = function(array, element) {
     return (array instanceof Array) && array.indexOf(element) >= 0;
 }
 
-utils.prototype.clamp = function (x, a, b) {
-    var min = Math.min(a, b), max = Math.max(a, b);
+utils.prototype.clamp = function(x, a, b) {
+    var min = Math.min(a, b),
+        max = Math.max(a, b);
     return Math.min(Math.max(x || 0, min), max);
 }
 
-utils.prototype.getCookie = function (name) {
+utils.prototype.getCookie = function(name) {
     var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
     return match ? match[2] : null;
 }
 
 ////// 设置statusBar的innerHTML，会自动斜体和放缩，也可以增加自定义css //////
-utils.prototype.setStatusBarInnerHTML = function (name, value, css) {
+utils.prototype.setStatusBarInnerHTML = function(name, value, css) {
     if (!core.statusBar[name]) return;
     if (typeof value == 'number') value = this.formatBigNumber(value);
     var italic = /^[-a-zA-Z0-9`~!@#$%^&*()_=+\[{\]}\\|;:'",<.>\/?]*$/.test(value);
@@ -858,7 +865,7 @@ utils.prototype.setStatusBarInnerHTML = function (name, value, css) {
     core.statusBar[name].setAttribute('_value', value);;
 }
 
-utils.prototype.strlen = function (str) {
+utils.prototype.strlen = function(str) {
     var count = 0;
     for (var i = 0, len = str.length; i < len; i++) {
         count += str.charCodeAt(i) < 256 ? 1 : 2;
@@ -866,19 +873,27 @@ utils.prototype.strlen = function (str) {
     return count;
 };
 
-utils.prototype.turnDirection = function (turn, direction) {
+utils.prototype.turnDirection = function(turn, direction) {
     direction = direction || core.getHeroLoc('direction');
     var directionList = ["left", "leftup", "up", "rightup", "right", "rightdown", "down", "leftdown"];
     if (directionList.indexOf(turn) >= 0) return turn;
-    if (turn == ':hero') return core.getHeroLoc('direction'); 
+    if (turn == ':hero') return core.getHeroLoc('direction');
     if (turn == ':backhero') return this.turnDirection(':back', core.getHeroLoc('direction'));
     if (typeof turn === 'number' && turn % 45 == 0) turn /= 45;
     else {
         switch (turn) {
-            case ':left': turn = 6; break; // turn left
-            case ':right': turn = 2; break; // turn right
-            case ':back': turn = 4; break; // turn back
-            default: turn = 0; break;
+            case ':left':
+                turn = 6;
+                break; // turn left
+            case ':right':
+                turn = 2;
+                break; // turn right
+            case ':back':
+                turn = 4;
+                break; // turn back
+            default:
+                turn = 0;
+                break;
         }
     }
     var index = directionList.indexOf(direction);
@@ -886,9 +901,9 @@ utils.prototype.turnDirection = function (turn, direction) {
     return directionList[(index + (turn || 0)) % directionList.length];
 }
 
-utils.prototype.matchWildcard = function (pattern, string) {
+utils.prototype.matchWildcard = function(pattern, string) {
     try {
-        return new RegExp('^' + pattern.split(/\*+/).map(function (s) {
+        return new RegExp('^' + pattern.split(/\*+/).map(function(s) {
             return s.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
         }).join('.*') + '$').test(string);
     } catch (e) {
@@ -896,7 +911,7 @@ utils.prototype.matchWildcard = function (pattern, string) {
     }
 }
 
-utils.prototype.matchRegex = function (pattern, string) {
+utils.prototype.matchRegex = function(pattern, string) {
     try {
         if (pattern.startsWith("^")) pattern = pattern.substring(1);
         if (pattern.endsWith("$")) pattern = pattern.substring(0, pattern.length - 1);
@@ -907,20 +922,20 @@ utils.prototype.matchRegex = function (pattern, string) {
 }
 
 ////// Base64加密 //////
-utils.prototype.encodeBase64 = function (str) {
-    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function (match, p1) {
+utils.prototype.encodeBase64 = function(str) {
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
         return String.fromCharCode(parseInt(p1, 16))
     }))
 }
 
 ////// Base64解密 //////
-utils.prototype.decodeBase64 = function (str) {
-    return decodeURIComponent(atob(str).split('').map(function (c) {
+utils.prototype.decodeBase64 = function(str) {
+    return decodeURIComponent(atob(str).split('').map(function(c) {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
     }).join(''));
 }
 
-utils.prototype.rand = function (num) {
+utils.prototype.rand = function(num) {
     var rand = core.getFlag('__rand__');
     rand = this.__next_rand(rand);
     core.setFlag('__rand__', rand);
@@ -931,7 +946,7 @@ utils.prototype.rand = function (num) {
 }
 
 ////// 生成随机数（录像方法） //////
-utils.prototype.rand2 = function (num) {
+utils.prototype.rand2 = function(num) {
     num = num || 2147483648;
     num = Math.abs(num);
 
@@ -944,20 +959,18 @@ utils.prototype.rand2 = function (num) {
                 console.warn('错误！当前random:项超过范围。将重新随机生成！');
                 value = Math.floor(Math.random() * num);
             }
-        }
-        else {
+        } else {
             console.warn('错误！当前需要一个random:项。将重新随机生成！');
             value = Math.floor(Math.random() * num);
         }
-    }
-    else {
+    } else {
         value = Math.floor(Math.random() * num);
     }
     core.status.route.push("random:" + value);
     return value;
 }
 
-utils.prototype.__init_seed = function () {
+utils.prototype.__init_seed = function() {
     var rand = new Date().getTime() % 34834795 + 3534;
     rand = this.__next_rand(rand);
     rand = this.__next_rand(rand);
@@ -966,14 +979,14 @@ utils.prototype.__init_seed = function () {
     core.setFlag('__rand__', rand);
 }
 
-utils.prototype.__next_rand = function (_rand) {
+utils.prototype.__next_rand = function(_rand) {
     _rand = (_rand % 127773) * 16807 - ~~(_rand / 127773) * 2836;
     _rand += _rand < 0 ? 2147483647 : 0;
     return _rand;
 }
 
 ////// 读取一个本地文件内容 //////
-utils.prototype.readFile = function (success, error, accept, readType) {
+utils.prototype.readFile = function(success, error, accept, readType) {
 
     core.platform.successCallback = success;
     core.platform.errorCallback = error;
@@ -1001,7 +1014,7 @@ utils.prototype.readFile = function (success, error, accept, readType) {
         core.platform.fileInput = document.createElement("input");
         core.platform.fileInput.style.opacity = 0;
         core.platform.fileInput.type = 'file';
-        core.platform.fileInput.onchange = function () {
+        core.platform.fileInput.onchange = function() {
             var files = core.platform.fileInput.files;
             if (files.length == 0) {
                 if (core.platform.errorCallback)
@@ -1020,7 +1033,7 @@ utils.prototype.readFile = function (success, error, accept, readType) {
 }
 
 ////// 读取文件完毕 //////
-utils.prototype.readFileContent = function (content) {
+utils.prototype.readFileContent = function(content) {
     var obj = null;
     if (content.slice(0, 4) === 'data') {
         if (core.platform.successCallback)
@@ -1049,7 +1062,7 @@ utils.prototype.readFileContent = function (content) {
 }
 
 ////// 下载文件到本地 //////
-utils.prototype.download = function (filename, content) {
+utils.prototype.download = function(filename, content) {
 
     if (window.jsinterface) {
         window.jsinterface.download(filename, content);
@@ -1066,8 +1079,7 @@ utils.prototype.download = function (filename, content) {
     if (core.platform.isIOS) {
         if (core.copy(content)) {
             alert("iOS平台下不支持直接下载文件！\n所有应下载内容已经复制到您的剪切板，请自行创建空白文件并粘贴。");
-        }
-        else {
+        } else {
             alert("iOS平台下不支持下载操作！");
         }
         return;
@@ -1078,8 +1090,7 @@ utils.prototype.download = function (filename, content) {
         if (!core.platform.isChrome || core.platform.isQQ || core.platform.isWeChat) { // 检测chrome
             if (core.copy(content)) {
                 alert("移动端只有Chrome浏览器支持直接下载文件！\n所有应下载内容已经复制到您的剪切板，请自行创建空白文件并粘贴。");
-            }
-            else {
+            } else {
                 alert("该平台或浏览器暂不支持下载操作！");
             }
             return;
@@ -1089,7 +1100,7 @@ utils.prototype.download = function (filename, content) {
     // Step 3: 如果是Safari浏览器，则提示并打开新窗口
     if (core.platform.isSafari) {
         alert("你当前使用的是Safari浏览器，不支持直接下载文件。\n即将打开一个新窗口为应下载内容，请自行全选复制然后创建空白文件并粘贴。");
-        var blob = new Blob([content], {type: 'text/plain;charset=utf-8'});
+        var blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
         var href = window.URL.createObjectURL(blob);
         var opened = window.open(href, "_blank");
         window.URL.revokeObjectURL(href);
@@ -1097,11 +1108,10 @@ utils.prototype.download = function (filename, content) {
     }
 
     // Step 4: 下载
-    var blob = new Blob([content], {type: 'text/plain;charset=utf-8'});
+    var blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     if (window.navigator.msSaveOrOpenBlob) {
         window.navigator.msSaveBlob(blob, filename);
-    }
-    else {
+    } else {
         var href = window.URL.createObjectURL(blob);
         var elem = window.document.createElement('a');
         elem.href = href;
@@ -1114,7 +1124,7 @@ utils.prototype.download = function (filename, content) {
 }
 
 ////// 复制一段内容到剪切板 //////
-utils.prototype.copy = function (data) {
+utils.prototype.copy = function(data) {
 
     if (window.jsinterface) {
         window.jsinterface.copy(data);
@@ -1150,7 +1160,7 @@ utils.prototype.copy = function (data) {
 }
 
 ////// 显示一段confirm //////
-utils.prototype.myconfirm = function (hint, yesCallback, noCallback) {
+utils.prototype.myconfirm = function(hint, yesCallback, noCallback) {
     main.dom.inputDiv.style.display = 'block';
     main.dom.inputMessage.innerHTML = hint.replace(/\n/g, '<br/>');
     main.dom.inputBox.style.display = 'none';
@@ -1163,14 +1173,14 @@ utils.prototype.myconfirm = function (hint, yesCallback, noCallback) {
 }
 
 ////// 让用户输入一段文字 //////
-utils.prototype.myprompt = function (hint, value, callback) {
+utils.prototype.myprompt = function(hint, value, callback) {
     main.dom.inputDiv.style.display = 'block';
     main.dom.inputMessage.innerHTML = hint.replace(/\n/g, '<br/>');
     main.dom.inputBox.style.display = 'block';
-    main.dom.inputBox.value = value==null?"":value;
+    main.dom.inputBox.value = value == null ? "" : value;
     main.dom.inputYes.blur();
     main.dom.inputNo.blur();
-    setTimeout(function () {
+    setTimeout(function() {
         main.dom.inputBox.focus();
     });
     core.status.holdingKeys = [];
@@ -1179,7 +1189,7 @@ utils.prototype.myprompt = function (hint, value, callback) {
 }
 
 ////// 动画显示某对象 //////
-utils.prototype.showWithAnimate = function (obj, speed, callback) {
+utils.prototype.showWithAnimate = function(obj, speed, callback) {
     obj.style.display = 'block';
     if (!speed || main.mode != 'play') {
         obj.style.opacity = 1;
@@ -1188,7 +1198,7 @@ utils.prototype.showWithAnimate = function (obj, speed, callback) {
     }
     obj.style.opacity = 0;
     var opacityVal = 0;
-    var showAnimate = window.setInterval(function () {
+    var showAnimate = window.setInterval(function() {
         opacityVal += 0.03;
         obj.style.opacity = opacityVal;
         if (opacityVal > 1) {
@@ -1199,7 +1209,7 @@ utils.prototype.showWithAnimate = function (obj, speed, callback) {
 }
 
 ////// 动画使某对象消失 //////
-utils.prototype.hideWithAnimate = function (obj, speed, callback) {
+utils.prototype.hideWithAnimate = function(obj, speed, callback) {
     if (!speed || main.mode != 'play') {
         obj.style.display = 'none';
         if (callback) callback();
@@ -1207,7 +1217,7 @@ utils.prototype.hideWithAnimate = function (obj, speed, callback) {
     }
     obj.style.opacity = 1;
     var opacityVal = 1;
-    var hideAnimate = window.setInterval(function () {
+    var hideAnimate = window.setInterval(function() {
         opacityVal -= 0.03;
         obj.style.opacity = opacityVal;
         if (opacityVal < 0) {
@@ -1219,20 +1229,22 @@ utils.prototype.hideWithAnimate = function (obj, speed, callback) {
 }
 
 ////// 生成浏览器唯一的 guid //////
-utils.prototype.getGuid = function () {
+utils.prototype.getGuid = function() {
     var guid = localStorage.getItem('guid');
     if (guid != null) return guid;
-    guid = 'xxxxxxxx_xxxx_4xxx_yxxx_xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    guid = 'xxxxxxxx_xxxx_4xxx_yxxx_xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0,
+            v = c == 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
     });
     localStorage.setItem('guid', guid);
     return guid;
 }
 
-utils.prototype.hashCode = function (obj) {
+utils.prototype.hashCode = function(obj) {
     if (typeof obj == 'string') {
-        var hash = 0, i, chr;
+        var hash = 0,
+            i, chr;
         if (obj.length === 0) return hash;
         for (i = 0; i < obj.length; i++) {
             chr = obj.charCodeAt(i);
@@ -1244,7 +1256,7 @@ utils.prototype.hashCode = function (obj) {
     return this.hashCode(JSON.stringify(obj).split("").sort().join(""));
 }
 
-utils.prototype.same = function (a, b) {
+utils.prototype.same = function(a, b) {
     if (a == null && b == null) return true;
     if (a == null || b == null) return false;
     if (a === b) return true;
@@ -1267,8 +1279,8 @@ utils.prototype.same = function (a, b) {
     return false;
 }
 
-utils.prototype.unzip = function (blobOrUrl, success, error, convertToText, onprogress) {
-    var _error = function (msg) {
+utils.prototype.unzip = function(blobOrUrl, success, error, convertToText, onprogress) {
+    var _error = function(msg) {
         main.log(msg);
         if (error) error(msg);
     }
@@ -1278,7 +1290,7 @@ utils.prototype.unzip = function (blobOrUrl, success, error, convertToText, onpr
     }
 
     if (typeof blobOrUrl == 'string') {
-        return core.http('GET', blobOrUrl, null, function (data) {
+        return core.http('GET', blobOrUrl, null, function(data) {
             core.unzip(data, success, error, convertToText);
         }, _error, null, 'blob', onprogress);
     }
@@ -1287,10 +1299,10 @@ utils.prototype.unzip = function (blobOrUrl, success, error, convertToText, onpr
         return _error("Should use Blob or URL as input");
     }
 
-    zip.createReader(new zip.BlobReader(blobOrUrl), function (reader) {
-        reader.getEntries(function (entries) {
-            core.utils._unzip_readEntries(entries, function (data) {
-                reader.close(function () {
+    zip.createReader(new zip.BlobReader(blobOrUrl), function(reader) {
+        reader.getEntries(function(entries) {
+            core.utils._unzip_readEntries(entries, function(data) {
+                reader.close(function() {
                     if (success) success(data);
                 });
             }, convertToText);
@@ -1298,14 +1310,14 @@ utils.prototype.unzip = function (blobOrUrl, success, error, convertToText, onpr
     }, _error);
 }
 
-utils.prototype._unzip_readEntries = function (entries, success, convertToText) {
+utils.prototype._unzip_readEntries = function(entries, success, convertToText) {
     var results = {};
     if (entries == null || entries.length == 0) {
         return success(results);
     }
     var length = entries.length;
-    entries.forEach(function (entry) {
-        entry.getData(convertToText ? new zip.TextWriter('utf8') : new zip.BlobWriter(), function (data) {
+    entries.forEach(function(entry) {
+        entry.getData(convertToText ? new zip.TextWriter('utf8') : new zip.BlobWriter(), function(data) {
             results[entry.filename] = data;
             length--;
             if (length == 0) {
@@ -1315,31 +1327,30 @@ utils.prototype._unzip_readEntries = function (entries, success, convertToText) 
     });
 }
 
-utils.prototype.http = function (type, url, formData, success, error, mimeType, responseType, onprogress) {
+utils.prototype.http = function(type, url, formData, success, error, mimeType, responseType, onprogress) {
     var xhr = new XMLHttpRequest();
     xhr.open(type, url, true);
     if (mimeType) xhr.overrideMimeType(mimeType);
     if (responseType) xhr.responseType = responseType;
-    xhr.onload = function (e) {
+    xhr.onload = function(e) {
         if (xhr.status == 200) {
             if (success) success(xhr.response);
-        }
-        else {
+        } else {
             if (error) error("HTTP " + xhr.status);
         }
     };
-    xhr.onprogress = function (e) {
+    xhr.onprogress = function(e) {
         if (e.lengthComputable) {
             if (onprogress) onprogress(e.loaded, e.total);
         }
     }
-    xhr.onabort = function () {
+    xhr.onabort = function() {
         if (error) error("Abort");
     }
-    xhr.ontimeout = function () {
+    xhr.ontimeout = function() {
         if (error) error("Timeout");
     }
-    xhr.onerror = function () {
+    xhr.onerror = function() {
         if (error) error("Error on Connection");
     }
     if (formData)
@@ -1360,8 +1371,7 @@ function lzw_encode(s) {
         currChar = data[i];
         if (dict[phrase + currChar] != null) {
             phrase += currChar;
-        }
-        else {
+        } else {
             out.push(phrase.length > 1 ? dict[phrase] : phrase.charCodeAt(0));
             dict[phrase + currChar] = code;
             code++;
@@ -1388,8 +1398,7 @@ function lzw_decode(s) {
         var currCode = data[i].charCodeAt(0);
         if (currCode < 256) {
             phrase = data[i];
-        }
-        else {
+        } else {
             phrase = dict[currCode] ? dict[currCode] : (oldPhrase + currChar);
         }
         out.push(phrase);
