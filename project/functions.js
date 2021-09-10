@@ -188,10 +188,13 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                 // 首次抵达楼层时执行的事件（后插入，先执行）
                 if (!core.hasVisitedFloor(floorId)) {
                     var todo = core.clone(core.floors[floorId].firstArrive);
+                    if (core.status.floorId.startsWith('L'))
+                        todo = core.push(todo, "闯关模式下，计分方式为怪物初始生命值*怪物初始移速*怪物剩余路程百分比");
+                    else todo = core.push(todo, "无尽模式下，计分方式为怪物初始生命值*怪物初始移速");
                     todo = core.push(todo, [
                         { "type": "function", "function": "function(){\ncore.startMonster('MT0', true);\n}" },
                         { "type": "setValue", "name": "status:money", "value": "200" },
-                        { "type": "function", "function": "function(){\nif (!main.replayChecking) {\n\tsetTimeout(function () { core.control.updateStatusBar(null, true) }, 5);\n}\n}" },
+                        { "type": "function", "function": "function() { if (!main.replayChecking) { core.control.updateStatusBar(null, true); } }" },
                     ]);
                     core.insertAction(todo);
                     core.visitFloor(floorId);
@@ -512,8 +515,8 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                 [4, "装甲", "该怪物免疫50%的子弹伤害（除闪电塔、激光塔、地雷塔、士兵塔、夹击塔、震荡塔以外的伤害），但同时会受到200%的闪电和激光伤害", "#ffee77"],
                 [5, "先攻", "怪物首先攻击", "#ffee77"],
                 [6, "匀加速", "该怪物的移速每帧增加0.02", "#ffee77"],
-                [7, "破甲", function(enemy) { return "战斗前，怪物附加角色防御的" + Math.floor(100 * (enemy.defValue || core.values.breakArmor || 0)) + "%作为伤害"; }, "#88c0ff"],
-                [8, "反击", function(enemy) { return "战斗时，怪物每回合附加角色攻击的" + Math.floor(100 * (enemy.atkValue || core.values.counterAttack || 0)) + "%作为伤害，无视角色防御"; }, "#ffaa44"],
+                [7, "瞬移", "怪物每移动两格，便会瞬移一格", "#88c0ff"],
+                [8, "进退两难", "怪物每移动5格，便会后退一格", "#ffaa44"],
                 [9, "净化", function(enemy) { return "战斗前，怪物附加角色护盾的" + (enemy.n || core.values.purify) + "倍作为伤害"; }, "#80eed6"],
                 [10, "模仿", "怪物的攻防和角色攻防相等", "#b0c0dd"],
                 [11, "吸血", function(enemy) { return "战斗前，怪物首先吸取角色的" + Math.floor(100 * enemy.value || 0) + "%生命（约" + Math.floor((enemy.value || 0) * core.getStatus('hp')) + "点）作为伤害" + (enemy.add ? "，并把伤害数值加到自身生命上" : ""); }, "#dd4448"],
@@ -787,6 +790,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                     } else {
                         for (var one in core.status.towers) {
                             core.status.towers[one].pauseBuild = false;
+                            core.status.realTower[one].pauseBuild = false;
                         }
                         flags.__pause__ = false;
                         core.drawTip('继续游戏');
@@ -884,6 +888,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                         var line = Math.floor((py - 305) / 37);
                         var list = Math.floor((px - 9) / 37);
                         var id = line * 3 + list;
+                        if (core.status.floorId == 'L1' && id >= 3) return;
                         if (id > 11) return;
                         core.status.event.data = Object.keys(core.defense.towers)[id];
                         core.status.event.id = null;
@@ -1001,6 +1006,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                         var line = Math.floor((py - 30) / 37);
                         var list = Math.floor((px - 260) / 37);
                         var id = line * 4 + list;
+                        if (core.status.floorId == 'L1' && id >= 3) return;
                         if (id > 11) return;
                         core.status.event.data = Object.keys(core.defense.towers)[id];
                         core.status.event.id = null;
@@ -1026,6 +1032,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                         } else {
                             for (var one in core.status.towers) {
                                 core.status.towers[one].pauseBuild = false;
+                                core.status.realTower[one].pauseBuild = false;
                             }
                             flags.__pause__ = false;
                             core.drawTip('继续游戏');
@@ -1736,6 +1743,17 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                 core.status.maps[floorId].enemys = enemys;
                 return enemys;
             }
+            if (floorId == 'L1') {
+                var enemys = [
+                    ['skeleton', 6],
+                    ['redSlime', 13],
+                    ['bluePriest', 7],
+                    ['skeleton', 5],
+                    ['skeleton', 2],
+                ];
+                core.status.maps[floorId].enemys = enemys;
+                return enemys;
+            }
         },
         "enemyDie": function(id) {
             var e = core.clone(core.status.enemys.enemys[id]);
@@ -1748,7 +1766,9 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
             var enemy = core.material.enemys[enemyId];
             core.status.hero.money += e.money;
             if (!core.status.score) core.status.score = 0;
-            core.status.score += Math.round(enemy.hp * enemy.speed);
+            var score = Math.round(enemy.hp * enemy.speed);
+            if (core.status.floorId.startsWith('L')) score *= 1 - e.to / core.status.thisMap.route.length;
+            core.status.score += score;
             delete core.status.enemys.enemys[id];
             core.status.enemys.cnt--;
             core.status.totalKilled++;
@@ -1790,13 +1810,21 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
             }
             core.updateStatusBar();
         },
-        "getAllMaps": function() {
+        "getAllMaps": function(infinite) {
             // 在这里写上你所有的地图 以及地图名
             // 地图名后面要写上 _加数字 用于关卡排序
-            return {
-                'MT0': '第一关_0',
-                'MT1': '第二关_1',
-                'MT2': '第三关_2'
+            if (infinite) {
+                return {
+                    'MT0': '第一关_0',
+                    'MT1': '第二关_1',
+                    'MT2': '第三关_2'
+                }
+            } else {
+                return {
+                    'L1': '闯关第一关_0',
+                    'L2': '闯关第二关_1',
+                    'L3': '闯关第三关_2',
+                }
             }
         }
     }

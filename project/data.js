@@ -4,7 +4,17 @@ var data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d =
 		"floorIds": [
 			"MT0",
 			"MT1",
-			"MT2"
+			"MT2",
+			"L1",
+			"L2",
+			"L3",
+			"L4",
+			"L5",
+			"L6",
+			"L7",
+			"L8",
+			"L9",
+			"L10"
 		],
 		"floorPartitions": [],
 		"images": [

@@ -1591,7 +1591,6 @@ control.prototype.isReplaying = function() {
 control.prototype.replay = function(force) {
     if (core.isReplaying())
         flags.__pause__ = false;
-    console.log(core.isPlaying(), core.isReplaying(), core.status.replay.animate, core.status.event.id, core.status.replay.pausing);
     if (!core.isPlaying() || !core.isReplaying() ||
         core.status.replay.animate || core.status.event.id) return;
     if (core.status.replay.pausing && !force) return;

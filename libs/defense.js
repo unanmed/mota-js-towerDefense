@@ -17,6 +17,7 @@ defense.prototype._init = function() {
     this.bossList = [];
     this.mapIndex = 0;
     this.floorId = '';
+    this.type = 'battle';
     this.enemyCnt = [];
     this.defensedata = functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a.defense;
     core.batchCanvas = this.batchCanvas;
@@ -529,7 +530,6 @@ defense.prototype.initAttack = function() {
                 var x = loc.split(',')[0],
                     y = loc.split(',')[1];
                 core.expLevelUp(x, y);
-                core.autoUpdateStatusBar(x, y);
                 // 旋转
                 if (tower.type === 'freeze' && !main.replayChecking) {
                     var weaponCanvas = core.batchDict["tower-weapon_" + loc].canvas;
@@ -1171,7 +1171,28 @@ defense.prototype._drawAllEnemys_drawEnemy = function(enemys, one, route) {
         if (chain && chain[enemy.to]) {
             core.defense._drawAllEnemys_reachChain(enemys, enemy, one, chain);
         }
-        enemy.to++;
+        if (core.hasSpecial(enemy, 7)) {
+            if (enemy.to + 2 >= route.length) enemy.to++;
+            else {
+                if (enemy.to % 3 == 0) {
+                    enemy.x = route[enemy.to + 1][0];
+                    enemy.y = route[enemy.to + 1][1];
+                    enemy.to += 2;
+                } else enemy.to++;
+            }
+        } else if (core.hasSpecial(enemy.special, 8)) {
+            if (enemy.to - 2 <= 0) enemy.to++;
+            else {
+                if ((enemy.to + 1) % 4 == 0) {
+                    if (!enemy.back) enemy.back = {};
+                    if (!enemy.back[enemy.to]) {
+                        enemy.back[enemy.to] = true;
+                        enemy.x = route[enemy.to - 1][0];
+                        enemy.y = route[enemy.to - 1][1];
+                    } else enemy.to++;
+                } else enemy.to++;
+            }
+        } else enemy.to++;
         // ---- 冰冻检测
         if (!core.hasSpecial(enemy.special, 2)) {
             core.defense._drawAllEnemys_doFreeze(enemys, enemy, one);
@@ -1712,11 +1733,11 @@ defense.prototype.expLevelUp = function(x, y) {
             core.updateStatusBar();
             core.drawRange(x, y, core.status.realTower[x + ',' + y].range || 0, core.status.realTower[x + ',' + y].square);
         }
+        if (tower.type == 'freeze')
+            core.getFreezeLoc();
+        if (tower.type == 'chain')
+            core.getChainLoc();
     }
-    if (tower.type == 'freeze')
-        core.getFreezeLoc();
-    if (tower.type == 'chain')
-        core.getChainLoc();
 }
 
 ////// 卖出防御塔 //////
@@ -2162,6 +2183,7 @@ defense.prototype._drawConstructor_drawHorizon = function(ctx, type) {
     if (!type) {
         // 各个防御塔
         Object.keys(core.defense.towers).forEach(function(one, i) {
+            if (core.status.floorId == 'L1' && i >= 3) return;
             var line = Math.floor(i / 3);
             var list = i % 3;
             core.drawIcon(ctx, one, 9 + 37 * list, 305 + 37 * line, 32, 32);
@@ -2249,6 +2271,7 @@ defense.prototype._drawConstructor_drawVertical = function(ctx, type) {
     core.fillText(ctx, '自动' + (flags.autoNext ? '中' : ''), 210, 153, '#000', '14px Arial');
     // 各个防御塔
     Object.keys(core.defense.towers).forEach(function(one, i) {
+        if (core.status.floorId == 'L1' && i >= 3) return;
         var line = Math.floor(i / 4);
         var list = i % 4;
         core.drawIcon(ctx, one, 260 + 37 * list, 30 + 37 * line, 32, 32);
@@ -2621,7 +2644,7 @@ defense.prototype.pushActionToRoute = function(action) {
     // 检测当前录像最后一项的类型
     var last = core.status.route[core.status.route.length - 1];
     if (action == 'wait') {
-        if (parseInt(last) && parseInt(last) < 60)
+        if (parseInt(last) && parseInt(last) < 30)
             core.status.route[core.status.route.length - 1] =
             (parseInt(core.status.route[core.status.route.length - 1]) + 1).toString();
         else core.status.route.push('1');
@@ -2644,30 +2667,41 @@ defense.prototype.openAllMaps = function() {
         },
         {
             "type": "function",
-            "function": "function () { core.deleteCanvas('back'); core.deleteCanvas('mapCtx'); core.deleteCanvas('mapTextCtx'); }"
+            "function": "function () { core.deleteCanvas('back'); core.deleteCanvas('mapCtx');" +
+                " core.deleteCanvas('mapTextCtx'); core.deleteCanvas('modeCtx'); core.clearUIEventSelector();}"
         }
     ]);
 }
 
-defense.prototype.getAllMaps = function() {
-    return this.defensedata.getAllMaps();
+defense.prototype.getAllMaps = function(infinite) {
+    return this.defensedata.getAllMaps(infinite);
 }
 
 defense.prototype._drawAllMaps_draw = function() {
     if (main.replayChecking) return;
-    var all = this.getAllMaps();
+    if (core.defense.type == 'infinite')
+        var all = this.getAllMaps(true);
+    else
+        var all = this.getAllMaps(false);
     var ctx = core.createCanvas('back', 0, 0, 416, 416, 150);
-    var mapTextCtx = core.createCanvas('mapTextCtx', 0, 0, 208 + Object.keys(all).length * 150, 30, 160);
-    var mapCtx = core.createCanvas('mapCtx', 20, 35, 376, 376, 155);
+    var mapTextCtx = core.createCanvas('mapTextCtx', 0, 0, 208 + Object.keys(all).length * 150, 40, 160);
+    var mapCtx = core.createCanvas('mapCtx', 100, 40, 316, 376, 155);
+    var modeCtx = core.createCanvas('modeCtx', 0, 40, 100, 376, 155);
     core.clearMap(ctx);
-    core.drawWindowSkin('winskin.png', ctx, 0, 0, 416, 30);
-    core.drawWindowSkin('winskin.png', ctx, 0, 30, 416, 386);
+    core.drawWindowSkin('winskin.png', ctx, 0, 0, 416, 40);
+    core.drawWindowSkin('winskin.png', ctx, 0, 40, 100, 376);
+    core.drawWindowSkin('winskin.png', ctx, 100, 40, 316, 376);
     mapTextCtx.canvas.className = 'chooseMap';
     mapTextCtx.shadowColor = '#000';
     mapTextCtx.shadowBlur = 2;
     mapTextCtx.shadowOffsetX = 1;
     mapTextCtx.shadowOffsetY = 1;
+    modeCtx.shadowColor = '#000';
+    modeCtx.shadowBlur = 2;
+    modeCtx.shadowOffsetX = 1;
+    modeCtx.shadowOffsetY = 1;
     core.setTextAlign(mapTextCtx, 'center');
+    core.setTextAlign(modeCtx, 'center');
     mapCtx.shadowColor = '#fff';
     mapCtx.shadowBlur = 5;
 }
@@ -2676,19 +2710,32 @@ defense.prototype._drawAllMaps_drawText = function() {
     if (main.replayChecking) return;
     core.clearMap('mapCtx');
     core.clearMap('mapTextCtx');
+    core.clearMap('modeCtx');
     var index = this.mapIndex;
-    var all = this.getAllMaps();
+    if (core.defense.type == 'infinite')
+        var all = this.getAllMaps(true);
+    else
+        var all = this.getAllMaps(false);
     var maps = Object.keys(all).sort(function(a, b) { return all[a].split('_')[1] - all[b].split('_')[1]; });
     maps.forEach(function(map, i) {
         var text = all[map].split('_')[0];
         if (i == index) text = '<  ' + text + '  >';
-        core.fillText('mapTextCtx', text, 208 + 150 * i, 23, '#fff', '20px Arial');
+        core.fillText('mapTextCtx', text, 208 + 150 * i, 27, '#fff', '20px Arial');
     });
-    core.drawThumbnail(maps[index], null, { x: 5, y: 5, ctx: 'mapCtx', size: 366 });
+    core.drawThumbnail(maps[index], null, { x: 5, y: 5, ctx: 'mapCtx', size: 306 });
+    var text = core.status.maps[maps[index]].description;
+    core.drawTextContent('mapCtx', text, { left: 5, top: 315, maxWidth: 306, fontSize: 16 });
+    core.fillText('modeCtx', '闯关模式', 50, 120, '#fff', '18px Arial');
+    core.fillText('modeCtx', '无尽模式', 50, 250, '#fff', '18px Arial');
+    if (this.type == 'battle') core.drawUIEventSelector(1, 'winskin.png', 3, 140, 94, 30, 160);
+    if (this.type == 'infinite') core.drawUIEventSelector(1, 'winskin.png', 3, 270, 94, 30, 160);
 }
 
 defense.prototype._drawAllMaps_actions_keyboard = function(keycode) {
-    var all = this.getAllMaps();
+    if (core.defense.type == 'infinite')
+        var all = this.getAllMaps(true);
+    else
+        var all = this.getAllMaps(false);
     switch (keycode) {
         case 37:
             this._drawAllMaps_changeMap('left');
@@ -2701,17 +2748,34 @@ defense.prototype._drawAllMaps_actions_keyboard = function(keycode) {
             this.floorId = Object.keys(all)[this.mapIndex];
             core.insertAction([{ "type": "break", "n": 1 }]);
             break;
+        case 38:
+            this._drawAllMaps_changeMap('up');
+            break;
+        case 40:
+            this._drawAllMaps_changeMap('down');
+            break;
     }
 }
 
 defense.prototype._drawAllMaps_actions_click = function(px, py) {
-    var all = this.getAllMaps();
+    if (core.defense.type == 'infinite')
+        var all = this.getAllMaps(true);
+    else
+        var all = this.getAllMaps(false);
     if (py <= 30 && px >= 208) {
         this._drawAllMaps_changeMap('right');
         return;
     }
     if (py <= 30 && px <= 208) {
         this._drawAllMaps_changeMap('left');
+        return;
+    }
+    if (px <= 100 && py <= 223) {
+        this._drawAllMaps_changeMap('up');
+        return;
+    }
+    if (px <= 100 && py >= 223) {
+        this._drawAllMaps_changeMap('down');
         return;
     }
     this.floorId = Object.keys(all)[this.mapIndex];
@@ -2738,5 +2802,17 @@ defense.prototype._drawAllMaps_changeMap = function(dir) {
             core.relocateCanvas('mapTextCtx', 150, 0, true);
             this._drawAllMaps_drawText();
         }
+    }
+    if (dir === 'up') {
+        if (this.type == 'battle') return;
+        this.type = 'battle';
+        this.mapIndex = 0;
+        this._drawAllMaps_draw();
+    }
+    if (dir === 'down') {
+        if (this.type == 'infinite') return;
+        this.type = 'infinite';
+        this.mapIndex = 0;
+        this._drawAllMaps_draw();
     }
 }
