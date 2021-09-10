@@ -2448,8 +2448,8 @@ defense.prototype._replay_placeTower = function(action) {
         if (core.status.hero.money < core.defense.towers[tower].cost) return false;
         core.status.towers[x + ',' + y] = core.clone(core.defense.towers[tower]);
         var now = core.status.towers[x + ',' + y];
-        now.x = x;
-        now.y = y;
+        now.x = parseInt(x);
+        now.y = parseInt(y);
         now.level = 1;
         now.killed = 0;
         now.damage = 0;
@@ -2457,7 +2457,7 @@ defense.prototype._replay_placeTower = function(action) {
         now.exp = 0;
         now.type = tower;
         now.haveCost = core.defense.towers[tower].cost;
-        if (flags.__pause__) now.pauseBuild = true;
+        now.pauseBuild = true;
         core.status.hero.money -= now.cost;
         core.status.event.data = null;
         core.status.event.id = null;
@@ -2523,6 +2523,10 @@ defense.prototype._replay_wait = function(action) {
     var rounds = parseInt(action);
     var fail = false;
     var now = 0;
+    for (var one in core.status.towers) {
+        core.status.towers[one].pauseBuild = false;
+        core.status.realTower[one].pauseBuild = false;
+    }
     if (!main.replayChecking) {
         var interval = window.setInterval(function() {
             now++;
