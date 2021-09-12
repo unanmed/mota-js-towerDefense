@@ -781,21 +781,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
             if (!_isVertical()) {
                 // 暂停
                 if (py < 21) {
-                    if (!flags.__pause__) {
-                        flags.__pause__ = true;
-                        core.drawTip('游戏暂停');
-                        core.defense._drawBossHealthBar_transparent('add');
-                        core.updateStatusBar();
-                    } else {
-                        for (var one in core.status.towers) {
-                            core.status.towers[one].pauseBuild = false;
-                            core.status.realTower[one].pauseBuild = false;
-                        }
-                        flags.__pause__ = false;
-                        core.drawTip('继续游戏');
-                        core.defense._drawBossHealthBar_transparent('remove');
-                        core.updateStatusBar();
-                    }
+                    return core.pauseGame();
                 }
                 // 升级 卖出
                 if (core.status.event.id && (core.status.event.id == 'checkTower' || core.status.event.id.startsWith('confirm'))) {
@@ -882,12 +868,20 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                         core.updateStatusBar();
                         return;
                     }
+                    // 加速、减速、暂停
+                    if (py > 300 && py < 320) {
+                        if (px < 35) return core.changeSpeed('down');
+                        if (px > 95) return core.changeSpeed('up');
+                        return core.pauseGame();
+                    }
                     // 防御塔
-                    if (py > 305 && px > 9 && px < 120) {
-                        var line = Math.floor((py - 305) / 37);
+                    if (py > 320 && px > 9 && px < 120) {
+                        var line = Math.floor((py - 320) / 32);
                         var list = Math.floor((px - 9) / 37);
                         var id = line * 3 + list;
                         if (core.status.floorId == 'L1' && id >= 3) return;
+                        if (core.status.floorId == 'L2' && id >= 6) return;
+                        if (core.status.floorId == 'L3' && id >= 9) return;
                         if (id > 11) return;
                         core.status.event.data = Object.keys(core.defense.towers)[id];
                         core.status.event.id = null;
@@ -957,14 +951,14 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                         }
                     }
                 } else if (core.status.event.id == 'enemyDetail') {
-                    if (py > 135 && py < 160 && px > 120 && px < 180) {
+                    if (py > 145 && py < 165 && px > 120 && px < 180) {
                         // 下一波
                         core.pushActionToRoute('nextWave');
                         core.startMonster(core.status.floorId);
                         core.updateStatusBar();
                         return;
                     }
-                    if (py > 135 && py < 160 && px > 185 && px < 235) {
+                    if (py > 145 && py < 165 && px > 185 && px < 235) {
                         // 自动
                         if (flags.autoNext) {
                             flags.autoNext = false;
@@ -981,13 +975,13 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                     core.status.event.data = null;
                     core.updateStatusBar();
                 } else if (!core.status.event.id && !core.status.event.data) {
-                    if (py > 135 && py < 160 && px > 120 && px < 180) {
+                    if (py > 145 && py < 165 && px > 120 && px < 180) {
                         // 下一波
                         core.startMonster(core.status.floorId);
                         core.updateStatusBar();
                         return;
                     }
-                    if (py > 135 && py < 160 && px > 185 && px < 235) {
+                    if (py > 145 && py < 165 && px > 185 && px < 235) {
                         // 自动
                         if (flags.autoNext) {
                             flags.autoNext = false;
@@ -1000,12 +994,20 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                         core.updateStatusBar();
                         return;
                     }
+                    // 加速、减速、暂停
+                    if (py > 140 && py < 160 && px > 250 && px < 355) {
+                        if (px < 280) return core.changeSpeed('down');
+                        if (px > 325) return core.changeSpeed('up');
+                        return core.pauseGame();
+                    }
                     // 防御塔
                     if (py > 30 && py < 136 && px > 260 && px < 403) {
                         var line = Math.floor((py - 30) / 37);
                         var list = Math.floor((px - 260) / 37);
                         var id = line * 4 + list;
                         if (core.status.floorId == 'L1' && id >= 3) return;
+                        if (core.status.floorId == 'L2' && id >= 6) return;
+                        if (core.status.floorId == 'L3' && id >= 9) return;
                         if (id > 11) return;
                         core.status.event.data = Object.keys(core.defense.towers)[id];
                         core.status.event.id = null;
@@ -1022,22 +1024,8 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                         core.updateStatusBar();
                     }
                     // 暂停 继续
-                    if (py > 140 && py < 165 && px > 288 && px < 378) {
-                        if (!flags.__pause__) {
-                            flags.__pause__ = true;
-                            core.drawTip('游戏暂停');
-                            core.defense._drawBossHealthBar_transparent('add');
-                            core.updateStatusBar();
-                        } else {
-                            for (var one in core.status.towers) {
-                                core.status.towers[one].pauseBuild = false;
-                                core.status.realTower[one].pauseBuild = false;
-                            }
-                            flags.__pause__ = false;
-                            core.drawTip('继续游戏');
-                            core.defense._drawBossHealthBar_transparent('remove');
-                            core.updateStatusBar();
-                        }
+                    if (py > 140 && py < 165 && px > 371 && px < 403) {
+                        return core.pauseGame();
                     }
                 } else if (core.status.event.id == 'placeTower-confirm') {
                     core.status.event.data = null;
@@ -1766,24 +1754,23 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
             }
             if (floorId == 'L2') {
                 var enemys = [
-                    ['skeleton', 6],
+                    ['greenSlime', 7],
                     ['redSlime', 13],
-                    ['bluePriest', 7],
+                    ['greenSlime', 20],
                     ['skeletonPriest', 8],
-                    ['whiteSlimeman', 4], // 5
-                    ['blueKnight', 3],
-                    ['skeleton', 6],
-                    ['bat', 16],
+                    ['rock', 6], // 5
+                    ['greenSlime', 30],
+                    ['skeleton', 10],
+                    ['goldSlime', 10],
                     ['skeletonWarrior', 7],
-                    ['skeletonPriest', 8], // 10
-                    ['fairyEnemy', 7],
-                    ['ghostSoldier', 10]
+                    ['devilWarrior', 7], // 10
                 ];
                 core.status.maps[floorId].enemys = enemys;
                 return enemys;
             }
         },
         "enemyDie": function (id) {
+            "use strict";
             var e = core.clone(core.status.enemys.enemys[id]);
             if (!e) return;
             core.returnCanvas(id, 'enemy');
@@ -1836,11 +1823,8 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                     special: core.clone(core.material.enemys[toEnemy].special) || []
                 };
             }
-            if (
-                core.status.floorId.startsWith('L') &&
-                core.status.enemys.cnt === 0 &&
-                flags.__waves__ === Object.keys(core.status.enemys.enemys).length - 1
-            ) {
+            if (core.status.floorId.startsWith('L') && core.status.enemys.cnt === 0 &&
+                flags.__waves__ === Object.keys(core.status.enemys.enemys).length - 1) {
                 core.status.hero.hp = ~~core.status.score;
                 core.win(core.getAllMaps(false)[core.status.floorId].split('_')[0] + '结束  v0.1.1');
                 core.unregisterAnimationFrame('_drawCanvases');
