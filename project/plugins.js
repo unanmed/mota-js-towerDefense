@@ -1,10 +1,10 @@
 var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
-    "init": function() {
+    "init": function () {
         // 可以写一些直接执行的代码
         // 在这里写的代码将会在【资源加载前】被执行，此时图片等资源尚未被加载。
         // 请勿在这里对包括bgm，图片等资源进行操作。
 
-        this._afterLoadResources = function() {
+        this._afterLoadResources = function () {
             // 本函数将在所有资源加载完毕后，游戏开启前被执行
             // 可以在这个函数里面对资源进行一些操作。
             // 若需要进行切分图片，可以使用 core.splitImage() 函数，或直接在全塔属性-图片切分中操作
@@ -13,7 +13,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         // 可以在任何地方（如afterXXX或自定义脚本事件）调用函数，方法为 core.plugin.xxx();
         // 从V2.6开始，插件中用this.XXX方式定义的函数也会被转发到core中，详见文档-脚本-函数的转发。
     },
-    "drawLight": function() {
+    "drawLight": function () {
 
         // 绘制灯光/漆黑层效果。调用方式 core.plugin.drawLight(...)
         // 【参数说明】
@@ -29,7 +29,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         // core.plugin.drawLight('test', 0.2, [[25,11,46,0.1]]); // 创建一个test图层，不透明度0.2，其中在(25,11)点存在一个半径为46的灯光效果，灯光中心不透明度0.1。
         // core.plugin.drawLight('test2', 0.9, [[25,11,46],[105,121,88],[301,221,106]]); // 创建test2图层，且存在三个灯光效果，分别是中心(25,11)半径46，中心(105,121)半径88，中心(301,221)半径106。
         // core.plugin.drawLight('xxx', 0.3, [[25,11,46],[105,121,88,0.2]], 0.4); // 存在两个灯光效果，它们在内圈40%范围内保持全亮，40%后才开始衰减。
-        this.drawLight = function(name, color, lights, lightDec) {
+        this.drawLight = function (name, color, lights, lightDec) {
 
             // 清空色调层；也可以修改成其它层比如animate/weather层，或者用自己创建的canvas
             var ctx = core.getContextByName(name);
@@ -54,7 +54,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 
             // 绘制每个灯光效果
             ctx.globalCompositeOperation = 'destination-out';
-            lights.forEach(function(light) {
+            lights.forEach(function (light) {
                 // 坐标，半径，中心不透明度
                 var x = light[0],
                     y = light[1],
@@ -74,12 +74,12 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             // 可以在任何地方（如afterXXX或自定义脚本事件）调用函数，方法为  core.plugin.xxx();
         }
     },
-    "shop": function() {
+    "shop": function () {
         // 【全局商店】相关的功能
         // 
         // 打开一个全局商店
         // shopId：要打开的商店id；noRoute：是否不计入录像
-        this.openShop = function(shopId, noRoute) {
+        this.openShop = function (shopId, noRoute) {
             var shop = core.status.shops[shopId];
             // Step 1: 检查能否打开此商店
             if (!this.canOpenShop(shopId)) {
@@ -113,7 +113,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         }
 
         ////// 将一个全局商店转变成可预览的公共事件 //////
-        this._convertShop = function(shop) {
+        this._convertShop = function (shop) {
             return [
                 { "type": "function", "function": "function() {core.setFlag('@temp@shop', true);}" },
                 {
@@ -153,12 +153,12 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             ];
         }
 
-        this._convertShop_replaceChoices = function(shopId, previewMode) {
+        this._convertShop_replaceChoices = function (shopId, previewMode) {
             var shop = core.status.shops[shopId];
-            var choices = (shop.choices || []).filter(function(choice) {
+            var choices = (shop.choices || []).filter(function (choice) {
                 if (choice.condition == null || choice.condition == '') return true;
                 try { return core.calValue(choice.condition); } catch (e) { return true; }
-            }).map(function(choice) {
+            }).map(function (choice) {
                 var ableToBuy = core.calValue(choice.need);
                 return {
                     "text": choice.text,
@@ -174,7 +174,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         }
 
         /// 是否访问过某个快捷商店
-        this.isShopVisited = function(id) {
+        this.isShopVisited = function (id) {
             if (!core.hasFlag("__shops__")) core.setFlag("__shops__", {});
             var shops = core.getFlag("__shops__");
             if (!shops[id]) shops[id] = {};
@@ -182,14 +182,14 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         }
 
         /// 当前应当显示的快捷商店列表
-        this.listShopIds = function() {
-            return Object.keys(core.status.shops).filter(function(id) {
+        this.listShopIds = function () {
+            return Object.keys(core.status.shops).filter(function (id) {
                 return core.isShopVisited(id) || !core.status.shops[id].mustEnable;
             });
         }
 
         /// 是否能够打开某个商店
-        this.canOpenShop = function(id) {
+        this.canOpenShop = function (id) {
             if (this.isShopVisited(id)) return true;
             var shop = core.status.shops[id];
             if (shop.item || shop.commonEvent || shop.mustEnable) return false;
@@ -197,7 +197,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         }
 
         /// 启用或禁用某个快捷商店
-        this.setShopVisited = function(id, visited) {
+        this.setShopVisited = function (id, visited) {
             if (!core.hasFlag("__shops__")) core.setFlag("__shops__", {});
             var shops = core.getFlag("__shops__");
             if (!shops[id]) shops[id] = {};
@@ -206,7 +206,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         }
 
         /// 能否使用快捷商店
-        this.canUseQuickShop = function(id) {
+        this.canUseQuickShop = function (id) {
             // 如果返回一个字符串，表示不能，字符串为不能使用的提示
             // 返回null代表可以使用
 
@@ -217,7 +217,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         }
 
         /// 允许商店X键退出
-        core.registerAction('keyUp', 'shops', function(keycode) {
+        core.registerAction('keyUp', 'shops', function (keycode) {
             if (!core.status.lockControl || !core.hasFlag("@temp@shop") || core.status.event.id != 'action') return false;
             if (core.status.event.data.type != 'choices') return false;
             var data = core.status.event.data.current;
@@ -232,7 +232,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         }, 60);
 
         /// 允许长按空格或回车连续执行操作
-        core.registerAction('keyDown', 'shops', function(keycode) {
+        core.registerAction('keyDown', 'shops', function (keycode) {
             if (!core.status.lockControl || !core.hasFlag("@temp@shop") || core.status.event.id != 'action') return false;
             if (core.status.event.data.type != 'choices') return false;
             var data = core.status.event.data.current;
@@ -246,7 +246,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         }, 60);
 
         // 允许长按屏幕连续执行操作
-        core.registerAction('longClick', 'shops', function(x, y, px, py) {
+        core.registerAction('longClick', 'shops', function (x, y, px, py) {
             if (!core.status.lockControl || !core.hasFlag("@temp@shop") || core.status.event.id != 'action') return false;
             if (core.status.event.data.type != 'choices') return false;
             var data = core.status.event.data.current;
@@ -259,7 +259,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             return false;
         }, 60);
     },
-    "removeMap": function() {
+    "removeMap": function () {
         // 高层塔砍层插件，删除后不会存入存档，不可浏览地图也不可飞到。
         // 推荐用法：
         // 对于超高层或分区域塔，当在1区时将2区以后的地图删除；1区结束时恢复2区，进二区时删除1区地图，以此类推
@@ -268,7 +268,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         // 删除楼层
         // core.removeMaps("MT1", "MT300") 删除MT1~MT300之间的全部层
         // core.removeMaps("MT10") 只删除MT10层
-        this.removeMaps = function(fromId, toId) {
+        this.removeMaps = function (fromId, toId) {
             toId = toId || fromId;
             var fromIndex = core.floorIds.indexOf(fromId),
                 toIndex = core.floorIds.indexOf(toId);
@@ -284,7 +284,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 flags.__removed__.push(floorId);
                 delete flags.__disabled__[floorId];
                 delete flags.__leaveLoc__[floorId];
-                (core.status.autoEvents || []).forEach(function(event) {
+                (core.status.autoEvents || []).forEach(function (event) {
                     if (event.floorId == floorId && event.currentFloor) {
                         core.autoEventExecuting(event.symbol, false);
                         core.autoEventExecuted(event.symbol, false);
@@ -300,7 +300,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         // 恢复楼层
         // core.resumeMaps("MT1", "MT300") 恢复MT1~MT300之间的全部层
         // core.resumeMaps("MT10") 只恢复MT10层
-        this.resumeMaps = function(fromId, toId) {
+        this.resumeMaps = function (fromId, toId) {
             toId = toId || fromId;
             var fromIndex = core.floorIds.indexOf(fromId),
                 toIndex = core.floorIds.indexOf(toId);
@@ -309,15 +309,15 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             for (var i = fromIndex; i <= toIndex; ++i) {
                 var floorId = core.floorIds[i];
                 if (!core.status.maps[floorId].deleted) continue;
-                flags.__removed__ = flags.__removed__.filter(function(f) { return f != floorId; });
+                flags.__removed__ = flags.__removed__.filter(function (f) { return f != floorId; });
                 core.status.maps[floorId] = core.loadFloor(floorId);
             }
         }
 
         // 分区砍层相关
-        var inAnyPartition = function(floorId) {
+        var inAnyPartition = function (floorId) {
             var inPartition = false;
-            (core.floorPartitions || []).forEach(function(floor) {
+            (core.floorPartitions || []).forEach(function (floor) {
                 var fromIndex = core.floorIds.indexOf(floor[0]);
                 var toIndex = core.floorIds.indexOf(floor[1]);
                 var index = core.floorIds.indexOf(floorId);
@@ -329,10 +329,10 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         }
 
         // 分区砍层
-        this.autoRemoveMaps = function(floorId) {
+        this.autoRemoveMaps = function (floorId) {
             if (main.mode != 'play' || !inAnyPartition(floorId)) return;
             // 根据分区信息自动砍层与恢复
-            (core.floorPartitions || []).forEach(function(floor) {
+            (core.floorPartitions || []).forEach(function (floor) {
                 var fromIndex = core.floorIds.indexOf(floor[0]);
                 var toIndex = core.floorIds.indexOf(floor[1]);
                 var index = core.floorIds.indexOf(floorId);
@@ -346,7 +346,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             });
         }
     },
-    "fiveLayers": function() {
+    "fiveLayers": function () {
         // 是否启用五图层（增加背景2层和前景2层） 将__enable置为true即会启用；启用后请保存后刷新编辑器
         // 背景层2将会覆盖背景层 被事件层覆盖 前景层2将会覆盖前景层
         // 另外 请注意加入两个新图层 会让大地图的性能降低一些
@@ -355,7 +355,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         if (!__enable) return;
 
         // 创建新图层
-        function createCanvas(name, zIndex) {
+        function createCanvas (name, zIndex) {
             if (!name) return;
             var canvas = document.createElement('canvas');
             canvas.id = name;
@@ -396,7 +396,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             editor.dom.canvas.push('bg2', 'fg2');
 
             // 创建编辑器上的按钮
-            var createCanvasBtn = function(name) {
+            var createCanvasBtn = function (name) {
                 // 电脑端创建按钮
                 var input = document.createElement('input');
                 // layerMod4/layerMod5
@@ -408,13 +408,13 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 input.id = id;
                 input.value = value;
                 editor.dom[id] = input;
-                input.onchange = function() {
+                input.onchange = function () {
                     editor.uifunctions.setLayerMod(value);
                 }
                 return input;
             };
 
-            var createCanvasBtn_mobile = function(name) {
+            var createCanvasBtn_mobile = function (name) {
                 // 手机端往选择列表中添加子选项
                 var input = document.createElement('option');
                 var id = 'layerMod' + num++;
@@ -453,11 +453,11 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         }
 
         var _loadFloor_doNotCopy = core.maps._loadFloor_doNotCopy;
-        core.maps._loadFloor_doNotCopy = function() {
-                return ["bg2map", "fg2map"].concat(_loadFloor_doNotCopy());
-            }
-            ////// 绘制背景和前景层 //////
-        core.maps._drawBg_draw = function(floorId, toDrawCtx, cacheCtx, config) {
+        core.maps._loadFloor_doNotCopy = function () {
+            return ["bg2map", "fg2map"].concat(_loadFloor_doNotCopy());
+        }
+        ////// 绘制背景和前景层 //////
+        core.maps._drawBg_draw = function (floorId, toDrawCtx, cacheCtx, config) {
             config.ctx = cacheCtx;
             core.maps._drawBg_drawBackground(floorId, config);
             // ------ 调整这两行的顺序来控制是先绘制贴图还是先绘制背景图块；后绘制的覆盖先绘制的。
@@ -472,22 +472,22 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             if (config.onMap) core.drawImage('bg2', cacheCtx.canvas, core.bigmap.v2 ? -32 : 0, core.bigmap.v2 ? -32 : 0);
             config.ctx = toDrawCtx;
         }
-        core.maps._drawFg_draw = function(floorId, toDrawCtx, cacheCtx, config) {
-                config.ctx = cacheCtx;
-                // ------ 调整这两行的顺序来控制是先绘制贴图还是先绘制前景图块；后绘制的覆盖先绘制的。
-                core.maps._drawFloorImages(floorId, config.ctx, 'fg', null, null, config.onMap);
-                core.maps._drawBgFgMap(floorId, 'fg', config);
-                if (config.onMap) {
-                    core.drawImage(toDrawCtx, cacheCtx.canvas, core.bigmap.v2 ? -32 : 0, core.bigmap.v2 ? -32 : 0);
-                    core.clearMap('fg2');
-                    core.clearMap(cacheCtx);
-                }
-                core.maps._drawBgFgMap(floorId, 'fg2', config);
-                if (config.onMap) core.drawImage('fg2', cacheCtx.canvas, core.bigmap.v2 ? -32 : 0, core.bigmap.v2 ? -32 : 0);
-                config.ctx = toDrawCtx;
+        core.maps._drawFg_draw = function (floorId, toDrawCtx, cacheCtx, config) {
+            config.ctx = cacheCtx;
+            // ------ 调整这两行的顺序来控制是先绘制贴图还是先绘制前景图块；后绘制的覆盖先绘制的。
+            core.maps._drawFloorImages(floorId, config.ctx, 'fg', null, null, config.onMap);
+            core.maps._drawBgFgMap(floorId, 'fg', config);
+            if (config.onMap) {
+                core.drawImage(toDrawCtx, cacheCtx.canvas, core.bigmap.v2 ? -32 : 0, core.bigmap.v2 ? -32 : 0);
+                core.clearMap('fg2');
+                core.clearMap(cacheCtx);
             }
-            ////// 移动判定 //////
-        core.maps._generateMovableArray_arrays = function(floorId) {
+            core.maps._drawBgFgMap(floorId, 'fg2', config);
+            if (config.onMap) core.drawImage('fg2', cacheCtx.canvas, core.bigmap.v2 ? -32 : 0, core.bigmap.v2 ? -32 : 0);
+            config.ctx = toDrawCtx;
+        }
+        ////// 移动判定 //////
+        core.maps._generateMovableArray_arrays = function (floorId) {
             return {
                 bgArray: this.getBgMapArray(floorId),
                 fgArray: this.getFgMapArray(floorId),
@@ -497,7 +497,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             };
         }
     },
-    "itemShop": function() {
+    "itemShop": function () {
         // 道具商店相关的插件
         // 可在全塔属性-全局商店中使用「道具商店」事件块进行编辑（如果找不到可以在入口方块中找）
 
@@ -517,7 +517,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         var bigFont = core.ui._buildFont(20, false),
             middleFont = core.ui._buildFont(18, false);
 
-        this._drawItemShop = function() {
+        this._drawItemShop = function () {
             // 绘制道具商店
 
             // Step 1: 背景和固定的几个文字
@@ -550,9 +550,9 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             }
 
             // Step 2：获得列表并展示
-            list = choices.filter(function(one) {
+            list = choices.filter(function (one) {
                 if (one.condition != null && one.condition != '') {
-                    try { if (!core.calValue(one.condition)) return false; } catch (e) {}
+                    try { if (!core.calValue(one.condition)) return false; } catch (e) { }
                 }
                 return (type == 0 && one.money != null) || (type == 1 && one.sell != null);
             });
@@ -585,7 +585,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 if (curr == selectItem) {
                     // 绘制描述，文字自动放缩
                     var text = core.material.items[item.id].text || "该道具暂无描述";
-                    try { text = core.replaceText(text); } catch (e) {}
+                    try { text = core.replaceText(text); } catch (e) { }
                     for (var fontSize = 20; fontSize >= 8; fontSize -= 2) {
                         var config = { left: 10, fontSize: fontSize, maxWidth: 403 };
                         var height = core.getTextContentHeight(text, config);
@@ -622,7 +622,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             core.setTextBaseline('uievent', 'alphabetic');
         }
 
-        var _add = function(item, delta) {
+        var _add = function (item, delta) {
             if (item == null) return;
             selectCount = core.clamp(
                 selectCount + delta, 0,
@@ -631,7 +631,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             );
         }
 
-        var _confirm = function(item) {
+        var _confirm = function (item) {
             if (item == null || selectCount == 0) return;
             if (type == 0) {
                 core.status.hero[use] -= totalMoney;
@@ -651,7 +651,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             selectCount = 0;
         }
 
-        this._performItemShopKeyBoard = function(keycode) {
+        this._performItemShopKeyBoard = function (keycode) {
             var item = list[selectItem] || null;
             // 键盘操作
             switch (keycode) {
@@ -705,7 +705,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             }
         }
 
-        this._performItemShopClick = function(px, py) {
+        this._performItemShopClick = function (px, py) {
             var item = list[selectItem] || null;
             // 鼠标操作
             if (px >= 22 && px <= 82 && py >= 71 && py <= 102) {
@@ -767,12 +767,12 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             }
         }
 
-        this._performItemShopAction = function() {
+        this._performItemShopAction = function () {
             if (flags.type == 0) return this._performItemShopKeyBoard(flags.keycode);
             else return this._performItemShopClick(flags.px, flags.py);
         }
 
-        this.openItemShop = function(itemShopId) {
+        this.openItemShop = function (itemShopId) {
             shopId = itemShopId;
             type = 0;
             page = 0;
@@ -787,32 +787,32 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             useText = use == 'money' ? '金币' : '经验';
 
             core.insertAction([{
-                    "type": "while",
-                    "condition": "true",
-                    "data": [
-                        { "type": "function", "function": "function () { core.plugin._drawItemShop(); }" },
-                        { "type": "wait" },
-                        { "type": "function", "function": "function() { core.plugin._performItemShopAction(); }" }
-                    ]
-                },
-                {
-                    "type": "function",
-                    "function": "function () { core.deleteCanvas('uievent'); core.ui.clearUIEventSelector(); }"
-                }
+                "type": "while",
+                "condition": "true",
+                "data": [
+                    { "type": "function", "function": "function () { core.plugin._drawItemShop(); }" },
+                    { "type": "wait" },
+                    { "type": "function", "function": "function() { core.plugin._performItemShopAction(); }" }
+                ]
+            },
+            {
+                "type": "function",
+                "function": "function () { core.deleteCanvas('uievent'); core.ui.clearUIEventSelector(); }"
+            }
             ]);
         }
 
     },
-    "enemyLevel": function() {
+    "enemyLevel": function () {
         // 此插件将提供怪物手册中的怪物境界显示
         // 使用此插件需要先给每个怪物定义境界，方法如下：
         // 点击怪物的【配置表格】，找到“【怪物】相关的表格配置”，然后在【名称】仿照增加境界定义：
         /*
          "level": {
-         	"_leaf": true,
-         	"_type": "textarea",
-         	"_string": true,
-         	"_data": "境界"
+              "_leaf": true,
+              "_type": "textarea",
+              "_string": true,
+              "_data": "境界"
          },
          */
         // 然后保存刷新，可以看到怪物的属性定义中出现了【境界】。再开启本插件即可。
@@ -830,7 +830,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 
         // 复写 _drawBook_drawName
         var originDrawBook = core.ui._drawBook_drawName;
-        core.ui._drawBook_drawName = function(index, enemy, top, left, width) {
+        core.ui._drawBook_drawName = function (index, enemy, top, left, width) {
             // 如果没有境界，则直接调用原始代码绘制
             if (!enemy.level) return originDrawBook.call(core.ui, index, enemy, top, left, width);
             // 存在境界，则额外进行绘制
@@ -873,7 +873,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         }
 
         // 也可以复写其他的属性颜色如怪物攻防等，具体参见下面的例子的注释部分
-        core.ui._drawBook_drawRow1 = function(index, enemy, top, left, width, position) {
+        core.ui._drawBook_drawRow1 = function (index, enemy, top, left, width, position) {
             // 绘制第一行
             core.setTextAlign('ui', 'left');
             var b13 = this._buildFont(13, true),
@@ -891,7 +891,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 
 
     },
-    "dynamicHp": function() {
+    "dynamicHp": function () {
         // 此插件允许人物血量动态进行变化
         // 原作：Fux2（老黄鸡）
 
@@ -903,14 +903,14 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 
         var _currentHp = null;
         var _lastStatus = null;
-        var _check = function() {
+        var _check = function () {
             if (_lastStatus != core.status.hero) {
                 _lastStatus = core.status.hero;
                 _currentHp = core.status.hero.hp;
             }
         }
 
-        core.registerAnimationFrame('dynamicHp', true, function() {
+        core.registerAnimationFrame('dynamicHp', true, function () {
             _check();
             if (core.status.hero.hp != _currentHp) {
                 var dis = (_currentHp - core.status.hero.hp) * speed;
@@ -923,7 +923,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             }
         });
     },
-    "multiHeros": function() {
+    "multiHeros": function () {
         // 多角色插件
         // Step 1: 启用本插件
         // Step 2: 定义每个新的角色各项初始数据（参见下方注释）
@@ -962,7 +962,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 
         var heroCount = 2; // 包含默认角色在内总共多少个角色，该值需手动修改。
 
-        this.initHeros = function() {
+        this.initHeros = function () {
             core.setFlag("hero1", core.clone(hero1)); // 将属性值存到变量中
             // core.setFlag("hero2", core.clone(hero2)); // 更多的角色也存入变量中；每个定义的角色都需要新增一行
 
@@ -984,7 +984,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 
         // 在游戏开始注入initHeros
         var _startGame_setHard = core.events._startGame_setHard;
-        core.events._startGame_setHard = function() {
+        core.events._startGame_setHard = function () {
             _startGame_setHard.call(core.events);
             core.initHeros();
         }
@@ -992,7 +992,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         // 切换角色
         // 可以使用 core.changeHero() 来切换到下一个角色
         // 也可以 core.changeHero(1) 来切换到某个角色（默认角色为0）
-        this.changeHero = function(toHeroId) {
+        this.changeHero = function (toHeroId) {
             var currHeroId = core.getFlag("heroId", 0); // 获得当前角色ID
             if (toHeroId == null) {
                 toHeroId = (currHeroId + 1) % heroCount;
@@ -1005,10 +1005,10 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var toSave = {};
             // 暂时干掉 drawTip 和 音效，避免切装时的提示
             var _drawTip = core.ui.drawTip;
-            core.ui.drawTip = function() {};
+            core.ui.drawTip = function () { };
             var _playSound = core.control.playSound;
-            core.control.playSound = function() {}
-                // 记录当前录像，因为可能存在换装问题
+            core.control.playSound = function () { }
+            // 记录当前录像，因为可能存在换装问题
             core.clearRouteFolding();
             var routeLength = core.status.route.length;
             // 优先判定装备
@@ -1017,11 +1017,11 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 core.items.quickLoadEquip(99);
             }
 
-            saveList.forEach(function(name) {
+            saveList.forEach(function (name) {
                 if (name == 'floorId') toSave[name] = core.status.floorId; // 楼层单独设置
                 else if (name == 'items') {
                     toSave.items = core.clone(core.status.hero.items);
-                    Object.keys(toSave.items).forEach(function(one) {
+                    Object.keys(toSave.items).forEach(function (one) {
                         if (!hero1.items[one]) delete toSave.items[one];
                     });
                 } else toSave[name] = core.clone(core.status.hero[name]); // 使用core.clone()来创建新对象
@@ -1031,10 +1031,10 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var data = core.getFlag("hero" + toHeroId); // 获得要切换的角色保存内容
 
             // 设置角色的属性值
-            saveList.forEach(function(name) {
+            saveList.forEach(function (name) {
                 if (name == "floorId");
                 else if (name == "items") {
-                    Object.keys(core.status.hero.items).forEach(function(one) {
+                    Object.keys(core.status.hero.items).forEach(function (one) {
                         if (data.items[one]) core.status.hero.items[one] = core.clone(data.items[one]);
                     });
                 } else {
@@ -1068,7 +1068,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             core.setFlag("heroId", toHeroId); // 保存切换到的角色ID
         }
     },
-    "itemCategory": function() {
+    "itemCategory": function () {
         // 物品分类插件。此插件允许你对消耗道具和永久道具进行分类，比如标记「宝物类」「剧情道具」「药品」等等。
         // 使用方法：
         // 1. 启用本插件
@@ -1076,10 +1076,10 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         // 3. 点击道具的【配置表格】，找到“【道具】相关的表格配置”，然后在【道具描述】之后仿照增加道具的分类：
         /*
          "category": {
-         	"_leaf": true,
-         	"_type": "textarea",
-         	"_string": true,
-         	"_data": "道具分类"
+              "_leaf": true,
+              "_type": "textarea",
+              "_string": true,
+              "_data": "道具分类"
          },
          */
         // （你也可以选择使用下拉框的方式定义每个道具的分类，写法参见上面的cls）
@@ -1102,17 +1102,17 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 
         // 重写 core.ui._drawToolbox 以绘制分类类别
         var _drawToolbox = core.ui._drawToolbox;
-        core.ui._drawToolbox = function(index) {
+        core.ui._drawToolbox = function (index) {
             _drawToolbox.call(this, index);
             core.setTextAlign('ui', 'left');
             core.fillText('ui', '类别[E]：' + (currentCategory || "全部"), 15, this.PIXEL - 13);
         }
 
         // 获得所有应该在道具栏显示的某个类型道具
-        core.ui.getToolboxItems = function(cls) {
+        core.ui.getToolboxItems = function (cls) {
             // 检查类别
             return Object.keys(core.status.hero.items[cls])
-                .filter(function(id) {
+                .filter(function (id) {
                     return !core.material.items[id].hideInToolbox &&
                         (currentCategory == null || core.material.items[id].category == currentCategory);
                 }).sort();
@@ -1120,7 +1120,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 
         // 注入道具栏的点击事件（点击类别）
         var _clickToolbox = core.actions._clickToolbox;
-        core.actions._clickToolbox = function(x, y) {
+        core.actions._clickToolbox = function (x, y) {
             if (x >= 0 && x <= this.HSIZE - 4 && y == this.LAST) {
                 drawToolboxCategory();
                 return;
@@ -1130,7 +1130,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 
         // 注入道具栏的按键事件（E键）
         var _keyUpToolbox = core.actions._keyUpToolbox;
-        core.actions._keyUpToolbox = function(keyCode) {
+        core.actions._keyUpToolbox = function (keyCode) {
             if (keyCode == 69) {
                 // 按E键则打开分类类别选择
                 drawToolboxCategory();
@@ -1143,14 +1143,14 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 
         // 关闭窗口时清除分类选择项
         var _closePanel = core.ui.closePanel;
-        core.ui.closePanel = function() {
+        core.ui.closePanel = function () {
             currentCategory = null;
             _closePanel.call(core.ui);
         }
 
         // 弹出菜单以选择具体哪个分类
         // 直接使用 core.drawChoices 进行绘制
-        var drawToolboxCategory = function() {
+        var drawToolboxCategory = function () {
             if (core.status.event.id != 'toolbox') return;
             var selection = categories.indexOf(currentCategory) + 1;
             core.ui.closePanel();
@@ -1162,14 +1162,14 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         }
 
         // 选择某一项
-        var _selectCategory = function(index) {
+        var _selectCategory = function (index) {
             core.ui.closePanel();
             if (index <= 0 || index > categories.length) currentCategory = null;
             else currentCategory = categories[index - 1];
             core.openToolbox();
         }
 
-        var _clickToolBoxCategory = function(x, y) {
+        var _clickToolBoxCategory = function (x, y) {
             if (!core.status.lockControl || core.status.event.id != 'toolbox-category') return false;
 
             if (x < core.actions.CHOICES_LEFT || x > core.actions.CHOICES_RIGHT) return false;
@@ -1185,40 +1185,40 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         core.registerAction('onclick', 'toolbox-category', _clickToolBoxCategory, 100);
 
         // 注入光标跟随事件
-        core.registerAction('onmove', 'toolbox-category', function(x, y) {
+        core.registerAction('onmove', 'toolbox-category', function (x, y) {
             if (!core.status.lockControl || core.status.event.id != 'toolbox-category') return false;
             core.actions._onMoveChoices(x, y);
             return true;
         }, 100);
 
         // 注入键盘光标事件
-        core.registerAction('keyDown', 'toolbox-category', function(keyCode) {
+        core.registerAction('keyDown', 'toolbox-category', function (keyCode) {
             if (!core.status.lockControl || core.status.event.id != 'toolbox-category') return false;
             core.actions._keyDownChoices(keyCode);
             return true;
         }, 100);
 
         // 注入键盘按键事件
-        core.registerAction('keyUp', 'toolbox-category', function(keyCode) {
+        core.registerAction('keyUp', 'toolbox-category', function (keyCode) {
             if (!core.status.lockControl || core.status.event.id != 'toolbox-category') return false;
             core.actions._selectChoices(core.status.event.ui.choices.length, keyCode, _clickToolBoxCategory);
             return true;
         }, 100);
 
     },
-    "heroFourFrames": function() {
+    "heroFourFrames": function () {
         // 样板的勇士/跟随者移动时只使用2、4两帧，观感较差。本插件可以将四帧全用上。
 
         // 是否启用本插件
         var __enable = false;
         if (!__enable) return;
 
-        ["up", "down", "left", "right"].forEach(function(one) {
+        ["up", "down", "left", "right"].forEach(function (one) {
             // 指定中间帧动画
             core.material.icons.hero[one].midFoot = 2;
         });
 
-        var heroMoving = function(timestamp) {
+        var heroMoving = function (timestamp) {
             if (core.status.heroMoving <= 0) return;
             if (timestamp - core.animateFrame.moveTime > core.values.moveSpeed) {
                 core.animateFrame.leftLeg++;
@@ -1228,7 +1228,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         }
         core.registerAnimationFrame('heroMoving', true, heroMoving);
 
-        core.events._eventMoveHero_moving = function(step, moveSteps) {
+        core.events._eventMoveHero_moving = function (step, moveSteps) {
             var curr = moveSteps[0];
             var direction = curr[0],
                 x = core.getHeroLoc('x'),
@@ -1261,7 +1261,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             return false;
         }
     },
-    "startCanvas": function() {
+    "startCanvas": function () {
         // 使用本插件可以将自绘的标题界面居中。仅在【标题开启事件化】后才有效。
         // 由于一些技术性的原因，标题界面事件化无法应用到覆盖状态栏的整个界面。
         // 这是一个较为妥协的插件，会在自绘标题界面时隐藏状态栏、工具栏和边框，并将画布进行居中。
@@ -1276,13 +1276,13 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
 
         var _isTitleCanvasEnabled = false;
         var _getClickLoc = core.actions._getClickLoc;
-        this._setTitleCanvas = function() {
+        this._setTitleCanvas = function () {
             if (_isTitleCanvasEnabled) return;
             _isTitleCanvasEnabled = true;
 
             // 禁用窗口resize
-            window.onresize = function() {};
-            core.resize = function() {}
+            window.onresize = function () { };
+            core.resize = function () { }
 
             // 隐藏状态栏
             core.dom.statusBar.style.display = 'none';
@@ -1297,7 +1297,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     (parseInt(core.dom.gameGroup.style.width) - parseInt(core.dom.gameDraw.style.width)) / 2 + "px";
             }
             core.dom.gameDraw.style.border = '3px transparent solid';
-            core.actions._getClickLoc = function(x, y) {
+            core.actions._getClickLoc = function (x, y) {
                 var left = core.dom.gameGroup.offsetLeft + core.dom.gameDraw.offsetLeft + 3;
                 var top = core.dom.gameGroup.offsetTop + core.dom.gameDraw.offsetTop + 3;
                 var loc = { 'x': Math.max(x - left, 0), 'y': Math.max(y - top, 0), 'size': 32 * core.domStyle.scale };
@@ -1305,17 +1305,17 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             }
         }
 
-        this._resetTitleCanvas = function() {
+        this._resetTitleCanvas = function () {
             if (!_isTitleCanvasEnabled) return;
             _isTitleCanvasEnabled = false;
-            window.onresize = function() { try { main.core.resize(); } catch (e) { main.log(e); } }
-            core.resize = function() { return core.control.resize(); }
+            window.onresize = function () { try { main.core.resize(); } catch (e) { main.log(e); } }
+            core.resize = function () { return core.control.resize(); }
             core.resize();
             core.actions._getClickLoc = _getClickLoc;
         }
 
         // 复写“开始游戏”
-        core.events._startGame_start = function(hard, seed, route, callback) {
+        core.events._startGame_start = function (hard, seed, route, callback) {
             console.log('开始游戏');
             core.resetGame(core.firstData.hero, hard, null, core.cloneArray(core.initStatus.maps));
             core.setHeroLoc('x', -1);
@@ -1334,7 +1334,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             core.push(todo, core.firstData.startCanvas);
             core.push(todo, { "type": "function", "function": "function() { core.plugin._resetTitleCanvas(); core.events._startGame_setHard(); }" })
             core.push(todo, core.firstData.startText);
-            this.insertAction(todo, null, null, function() {
+            this.insertAction(todo, null, null, function () {
                 core.events._startGame_afterStart(callback);
             });
 
@@ -1342,15 +1342,16 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
         }
 
         var _loadData = core.control.loadData;
-        core.control.loadData = function(data, callback) {
+        core.control.loadData = function (data, callback) {
             core.plugin._resetTitleCanvas();
             _loadData.call(core.control, data, callback);
         }
     },
-    "doTower": function() {
+    "doTower": function () {
+        "use strict";
         // 卖出防御塔
         // 获得升级后的属性
-        this.getNextLvStatus = function(x, y, fromDraw) {
+        this.getNextLvStatus = function (x, y, fromDraw) {
             var now = core.status.towers[x + ',' + y];
             if (!now) return console.error('不存在防御塔！');
             var level = now.level,
@@ -1402,7 +1403,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             return toStatus;
         };
         // 获得防御塔真实属性 附有经验等级加成
-        this.getTowerRealStatus = function(x, y, name, status) {
+        this.getTowerRealStatus = function (x, y, name, status) {
             if (status) var tower = status;
             else var tower = core.status.towers[x + ',' + y];
             var skipped = [
@@ -1429,7 +1430,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             return tower[name] * (1 + tower.expLevel / 100);
         };
         // 保存防御塔真实属性
-        this.saveRealStatusInCache = function(x, y) {
+        this.saveRealStatusInCache = function (x, y) {
             x = parseInt(x);
             y = parseInt(y);
             if (typeof x == 'number' && typeof y == 'number') {
@@ -1447,15 +1448,16 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             }
         };
     },
-    "towerAttack": function() {
+    "towerAttack": function () {
+        "use strict";
         // 旋转炮塔
-        var rotateWeapon = function(pos, dx, dy) {
+        var rotateWeapon = function (pos, dx, dy) {
             // atan2 是从X轴开始逆时针旋转, 炮塔是Y轴开始顺时针旋转, 因此交换x y坐标计算
             var deg = Math.atan2(dy, dx) / 3.1415926535 * 180 + 90;
             var transform = "rotate(" + deg + "deg)";
             core.batchDict["tower-weapon_" + pos].canvas.style.transform = transform;
         }
-        var triggleAnimate = function(elm, name) {
+        var triggleAnimate = function (elm, name) {
             if (elm.classList.contains(name + "-odd")) {
                 elm.classList.remove(name + "-odd");
                 elm.classList.add(name + "-even");
@@ -1464,7 +1466,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 elm.classList.add(name + "-odd");
             }
         }
-        this.basicAttack = function(x, y, tower) {
+        this.basicAttack = function (x, y, tower, i) {
             x = parseInt(x);
             y = parseInt(y);
             var pos = x + ',' + y;
@@ -1475,13 +1477,15 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var id = enemy;
             enemy = core.status.enemys.enemys[enemy];
             // 绘制攻击动画
-            if (!main.replayChecking) {
-                // 旋转炮塔
-                rotateWeapon(pos, enemy.x - x, enemy.y - y);
-                var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
-                var color = [255, 255 - tower.level / tower.max * 255, 255 - tower.level / tower.max * 255, 0.5]
-                core.drawLine(ctx, x * 32 + 16, y * 32 + 16, enemy.x * 32 + 16, enemy.y * 32 + 16, color, 2);
-                core.setTowerEffect(ctx, 0.5 / tower.speed);
+            if (i === 0) {
+                if (!main.replayChecking) {
+                    // 旋转炮塔
+                    rotateWeapon(pos, enemy.x - x, enemy.y - y);
+                    var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
+                    var color = [255, 255 - tower.level / tower.max * 255, 255 - tower.level / tower.max * 255, 0.5]
+                    core.drawLine(ctx, x * 32 + 16, y * 32 + 16, enemy.x * 32 + 16, enemy.y * 32 + 16, color, 2);
+                    core.setTowerEffect(ctx, 0.5 / tower.speed);
+                }
             }
             if (core.hasSpecial(enemy.special, 4)) {
                 enemy.hp -= atk / 2;
@@ -1501,11 +1505,13 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 core.autoUpdateStatusBar(x, y);
                 return;
             }
-            core.drawHealthBar(id);
-            core.autoUpdateStatusBar(x, y);
+            if (i === 0) {
+                core.drawHealthBar(id);
+                core.autoUpdateStatusBar(x, y);
+            }
         };
         // 机关枪
-        this.gunAttack = function(x, y, tower) {
+        this.gunAttack = function (x, y, tower, i) {
             x = parseInt(x);
             y = parseInt(y);
             var pos = x + ',' + y;
@@ -1516,12 +1522,14 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var id = enemy;
             enemy = core.status.enemys.enemys[enemy];
             // 绘制攻击动画
-            if (!main.replayChecking) {
-                rotateWeapon(pos, enemy.x - x, enemy.y - y);
-                var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
-                var color = [255, 255 - tower.level / tower.max * 255, 255 - tower.level / tower.max * 255, 0.4]
-                core.drawLine(ctx, x * 32 + 16, y * 32 + 16, enemy.x * 32 + 16, enemy.y * 32 + 16, color, 2);
-                core.setTowerEffect(ctx, 0.25 / tower.speed);
+            if (i === 0) {
+                if (!main.replayChecking) {
+                    rotateWeapon(pos, enemy.x - x, enemy.y - y);
+                    var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
+                    var color = [255, 255 - tower.level / tower.max * 255, 255 - tower.level / tower.max * 255, 0.4]
+                    core.drawLine(ctx, x * 32 + 16, y * 32 + 16, enemy.x * 32 + 16, enemy.y * 32 + 16, color, 2);
+                    core.setTowerEffect(ctx, 0.25 / tower.speed);
+                }
             }
             if (core.hasSpecial(enemy.special, 4)) {
                 enemy.hp -= atk / 2;
@@ -1541,11 +1549,13 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 core.autoUpdateStatusBar(x, y);
                 return;
             }
-            core.drawHealthBar(id);
-            core.autoUpdateStatusBar(x, y);
+            if (i === 0) {
+                core.drawHealthBar(id);
+                core.autoUpdateStatusBar(x, y);
+            }
         };
         // 炸弹塔
-        this.bombAttack = function(x, y, tower) {
+        this.bombAttack = function (x, y, tower, i) {
             x = parseInt(x);
             y = parseInt(y);
             var pos = x + ',' + y;
@@ -1557,7 +1567,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 ny = enemy.y;
             enemy = core.getEnemyInBombRange(nx, ny, tower.explode);
             // 爆炸攻击
-            enemy.forEach(function(one) {
+            enemy.forEach(function (one) {
                 var now = core.status.enemys.enemys[one];
                 if (core.hasSpecial(now.special, 4)) {
                     now.hp -= tower.atk / 2;
@@ -1573,26 +1583,29 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     core.status.towers[x + ',' + y].killed++;
                     return core.enemyDie(one);
                 }
-                core.drawHealthBar(one);
+                if (i === 0)
+                    core.drawHealthBar(one);
             });
             core.playSound('bomb.mp3');
             // 绘制攻击动画
-            if (!main.replayChecking) {
-                rotateWeapon(pos, nx - x, ny - y);
-                var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
-                ctx.filter = 'blur(0px)';
-                var color = [255, 150 - tower.level / tower.max * 150, 150 - tower.level / tower.max * 150, 0.5];
-                core.drawLine(ctx, x * 32 + 16, y * 32 + 16, nx * 32 + 16, ny * 32 + 16, color, 2);
-                color = [255, 100 - tower.level / tower.max * 100, 100 - tower.level / tower.max * 100, 0.5];
-                ctx.filter = 'blur(3px)';
-                core.fillCircle(ctx, nx * 32 + 16, ny * 32 + 16, tower.explode * 32, color);
-                core.setTowerEffect(ctx, 0.6 / tower.speed);
-            }
             core.expLevelUp(x, y);
-            core.autoUpdateStatusBar(x, y);
+            if (i === 0) {
+                if (!main.replayChecking) {
+                    rotateWeapon(pos, nx - x, ny - y);
+                    var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
+                    ctx.filter = 'blur(0px)';
+                    var color = [255, 150 - tower.level / tower.max * 150, 150 - tower.level / tower.max * 150, 0.5];
+                    core.drawLine(ctx, x * 32 + 16, y * 32 + 16, nx * 32 + 16, ny * 32 + 16, color, 2);
+                    color = [255, 100 - tower.level / tower.max * 100, 100 - tower.level / tower.max * 100, 0.5];
+                    ctx.filter = 'blur(3px)';
+                    core.fillCircle(ctx, nx * 32 + 16, ny * 32 + 16, tower.explode * 32, color);
+                    core.setTowerEffect(ctx, 0.6 / tower.speed);
+                }
+                core.autoUpdateStatusBar(x, y);
+            }
         };
         // 激光塔
-        this.laserAttack = function(x, y, tower) {
+        this.laserAttack = function (x, y, tower, i) {
             x = parseInt(x);
             y = parseInt(y);
             var pos = x + ',' + y;
@@ -1603,7 +1616,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var dx = -(x - enemy.x) * 32,
                 dy = -(y - enemy.y) * 32;
             enemy = core.getEnemyInLine(x, y, x + dx * 13, y + dy * 13);
-            enemy.forEach(function(one) {
+            enemy.forEach(function (one) {
                 var now = core.status.enemys.enemys[one];
                 if (core.hasSpecial(now.special, 4)) {
                     now.hp -= tower.atk * 2;
@@ -1619,24 +1632,27 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     core.status.towers[x + ',' + y].killed++;
                     return core.enemyDie(one);
                 }
-                core.drawHealthBar(one);
+                if (i === 0)
+                    core.drawHealthBar(one);
             });
             core.playSound('laser.mp3');
-            // 绘制攻击动画
-            if (!main.replayChecking) {
-                rotateWeapon(pos, dx, dy);
-                var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
-                dx *= 32;
-                dy *= 32;
-                var color = [170 + tower.level / tower.max * 85, 255 - tower.level / tower.max * 255, 170 + tower.level / tower.max * 85, 0.5];
-                core.drawLine(ctx, x * 32 + 16, y * 32 + 16, x * 32 + 16 + dx * 13, y * 32 + 16 + dy * 13, color, 3);
-                core.setTowerEffect(ctx, 1);
-            }
             core.expLevelUp(x, y);
-            core.autoUpdateStatusBar(x, y);
+            // 绘制攻击动画
+            if (i === 0) {
+                if (!main.replayChecking) {
+                    rotateWeapon(pos, dx, dy);
+                    var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
+                    dx *= 32;
+                    dy *= 32;
+                    var color = [170 + tower.level / tower.max * 85, 255 - tower.level / tower.max * 255, 170 + tower.level / tower.max * 85, 0.5];
+                    core.drawLine(ctx, x * 32 + 16, y * 32 + 16, x * 32 + 16 + dx * 13, y * 32 + 16 + dy * 13, color, 3);
+                    core.setTowerEffect(ctx, 1);
+                }
+                core.autoUpdateStatusBar(x, y);
+            }
         };
         // 闪电塔
-        this.teslaAttack = function(x, y, tower) {
+        this.teslaAttack = function (x, y, tower, j) {
             x = parseInt(x);
             y = parseInt(y);
             // 打距离基地最近的 并有连锁效果
@@ -1655,14 +1671,16 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 enemys.push(next);
             }
             // 动画效果
-            core.playSound('tesla.mp3')
-            if (!main.replayChecking) {
-                var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
-                core.drawLine(ctx, x * 32 + 16, y * 32, all[enemys[0]].x * 32 + 16,
-                    all[enemys[0]].y * 32 + 16, [255, 255, 255, 0.6], 2);
-                core.setTowerEffect(ctx, 0.64 / tower.speed);
+            core.playSound('tesla.mp3');
+            if (j === 0) {
+                if (!main.replayChecking) {
+                    var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
+                    core.drawLine(ctx, x * 32 + 16, y * 32, all[enemys[0]].x * 32 + 16,
+                        all[enemys[0]].y * 32 + 16, [255, 255, 255, 0.6], 2);
+                    core.setTowerEffect(ctx, 0.64 / tower.speed);
+                }
             }
-            enemys.forEach(function(one, i) {
+            enemys.forEach(function (one, i) {
                 var now = all[one];
                 if (core.hasSpecial(now.special, 4)) {
                     now.hp -= tower.atk * 2;
@@ -1674,25 +1692,29 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     core.status.towers[x + ',' + y].damage += tower.atk;
                 }
                 core.status.towers[x + ',' + y].exp++;
-                if (i != enemys.length - 1 && !main.replayChecking) {
-                    var next = all[enemys[i + 1]];
-                    var nx = now.x * 32 + 16,
-                        ny = now.y * 32 + 16,
-                        tx = next.x * 32 + 16,
-                        ty = next.y * 32 + 16;
-                    core.drawLine(ctx, nx, ny, tx, ty, [255, 255, 255, 0.6], 2);
+                if (j === 0) {
+                    if (i != enemys.length - 1 && !main.replayChecking) {
+                        var next = all[enemys[i + 1]];
+                        var nx = now.x * 32 + 16,
+                            ny = now.y * 32 + 16,
+                            tx = next.x * 32 + 16,
+                            ty = next.y * 32 + 16;
+                        core.drawLine(ctx, nx, ny, tx, ty, [255, 255, 255, 0.6], 2);
+                    }
                 }
                 if (now.hp <= 0) {
                     core.status.towers[x + ',' + y].killed++;
                     return core.enemyDie(one);
                 }
-                core.drawHealthBar(one);
+                if (j === 0)
+                    core.drawHealthBar(one);
             });
             core.expLevelUp(x, y);
-            core.autoUpdateStatusBar(x, y);
+            if (j === 0)
+                core.autoUpdateStatusBar(x, y);
         };
         // 散射塔
-        this.scatterAttack = function(x, y, tower) {
+        this.scatterAttack = function (x, y, tower, i) {
             x = parseInt(x);
             y = parseInt(y);
             // 打距离基地最近的几个怪物
@@ -1701,12 +1723,14 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var all = core.status.enemys.enemys;
             var nx = x * 32 + 16,
                 ny = y * 32 + 16;
-            if (!main.replayChecking) {
-                var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
-                var color = [255, 255 - tower.level / tower.max * 150, 255 - tower.level / tower.max * 150, 0.5];
-                core.setTowerEffect(ctx, 0.64 / tower.speed);
+            if (i === 0) {
+                if (!main.replayChecking) {
+                    var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
+                    var color = [255, 255 - tower.level / tower.max * 150, 255 - tower.level / tower.max * 150, 0.5];
+                    core.setTowerEffect(ctx, 0.64 / tower.speed);
+                }
             }
-            enemy.forEach(function(one) {
+            enemy.forEach(function (one) {
                 var now = all[one];
                 // 动画效果
                 if (!main.replayChecking)
@@ -1725,14 +1749,16 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     core.status.towers[x + ',' + y].killed++;
                     return core.enemyDie(one);
                 }
-                core.drawHealthBar(one);
+                if (i === 0)
+                    core.drawHealthBar(one);
             });
             core.expLevelUp(x, y);
             core.playSound('gun.mp3');
-            core.autoUpdateStatusBar(x, y);
+            if (i === 0)
+                core.autoUpdateStatusBar(x, y);
         };
         // 冰冻塔
-        this.getFreezeLoc = function() {
+        this.getFreezeLoc = function () {
             // 把冰冻比率和位置保存
             var freeze = {};
             for (var loc in core.status.realTower) {
@@ -1749,7 +1775,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             core.status.thisMap.freeze = core.clone(freeze);
         };
         // 士兵塔
-        this.barrackAttack = function(x, y, tower) {
+        this.barrackAttack = function (x, y, tower, i) {
             if (!core.status.enemys.hero) core.status.enemys.hero = {};
             x = parseInt(x);
             y = parseInt(y);
@@ -1766,12 +1792,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             core.status.enemys.hero.cnt++;
             core.status.towers[pos].exp += 20;
             core.status.enemys.hero.cnt++;
-            var id = 'hero_' + Math.round(Date.now() * Math.random())
-            while (true) {
-                if (!core.status.enemys.hero) break;
-                if (!(id in core.status.enemys.hero)) break;
-                id = 'hero_' + Math.round(Date.now() * Math.random());
-            }
+            var id = core.getUnitId('hero_', core.status.enemys.hero);
             core.status.enemys.hero[id] = {
                 hp: hero.hp,
                 atk: hero.atk,
@@ -1784,15 +1805,18 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 special: [],
                 level: tower.level >= 25 ? 2 : 1,
             };
-            if (!main.replayChecking) {
-                var weaponCanvas = core.batchDict["tower-weapon_" + pos].canvas;
-                triggleAnimate(weaponCanvas, "rotate");
+            if (i === 0) {
+                if (!main.replayChecking) {
+                    var weaponCanvas = core.batchDict["tower-weapon_" + pos].canvas;
+                    triggleAnimate(weaponCanvas, "rotate");
+                }
             }
             core.expLevelUp(x, y);
-            core.autoUpdateStatusBar(x, y);
+            if (i === 0)
+                core.autoUpdateStatusBar(x, y);
         };
         // 狙击手
-        this.sniperAttack = function(x, y, tower) {
+        this.sniperAttack = function (x, y, tower, i) {
             x = parseInt(x);
             y = parseInt(y);
             var pos = x + ',' + y;
@@ -1803,12 +1827,14 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             var id = enemy;
             enemy = core.status.enemys.enemys[enemy];
             // 绘制攻击动画
-            if (!main.replayChecking) {
-                rotateWeapon(pos, enemy.x - x, enemy.y - y);
-                var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
-                var color = [255, 150 - tower.level / tower.max * 150, 150 - tower.level / tower.max * 150, 0.7];
-                core.drawLine(ctx, x * 32 + 16, y * 32 + 16, enemy.x * 32 + 16, enemy.y * 32 + 16, color, 2);
-                core.setTowerEffect(ctx, 1 / tower.speed);
+            if (i === 0) {
+                if (!main.replayChecking) {
+                    rotateWeapon(pos, enemy.x - x, enemy.y - y);
+                    var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
+                    var color = [255, 150 - tower.level / tower.max * 150, 150 - tower.level / tower.max * 150, 0.7];
+                    core.drawLine(ctx, x * 32 + 16, y * 32 + 16, enemy.x * 32 + 16, enemy.y * 32 + 16, color, 2);
+                    core.setTowerEffect(ctx, 1 / tower.speed);
+                }
             }
             if (core.hasSpecial(enemy.special, 4)) {
                 enemy.hp -= atk / 2;
@@ -1825,14 +1851,15 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             if (enemy.hp <= 0) {
                 core.enemyDie(id);
                 core.status.towers[x + ',' + y].killed++;
-                core.autoUpdateStatusBar(x, y);
                 return;
             }
-            core.drawHealthBar(id);
-            core.autoUpdateStatusBar(x, y);
+            if (i === 0) {
+                core.drawHealthBar(id);
+                core.autoUpdateStatusBar(x, y);
+            }
         };
         // 地雷塔
-        this.mineAttack = function(x, y, tower) {
+        this.mineAttack = function (x, y, tower) {
             x = parseInt(x);
             y = parseInt(y);
             // 往地上铺地雷 每个图块最多4个
@@ -1841,7 +1868,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                 tower = core.status.realTower[x + ',' + y];
             }
             // 排序一下 先在距离基地进的地方放地雷
-            var canReach = Object.keys(tower.canReach).sort(function(a, b) { return b - a; });
+            var canReach = Object.keys(tower.canReach).sort(function (a, b) { return b - a; });
             // 由小及大遍历 获得能放地雷的图块 并放上地雷
             var mine = core.status.thisMap.mine;
             if (!mine) {
@@ -1945,13 +1972,13 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             core.autoUpdateStatusBar(x, y);
         };
         // 夹击塔 获得夹击塔夹击点
-        this.getChainLoc = function() {
+        this.getChainLoc = function () {
             // 先获得所有可能的夹击点
             var allTower = Object
                 .values(core.status.towers)
-                .filter(function(tower) { return tower.type === 'chain'; });
+                .filter(function (tower) { return tower.type === 'chain'; });
             var all = {};
-            allTower.forEach(function(one) {
+            allTower.forEach(function (one) {
                 for (var dir in core.utils.scan2) {
                     var x = one.x + core.utils.scan2[dir].x,
                         y = one.y + core.utils.scan2[dir].y;
@@ -1959,14 +1986,14 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                     all[x + ',' + y] = true;
                 }
             });
-            var isChain = function(x, y) {
-                    var pos = x + ',' + y;
-                    if (core.status.towers[pos] && core.status.towers[pos].type === 'chain') {
-                        return true;
-                    }
-                    return false;
+            var isChain = function (x, y) {
+                var pos = x + ',' + y;
+                if (core.status.towers[pos] && core.status.towers[pos].type === 'chain') {
+                    return true;
                 }
-                // 检查夹击
+                return false;
+            }
+            // 检查夹击
             var chain = {};
             var towers = core.status.realTower;
             core.clearMap('fg');
@@ -2012,7 +2039,7 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
             core.status.thisMap.chain = core.clone(chain);
         };
         // 震荡塔
-        this.destoryAttack = function(x, y, tower) {
+        this.destoryAttack = function (x, y, tower, i) {
             x = parseInt(x);
             y = parseInt(y);
             var pos = x + ',' + y;
@@ -2035,33 +2062,27 @@ var plugins_bb40132b_638b_4a9f_b028_d3fe47acc8d1 = {
                         core.status.towers[pos].killed++;
                         continue;
                     }
-                    core.drawHealthBar(one);
+                    if (i === 0)
+                        core.drawHealthBar(one);
                 }
             }
             // 特效
             if (!attacked) return;
             core.playSound('destory.mp3');
-            if (!main.replayChecking) {
-                var weaponCanvas = core.batchDict["tower-weapon_" + pos].canvas;
-                triggleAnimate(weaponCanvas, "blast");
-                var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
-                ctx.filter = 'blur(5px)';
-                var color = [150 + tower.level / tower.max * 105, 150 - tower.level / tower.max * 100, 150 - tower.level / tower.max * 100, 0.6];
-                core.fillCircle(ctx, x * 32 + 16, y * 32 + 16, (tower.range - 0.2) * 32, color);
-                core.setTowerEffect(ctx, 0.5 / tower.speed);
+            if (i === 0) {
+                if (!main.replayChecking) {
+                    var weaponCanvas = core.batchDict["tower-weapon_" + pos].canvas;
+                    triggleAnimate(weaponCanvas, "blast");
+                    var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
+                    ctx.filter = 'blur(5px)';
+                    var color = [150 + tower.level / tower.max * 105, 150 - tower.level / tower.max * 100, 150 - tower.level / tower.max * 100, 0.6];
+                    core.fillCircle(ctx, x * 32 + 16, y * 32 + 16, (tower.range - 0.2) * 32, color);
+                    core.setTowerEffect(ctx, 0.5 / tower.speed);
+                }
             }
             core.expLevelUp(x, y);
-            core.autoUpdateStatusBar(x, y);
+            if (i === 0)
+                core.autoUpdateStatusBar(x, y);
         };
     },
-    "amazing": function() {
-        // (function() {
-        //     var re = /x/;
-        //     console.log(re);
-        //     re.toString = function() {
-        //         console.log('这个塔不能开控制台');
-        //         while (true) console.log(1);
-        //     };
-        // })();
-    }
 }
