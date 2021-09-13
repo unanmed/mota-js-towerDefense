@@ -1,4 +1,4 @@
-function main() {
+function main () {
 
     //------------------------ 用户修改内容 ------------------------//
 
@@ -92,7 +92,7 @@ function main() {
     };
     this.mode = 'play';
     this.loadList = [
-        'loader', 'control', 'utils', 'items', 'icons', 'maps', 'enemys', 'events', 'actions', 'data', 'ui', 'extensions', 'defense', 'core'
+        'loader', 'control', 'utils', 'items', 'icons', 'maps', 'enemys', 'events', 'actions', 'data', 'ui', 'extensions', 'defense', 'towers', 'core'
     ];
     this.pureData = [
         'data', 'enemys', 'icons', 'maps', 'items', 'functions', 'events', 'plugins'
@@ -203,25 +203,25 @@ function main() {
     this.__VERSION_CODE__ = 507;
 }
 
-main.prototype.init = function(mode, callback) {
+main.prototype.init = function (mode, callback) {
     for (var i = 0; i < main.dom.gameCanvas.length; i++) {
         main.canvas[main.dom.gameCanvas[i].id] = main.dom.gameCanvas[i].getContext('2d');
     }
     main.mode = mode;
 
-    main.loadJs('project', main.pureData, function() {
+    main.loadJs('project', main.pureData, function () {
         var mainData = data_a1e2fb4a_e986_4524_b0da_9b7ba7c0874d.main;
         for (var ii in mainData) main[ii] = mainData[ii];
 
         main.dom.startLogo.style = main.styles.startLogoStyle;
         main.dom.startButtonGroup.style = main.styles.startButtonsStyle;
         main.levelChoose = main.levelChoose || [];
-        main.levelChoose.forEach(function(value) {
+        main.levelChoose.forEach(function (value) {
             var span = document.createElement('span');
             span.setAttribute('class', 'startButton');
             span.innerText = value.title || '';
-            (function(span, str_) {
-                span.onclick = function() {
+            (function (span, str_) {
+                span.onclick = function () {
                     core.events.startGame(str_);
                 }
             })(span, value.name || '');
@@ -230,7 +230,7 @@ main.prototype.init = function(mode, callback) {
         main.createOnChoiceAnimation();
         main.importFonts(main.fonts);
 
-        main.loadJs('libs', main.loadList, function() {
+        main.loadJs('libs', main.loadList, function () {
             main.core = core;
 
             for (i = 0; i < main.loadList.length; i++) {
@@ -239,11 +239,11 @@ main.prototype.init = function(mode, callback) {
                 main.core[name] = new window[name]();
             }
 
-            main.loadFloors(function() {
+            main.loadFloors(function () {
                 var coreData = {};
                 ["dom", "statusBar", "canvas", "images", "tilesets", "materials",
                     "animates", "bgms", "sounds", "floorIds", "floors", "floorPartitions"
-                ].forEach(function(t) {
+                ].forEach(function (t) {
                     coreData[t] = main[t];
                 })
                 main.core.init(coreData, callback);
@@ -254,19 +254,19 @@ main.prototype.init = function(mode, callback) {
 }
 
 ////// 动态加载所有核心JS文件 //////
-main.prototype.loadJs = function(dir, loadList, callback) {
+main.prototype.loadJs = function (dir, loadList, callback) {
 
     // 加载js
     main.setMainTipsText('正在加载核心js文件...')
 
     if (this.useCompress) {
-        main.loadMod(dir, dir, function() {
+        main.loadMod(dir, dir, function () {
             callback();
         })
     } else {
         var instanceNum = 0;
         for (var i = 0; i < loadList.length; i++) {
-            main.loadMod(dir, loadList[i], function(modName) {
+            main.loadMod(dir, loadList[i], function (modName) {
                 main.setMainTipsText(modName + '.js 加载完毕');
                 instanceNum++;
                 if (instanceNum === loadList.length) {
@@ -278,18 +278,18 @@ main.prototype.loadJs = function(dir, loadList, callback) {
 }
 
 ////// 加载某一个JS文件 //////
-main.prototype.loadMod = function(dir, modName, callback, onerror) {
+main.prototype.loadMod = function (dir, modName, callback, onerror) {
     var script = document.createElement('script');
     var name = modName;
     script.src = dir + '/' + modName + (this.useCompress ? ".min" : "") + '.js?v=' + this.version;
-    script.onload = function() {
+    script.onload = function () {
         callback(name);
     }
     main.dom.body.appendChild(script);
 }
 
 ////// 动态加载所有楼层（剧本） //////
-main.prototype.loadFloors = function(callback) {
+main.prototype.loadFloors = function (callback) {
 
     // 加载js
     main.setMainTipsText('正在加载楼层文件...')
@@ -297,7 +297,7 @@ main.prototype.loadFloors = function(callback) {
         var script = document.createElement('script');
         script.src = 'project/floors.min.js?v=' + this.version;
         main.dom.body.appendChild(script);
-        script.onload = function() {
+        script.onload = function () {
             main.dom.mainTips.style.display = 'none';
             callback();
         }
@@ -307,15 +307,15 @@ main.prototype.loadFloors = function(callback) {
     // 高层塔优化
     var script = document.createElement('script');
     script.src = '__all_floors__.js?v=' + this.version + '&id=' + main.floorIds.join(',');
-    script.onload = function() {
+    script.onload = function () {
         main.dom.mainTips.style.display = 'none';
         main.supportBunch = true;
         callback();
     }
-    script.onerror = script.onabort = script.ontimeout = function(e) {
+    script.onerror = script.onabort = script.ontimeout = function (e) {
         console.clear();
         for (var i = 0; i < main.floorIds.length; i++) {
-            main.loadFloor(main.floorIds[i], function(modName) {
+            main.loadFloor(main.floorIds[i], function (modName) {
                 main.setMainTipsText("楼层 " + modName + '.js 加载完毕');
                 if (Object.keys(main.floors).length === main.floorIds.length) {
                     main.dom.mainTips.style.display = 'none';
@@ -328,21 +328,21 @@ main.prototype.loadFloors = function(callback) {
 }
 
 ////// 加载某一个楼层 //////
-main.prototype.loadFloor = function(floorId, callback) {
+main.prototype.loadFloor = function (floorId, callback) {
     var script = document.createElement('script');
     script.src = 'project/floors/' + floorId + '.js?v=' + this.version;
     main.dom.body.appendChild(script);
-    script.onload = function() {
+    script.onload = function () {
         callback(floorId);
     }
 }
 
 ////// 加载过程提示 //////
-main.prototype.setMainTipsText = function(text) {
+main.prototype.setMainTipsText = function (text) {
     main.dom.mainTips.innerHTML = text;
 }
 
-main.prototype.log = function(e) {
+main.prototype.log = function (e) {
     if (e) {
         if (main.core && main.core.platform && !main.core.platform.isPC) {
             console.log((e.stack || e.toString()));
@@ -352,7 +352,7 @@ main.prototype.log = function(e) {
     }
 }
 
-main.prototype.createOnChoiceAnimation = function() {
+main.prototype.createOnChoiceAnimation = function () {
     var borderColor = main.dom.startButtonGroup.style.caretColor || "rgb(255, 215, 0)";
     // get rgb value
     var rgb = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(,\s*\d+\s*)?\)$/.exec(borderColor);
@@ -371,8 +371,8 @@ main.prototype.createOnChoiceAnimation = function() {
 }
 
 ////// 选项 //////
-main.prototype.selectButton = function(index) {
-    var select = function(children) {
+main.prototype.selectButton = function (index) {
+    var select = function (children) {
         index = (index + children.length) % children.length;
         for (var i = 0; i < children.length; ++i) {
             children[i].classList.remove("onChoiceAnimate");
@@ -395,439 +395,439 @@ main.prototype.selectButton = function(index) {
 }
 
 ////// 创建字体 //////
-main.prototype.importFonts = function(fonts) {
+main.prototype.importFonts = function (fonts) {
     if (!(fonts instanceof Array) || fonts.length == 0) return;
     var style = document.createElement('style');
     style.type = 'text/css';
     var html = '';
-    fonts.forEach(function(font) {
+    fonts.forEach(function (font) {
         html += '@font-face { font-family: "' + font + '"; src: url("project/fonts/' + font + '.ttf") format("truetype"); }';
     });
     style.innerHTML = html;
     document.body.appendChild(style);
 }
 
-main.prototype.listen = function() {
+main.prototype.listen = function () {
 
-        ////// 窗口大小变化时 //////
-        window.onresize = function() {
-            try {
-                main.core.resize();
-            } catch (e) { main.log(e); }
-        }
+    ////// 窗口大小变化时 //////
+    window.onresize = function () {
+        try {
+            main.core.resize();
+        } catch (e) { main.log(e); }
+    }
 
-        ////// 在界面上按下某按键时 //////
-        main.dom.body.onkeydown = function(e) {
-            try {
-                if (main.dom.inputDiv.style.display == 'block') return;
-                if (main.core && (main.core.isPlaying() || main.core.status.lockControl))
-                    main.core.onkeyDown(e);
-            } catch (ee) { main.log(ee); }
-        }
+    ////// 在界面上按下某按键时 //////
+    main.dom.body.onkeydown = function (e) {
+        try {
+            if (main.dom.inputDiv.style.display == 'block') return;
+            if (main.core && (main.core.isPlaying() || main.core.status.lockControl))
+                main.core.onkeyDown(e);
+        } catch (ee) { main.log(ee); }
+    }
 
-        ////// 在界面上放开某按键时 //////
-        main.dom.body.onkeyup = function(e) {
-            try {
-                if (main.dom.startPanel.style.display == 'block' &&
-                    (main.dom.startButtons.style.display == 'block' || main.dom.levelChooseButtons.style.display == 'block')) {
-                    if (e.keyCode == 38 || e.keyCode == 33) // up/pgup
-                        main.selectButton((main.selectedButton || 0) - 1);
-                    else if (e.keyCode == 40 || e.keyCode == 34) // down/pgdn
-                        main.selectButton((main.selectedButton || 0) + 1);
-                    else if (e.keyCode == 67 || e.keyCode == 13 || e.keyCode == 32) // C/Enter/Space
-                        main.selectButton(main.selectedButton);
-                    else if (e.keyCode == 27 && main.dom.levelChooseButtons.style.display == 'block') { // ESC
-                        main.core.showStartAnimate(true);
-                    }
-                    e.stopPropagation();
-                    return;
+    ////// 在界面上放开某按键时 //////
+    main.dom.body.onkeyup = function (e) {
+        try {
+            if (main.dom.startPanel.style.display == 'block' &&
+                (main.dom.startButtons.style.display == 'block' || main.dom.levelChooseButtons.style.display == 'block')) {
+                if (e.keyCode == 38 || e.keyCode == 33) // up/pgup
+                    main.selectButton((main.selectedButton || 0) - 1);
+                else if (e.keyCode == 40 || e.keyCode == 34) // down/pgdn
+                    main.selectButton((main.selectedButton || 0) + 1);
+                else if (e.keyCode == 67 || e.keyCode == 13 || e.keyCode == 32) // C/Enter/Space
+                    main.selectButton(main.selectedButton);
+                else if (e.keyCode == 27 && main.dom.levelChooseButtons.style.display == 'block') { // ESC
+                    main.core.showStartAnimate(true);
                 }
-                if (main.dom.inputDiv.style.display == 'block') {
-                    if (e.keyCode == 13) {
-                        setTimeout(function() {
-                            main.dom.inputYes.click();
-                        }, 50);
-                    } else if (e.keyCode == 27) {
-                        setTimeout(function() {
-                            main.dom.inputNo.click();
-                        }, 50);
-                    }
-                    return;
-                }
-                if (main.core && main.core.isPlaying && main.core.status &&
-                    (main.core.isPlaying() || main.core.status.lockControl))
-                    main.core.onkeyUp(e);
-            } catch (ee) { main.log(ee); }
-        };
-
-        [main.dom.startButtons, main.dom.levelChooseButtons].forEach(function(dom) {
-            dom.onmousemove = function(e) {
-                for (var i = 0; i < dom.children.length; ++i) {
-                    if (dom.children[i] == e.target && i != (main.selectedButton || 0)) {
-                        main.selectButton(i);
-                    }
-                }
-            }
-        });
-
-        ////// 开始选择时 //////
-        main.dom.body.onselectstart = function() {
-            return false;
-        }
-
-        ////// 鼠标按下时 //////
-        main.dom.data.onmousedown = function(e) {
-            try {
                 e.stopPropagation();
-                var loc = main.core.actions._getClickLoc(e.clientX, e.clientY);
-                if (loc == null) return;
-                main.core.ondown(loc);
-            } catch (ee) { main.log(ee); }
-        }
-
-        ////// 鼠标移动时 //////
-        main.dom.data.onmousemove = function(e) {
-            try {
-                e.stopPropagation();
-                var loc = main.core.actions._getClickLoc(e.clientX, e.clientY);
-                if (loc == null) return;
-                main.core.onmove(loc);
-            } catch (ee) { main.log(ee); }
-        }
-
-        ////// 鼠标放开时 //////
-        main.dom.data.onmouseup = function(e) {
-            try {
-                e.stopPropagation();
-                var loc = main.core.actions._getClickLoc(e.clientX, e.clientY);
-                if (loc == null) return;
-                main.core.onup(loc);
-            } catch (e) { main.log(e); }
-        }
-
-        ////// 鼠标滑轮滚动时 //////
-        main.dom.data.onmousewheel = function(e) {
-            try {
-                if (e.wheelDelta)
-                    main.core.onmousewheel(Math.sign(e.wheelDelta))
-                else if (e.detail)
-                    main.core.onmousewheel(Math.sign(e.detail));
-            } catch (ee) { main.log(ee); }
-        }
-
-        ////// 手指在触摸屏开始触摸时 //////
-        main.dom.data.ontouchstart = function(e) {
-            try {
-                e.preventDefault();
-                var loc = main.core.actions._getClickLoc(e.targetTouches[0].clientX, e.targetTouches[0].clientY);
-                if (loc == null) return;
-                main.lastTouchLoc = loc;
-                main.core.ondown(loc);
-            } catch (ee) { main.log(ee); }
-        }
-
-        ////// 手指在触摸屏上移动时 //////
-        main.dom.data.ontouchmove = function(e) {
-            try {
-                e.preventDefault();
-                var loc = main.core.actions._getClickLoc(e.targetTouches[0].clientX, e.targetTouches[0].clientY);
-                if (loc == null) return;
-                main.lastTouchLoc = loc;
-                main.core.onmove(loc);
-            } catch (ee) { main.log(ee); }
-        }
-
-        ////// 手指离开触摸屏时 //////
-        main.dom.data.ontouchend = function(e) {
-            try {
-                e.preventDefault();
-                if (main.lastTouchLoc == null) return;
-                var loc = main.lastTouchLoc;
-                delete main.lastTouchLoc;
-                main.core.onup(loc);
-            } catch (e) {
-                main.log(e);
-            }
-        }
-
-        main.dom.statusCanvas.onclick = function(e) {
-            try {
-                e.preventDefault();
-                main.core.onStatusBarClick(e);
-            } catch (e) {
-                main.log(e);
-            }
-        }
-
-        ////// 点击状态栏中的怪物手册时 //////
-        main.statusBar.image.book.onclick = function(e) {
-            e.stopPropagation();
-
-            if (core.isReplaying()) {
-                core.triggerReplay();
                 return;
             }
-
-            if (main.core.isPlaying())
-                main.core.openBook(true);
-        }
-
-        ////// 点击状态栏中的楼层传送器/装备栏时 //////
-        main.statusBar.image.fly.onclick = function(e) {
-            e.stopPropagation();
-        }
-
-        ////// 点击状态栏中的工具箱时 //////
-        main.statusBar.image.toolbox.onclick = function(e) {
-            e.stopPropagation();
-        }
-
-        ////// 双击状态栏中的工具箱时 //////
-        main.statusBar.image.toolbox.ondblclick = function(e) {
-            e.stopPropagation();
-        }
-
-        ////// 点击状态栏中的虚拟键盘时 //////
-        main.statusBar.image.keyboard.onclick = function(e) {
-            e.stopPropagation();
-
-            if (core.isReplaying()) {
-                core.control._replay_book();
-                return;
-            }
-
-            if (main.core.isPlaying())
-                main.core.openKeyBoard(true);
-        }
-
-        ////// 点击状态栏中的快捷商店时 //////
-        main.statusBar.image.shop.onclick = function(e) {
-            e.stopPropagation();
-        }
-
-        ////// 点击金币时也可以开启快捷商店 //////
-        main.statusBar.image.money.onclick = function(e) {
-            e.stopPropagation();
-
-            if (main.core.isPlaying())
-                main.core.openQuickShop(true);
-        }
-
-        ////// 点击楼梯图标也可以浏览地图 //////
-        main.statusBar.image.floor.onclick = function(e) {
-            e.stopPropagation();
-
-            if (main.core && main.core.isPlaying() && !core.isMoving() && !core.status.lockControl) {
-                core.ui._drawViewMaps();
-            }
-        }
-
-        ////// 点击状态栏中的存档按钮时 //////
-        main.statusBar.image.save.onclick = function(e) {
-            e.stopPropagation();
-
-            if (core.isReplaying()) {
-                core.speedDownReplay();
-                return;
-            }
-
-            if (main.core.isPlaying())
-                main.core.save(true);
-        }
-
-        ////// 点击状态栏中的读档按钮时 //////
-        main.statusBar.image.load.onclick = function(e) {
-            e.stopPropagation();
-
-            if (core.isReplaying()) {
-                core.speedUpReplay();
-                return;
-            }
-
-            if (main.core.isPlaying())
-                main.core.load(true);
-        }
-
-        ////// 点击状态栏中的系统菜单时 //////
-        main.statusBar.image.settings.onclick = function(e) {
-            e.stopPropagation();
-
-            if (core.isReplaying()) {
-                core.control._replay_SL();
-                return;
-            }
-
-            if (main.core.isPlaying())
-                main.core.openSettings(true);
-        }
-
-        ////// 点击工具栏时 //////
-        main.dom.hard.onclick = function() {
-            if (core.isReplaying())
-                return;
-            main.core.control.setToolbarButton(!core.domStyle.toolbarBtn);
-        }
-
-        ////// 手机端的按钮1-7 //////
-        main.statusBar.image.btn1.onclick = function(e) {
-            e.stopPropagation();
-            main.core.onkeyUp({ "keyCode": 49, "altKey": core.getLocalStorage('altKey') });
-        };
-
-        main.statusBar.image.btn2.onclick = function(e) {
-            e.stopPropagation();
-            main.core.onkeyUp({ "keyCode": 50, "altKey": core.getLocalStorage('altKey') });
-        };
-
-        main.statusBar.image.btn3.onclick = function(e) {
-            e.stopPropagation();
-            main.core.onkeyUp({ "keyCode": 51, "altKey": core.getLocalStorage('altKey') });
-        };
-
-        main.statusBar.image.btn4.onclick = function(e) {
-            e.stopPropagation();
-            main.core.onkeyUp({ "keyCode": 52, "altKey": core.getLocalStorage('altKey') });
-        };
-
-        main.statusBar.image.btn5.onclick = function(e) {
-            e.stopPropagation();
-            main.core.onkeyUp({ "keyCode": 53, "altKey": core.getLocalStorage('altKey') });
-        };
-
-        main.statusBar.image.btn6.onclick = function(e) {
-            e.stopPropagation();
-            main.core.onkeyUp({ "keyCode": 54, "altKey": core.getLocalStorage('altKey') });
-        };
-
-        main.statusBar.image.btn7.onclick = function(e) {
-            e.stopPropagation();
-            main.core.onkeyUp({ "keyCode": 55, "altKey": core.getLocalStorage('altKey') });
-        };
-
-        main.statusBar.image.btn8.onclick = function(e) {
-            e.stopPropagation();
-            if (core.getLocalStorage('altKey')) {
-                core.removeLocalStorage('altKey');
-                core.drawTip("Alt模式已关闭。");
-                main.statusBar.image.btn8.style.filter = '';
-            } else {
-                core.setLocalStorage('altKey', true);
-                core.drawTip("Alt模式已开启；此模式下1~7按钮视为Alt+1~7。");
-                main.statusBar.image.btn8.style.filter = 'sepia(1) contrast(1.5)';
-            }
-        };
-
-        ////// 点击“开始游戏”时 //////
-        main.dom.playGame.onclick = function() {
-            main.dom.startButtons.style.display = 'none';
-            main.core.control.checkBgm();
-
-            if (main.levelChoose.length == 0) {
-                core.events.startGame("");
-            } else {
-                main.dom.levelChooseButtons.style.display = 'block';
-                main.selectedButton = null;
-                main.selectButton(0);
-            }
-        }
-
-        ////// 点击“载入游戏”时 //////
-        main.dom.loadGame.onclick = function() {
-            main.core.control.checkBgm();
-            main.core.load();
-        }
-
-        ////// 点击“录像回放”时 //////
-        main.dom.replayGame.onclick = function() {
-            main.core.control.checkBgm();
-            main.core.chooseReplayFile();
-        }
-
-        ////// 点击“玩法说明”时 //////
-        main.dom.description.onclick = function() {
-            var canvas = document.createElement('canvas');
-            canvas.setAttribute("_left", 0);
-            canvas.setAttribute("_top", 0);
-            if (!core.domStyle.isVertical) {
-                canvas.style.width = 554 * main.core.domStyle.scale + 'px';
-                canvas.style.height = 463 * main.core.domStyle.scale + 'px';
-            } else {
-                canvas.style.width = 422 * main.core.domStyle.scale + 'px';
-                canvas.style.height = 580 * main.core.domStyle.scale + 'px';
-            }
-            canvas.style.left = '0px';
-            canvas.style.top = '0px';
-            canvas.style.zIndex = '999';
-            canvas.style.position = 'absolute';
-            canvas.style.backgroundColor = '#222';
-            if (!core.domStyle.isVertical)
-                core.maps._setHDCanvasSize(canvas.getContext('2d'), 553, 463);
-            else
-                core.maps._setHDCanvasSize(canvas.getContext('2d'), 422, 580);
-            main.dom.gameGroup.appendChild(canvas);
-            var text = '                                       游戏玩法说明\n\n' +
-                '1.防御塔：防御塔有很多基础属性，大多数的属性都是一目了然的。这里单独说明一下以下属性：\n' +
-                '  ①金币等级和经验等级：金币等级就是用金币可以升的等级，属性栏的显示为 等级 经验等级就是打怪或其他操作' +
-                '可以升的等级，一般情况下，每级增加1%的原始属性，夹击塔增加5%，士兵塔增加5%，属性栏显示为 lv.\n' +
-                '  ②夹击比率和最高伤害：这两个属性为夹击塔独有，含义一目了然，这里主要说明叠加关系。两个塔夹击时，伤害取' +
-                '两个塔的平均值，两种属性均可叠加\n' +
-                '  ③地雷：这个是地雷塔特有的东西（废话），每个格子最多放4个地雷，引爆时逐个引爆，直至炸死该怪物为止。' +
-                '地雷塔升级时，现有地雷不会升级，但是在地雷放满以后，会从头开始逐个覆盖低级地雷\n' +
-                '  ④士兵塔：会不断出士兵，与怪物战斗时永远是怪物首先攻击\n\n' +
-                '2.怪物：包括生命值、攻击力、防御力、移速属性，其中防御力和攻击力仅在与勇士战斗时起效，防御塔攻击时怪物的防御力无效\n\n' +
-                '3.boss：一般情况下，每10波会出现一个boss，血量会在上方显示，如果boss死了以后血条仍长时间未消失，请存档后再读这个存档\n\n' +
-                '4.存档：你可以在任意时候暂停游戏来存档，也可以读档，注意，读档会很耗时间，请尽量不要频繁读档\n\n' +
-                '5.暂停：电脑端可以随时按空格暂停游戏，或者点击状态栏最上方的分数位置暂停游戏，手机端有专门的按钮可以暂停游戏。'
-            if (!core.domStyle.isVertical)
-                core.drawTextContent(canvas.getContext('2d'), text, { maxWidth: 553, fontSize: 14 });
-            else
-                core.drawTextContent(canvas.getContext('2d'), text, { maxWidth: 422, fontSize: 14 });
-            canvas.onclick = function() {
-                main.dom.gameGroup.removeChild(canvas);
-            }
-        }
-
-        main.dom.musicBtn.onclick = function() {
-            try {
-                if (main.core)
-                    main.core.triggerBgm();
-            } catch (e) { main.log(e); }
-        }
-
-        main.dom.enlargeBtn.onclick = function() {
-            try {
-                if (main.core) {
-                    main.core.setDisplayScale(1);
-                    if (!main.core.isPlaying() && main.core.flags.enableHDCanvas) {
-                        main.core.domStyle.ratio = Math.max(window.devicePixelRatio || 1, main.core.domStyle.scale);
-                        main.core.resize();
-                    }
+            if (main.dom.inputDiv.style.display == 'block') {
+                if (e.keyCode == 13) {
+                    setTimeout(function () {
+                        main.dom.inputYes.click();
+                    }, 50);
+                } else if (e.keyCode == 27) {
+                    setTimeout(function () {
+                        main.dom.inputNo.click();
+                    }, 50);
                 }
-            } catch (e) { main.log(e) };
-        }
+                return;
+            }
+            if (main.core && main.core.isPlaying && main.core.status &&
+                (main.core.isPlaying() || main.core.status.lockControl))
+                main.core.onkeyUp(e);
+        } catch (ee) { main.log(ee); }
+    };
 
-        window.onblur = function() {
-            if (main.core && main.core.control) {
-                try {
-                    main.core.control.checkAutosave();
-                } catch (e) {}
+    [main.dom.startButtons, main.dom.levelChooseButtons].forEach(function (dom) {
+        dom.onmousemove = function (e) {
+            for (var i = 0; i < dom.children.length; ++i) {
+                if (dom.children[i] == e.target && i != (main.selectedButton || 0)) {
+                    main.selectButton(i);
+                }
             }
         }
+    });
 
-        main.dom.inputYes.onclick = function() {
-            main.dom.inputDiv.style.display = 'none';
-            var func = core.platform.successCallback;
-            core.platform.successCallback = core.platform.errorCallback = null;
-            if (func) func(main.dom.inputBox.value);
+    ////// 开始选择时 //////
+    main.dom.body.onselectstart = function () {
+        return false;
+    }
+
+    ////// 鼠标按下时 //////
+    main.dom.data.onmousedown = function (e) {
+        try {
+            e.stopPropagation();
+            var loc = main.core.actions._getClickLoc(e.clientX, e.clientY);
+            if (loc == null) return;
+            main.core.ondown(loc);
+        } catch (ee) { main.log(ee); }
+    }
+
+    ////// 鼠标移动时 //////
+    main.dom.data.onmousemove = function (e) {
+        try {
+            e.stopPropagation();
+            var loc = main.core.actions._getClickLoc(e.clientX, e.clientY);
+            if (loc == null) return;
+            main.core.onmove(loc);
+        } catch (ee) { main.log(ee); }
+    }
+
+    ////// 鼠标放开时 //////
+    main.dom.data.onmouseup = function (e) {
+        try {
+            e.stopPropagation();
+            var loc = main.core.actions._getClickLoc(e.clientX, e.clientY);
+            if (loc == null) return;
+            main.core.onup(loc);
+        } catch (e) { main.log(e); }
+    }
+
+    ////// 鼠标滑轮滚动时 //////
+    main.dom.data.onmousewheel = function (e) {
+        try {
+            if (e.wheelDelta)
+                main.core.onmousewheel(Math.sign(e.wheelDelta))
+            else if (e.detail)
+                main.core.onmousewheel(Math.sign(e.detail));
+        } catch (ee) { main.log(ee); }
+    }
+
+    ////// 手指在触摸屏开始触摸时 //////
+    main.dom.data.ontouchstart = function (e) {
+        try {
+            e.preventDefault();
+            var loc = main.core.actions._getClickLoc(e.targetTouches[0].clientX, e.targetTouches[0].clientY);
+            if (loc == null) return;
+            main.lastTouchLoc = loc;
+            main.core.ondown(loc);
+        } catch (ee) { main.log(ee); }
+    }
+
+    ////// 手指在触摸屏上移动时 //////
+    main.dom.data.ontouchmove = function (e) {
+        try {
+            e.preventDefault();
+            var loc = main.core.actions._getClickLoc(e.targetTouches[0].clientX, e.targetTouches[0].clientY);
+            if (loc == null) return;
+            main.lastTouchLoc = loc;
+            main.core.onmove(loc);
+        } catch (ee) { main.log(ee); }
+    }
+
+    ////// 手指离开触摸屏时 //////
+    main.dom.data.ontouchend = function (e) {
+        try {
+            e.preventDefault();
+            if (main.lastTouchLoc == null) return;
+            var loc = main.lastTouchLoc;
+            delete main.lastTouchLoc;
+            main.core.onup(loc);
+        } catch (e) {
+            main.log(e);
+        }
+    }
+
+    main.dom.statusCanvas.onclick = function (e) {
+        try {
+            e.preventDefault();
+            main.core.onStatusBarClick(e);
+        } catch (e) {
+            main.log(e);
+        }
+    }
+
+    ////// 点击状态栏中的怪物手册时 //////
+    main.statusBar.image.book.onclick = function (e) {
+        e.stopPropagation();
+
+        if (core.isReplaying()) {
+            core.triggerReplay();
+            return;
         }
 
-        main.dom.inputNo.onclick = function() {
-            main.dom.inputDiv.style.display = 'none';
-            var func = core.platform.errorCallback;
-            core.platform.successCallback = core.platform.errorCallback = null;
-            if (func) func(null);
+        if (main.core.isPlaying())
+            main.core.openBook(true);
+    }
+
+    ////// 点击状态栏中的楼层传送器/装备栏时 //////
+    main.statusBar.image.fly.onclick = function (e) {
+        e.stopPropagation();
+    }
+
+    ////// 点击状态栏中的工具箱时 //////
+    main.statusBar.image.toolbox.onclick = function (e) {
+        e.stopPropagation();
+    }
+
+    ////// 双击状态栏中的工具箱时 //////
+    main.statusBar.image.toolbox.ondblclick = function (e) {
+        e.stopPropagation();
+    }
+
+    ////// 点击状态栏中的虚拟键盘时 //////
+    main.statusBar.image.keyboard.onclick = function (e) {
+        e.stopPropagation();
+
+        if (core.isReplaying()) {
+            core.control._replay_book();
+            return;
         }
 
-    } //listen end
+        if (main.core.isPlaying())
+            main.core.openKeyBoard(true);
+    }
+
+    ////// 点击状态栏中的快捷商店时 //////
+    main.statusBar.image.shop.onclick = function (e) {
+        e.stopPropagation();
+    }
+
+    ////// 点击金币时也可以开启快捷商店 //////
+    main.statusBar.image.money.onclick = function (e) {
+        e.stopPropagation();
+
+        if (main.core.isPlaying())
+            main.core.openQuickShop(true);
+    }
+
+    ////// 点击楼梯图标也可以浏览地图 //////
+    main.statusBar.image.floor.onclick = function (e) {
+        e.stopPropagation();
+
+        if (main.core && main.core.isPlaying() && !core.isMoving() && !core.status.lockControl) {
+            core.ui._drawViewMaps();
+        }
+    }
+
+    ////// 点击状态栏中的存档按钮时 //////
+    main.statusBar.image.save.onclick = function (e) {
+        e.stopPropagation();
+
+        if (core.isReplaying()) {
+            core.speedDownReplay();
+            return;
+        }
+
+        if (main.core.isPlaying())
+            main.core.save(true);
+    }
+
+    ////// 点击状态栏中的读档按钮时 //////
+    main.statusBar.image.load.onclick = function (e) {
+        e.stopPropagation();
+
+        if (core.isReplaying()) {
+            core.speedUpReplay();
+            return;
+        }
+
+        if (main.core.isPlaying())
+            main.core.load(true);
+    }
+
+    ////// 点击状态栏中的系统菜单时 //////
+    main.statusBar.image.settings.onclick = function (e) {
+        e.stopPropagation();
+
+        if (core.isReplaying()) {
+            core.control._replay_SL();
+            return;
+        }
+
+        if (main.core.isPlaying())
+            main.core.openSettings(true);
+    }
+
+    ////// 点击工具栏时 //////
+    main.dom.hard.onclick = function () {
+        if (core.isReplaying())
+            return;
+        main.core.control.setToolbarButton(!core.domStyle.toolbarBtn);
+    }
+
+    ////// 手机端的按钮1-7 //////
+    main.statusBar.image.btn1.onclick = function (e) {
+        e.stopPropagation();
+        main.core.onkeyUp({ "keyCode": 49, "altKey": core.getLocalStorage('altKey') });
+    };
+
+    main.statusBar.image.btn2.onclick = function (e) {
+        e.stopPropagation();
+        main.core.onkeyUp({ "keyCode": 50, "altKey": core.getLocalStorage('altKey') });
+    };
+
+    main.statusBar.image.btn3.onclick = function (e) {
+        e.stopPropagation();
+        main.core.onkeyUp({ "keyCode": 51, "altKey": core.getLocalStorage('altKey') });
+    };
+
+    main.statusBar.image.btn4.onclick = function (e) {
+        e.stopPropagation();
+        main.core.onkeyUp({ "keyCode": 52, "altKey": core.getLocalStorage('altKey') });
+    };
+
+    main.statusBar.image.btn5.onclick = function (e) {
+        e.stopPropagation();
+        main.core.onkeyUp({ "keyCode": 53, "altKey": core.getLocalStorage('altKey') });
+    };
+
+    main.statusBar.image.btn6.onclick = function (e) {
+        e.stopPropagation();
+        main.core.onkeyUp({ "keyCode": 54, "altKey": core.getLocalStorage('altKey') });
+    };
+
+    main.statusBar.image.btn7.onclick = function (e) {
+        e.stopPropagation();
+        main.core.onkeyUp({ "keyCode": 55, "altKey": core.getLocalStorage('altKey') });
+    };
+
+    main.statusBar.image.btn8.onclick = function (e) {
+        e.stopPropagation();
+        if (core.getLocalStorage('altKey')) {
+            core.removeLocalStorage('altKey');
+            core.drawTip("Alt模式已关闭。");
+            main.statusBar.image.btn8.style.filter = '';
+        } else {
+            core.setLocalStorage('altKey', true);
+            core.drawTip("Alt模式已开启；此模式下1~7按钮视为Alt+1~7。");
+            main.statusBar.image.btn8.style.filter = 'sepia(1) contrast(1.5)';
+        }
+    };
+
+    ////// 点击“开始游戏”时 //////
+    main.dom.playGame.onclick = function () {
+        main.dom.startButtons.style.display = 'none';
+        main.core.control.checkBgm();
+
+        if (main.levelChoose.length == 0) {
+            core.events.startGame("");
+        } else {
+            main.dom.levelChooseButtons.style.display = 'block';
+            main.selectedButton = null;
+            main.selectButton(0);
+        }
+    }
+
+    ////// 点击“载入游戏”时 //////
+    main.dom.loadGame.onclick = function () {
+        main.core.control.checkBgm();
+        main.core.load();
+    }
+
+    ////// 点击“录像回放”时 //////
+    main.dom.replayGame.onclick = function () {
+        main.core.control.checkBgm();
+        main.core.chooseReplayFile();
+    }
+
+    ////// 点击“玩法说明”时 //////
+    main.dom.description.onclick = function () {
+        var canvas = document.createElement('canvas');
+        canvas.setAttribute("_left", 0);
+        canvas.setAttribute("_top", 0);
+        if (!core.domStyle.isVertical) {
+            canvas.style.width = 554 * main.core.domStyle.scale + 'px';
+            canvas.style.height = 463 * main.core.domStyle.scale + 'px';
+        } else {
+            canvas.style.width = 422 * main.core.domStyle.scale + 'px';
+            canvas.style.height = 580 * main.core.domStyle.scale + 'px';
+        }
+        canvas.style.left = '0px';
+        canvas.style.top = '0px';
+        canvas.style.zIndex = '999';
+        canvas.style.position = 'absolute';
+        canvas.style.backgroundColor = '#222';
+        if (!core.domStyle.isVertical)
+            core.maps._setHDCanvasSize(canvas.getContext('2d'), 553, 463);
+        else
+            core.maps._setHDCanvasSize(canvas.getContext('2d'), 422, 580);
+        main.dom.gameGroup.appendChild(canvas);
+        var text = '                                       游戏玩法说明\n\n' +
+            '1.防御塔：防御塔有很多基础属性，大多数的属性都是一目了然的。这里单独说明一下以下属性：\n' +
+            '  ①金币等级和经验等级：金币等级就是用金币可以升的等级，属性栏的显示为 等级 经验等级就是打怪或其他操作' +
+            '可以升的等级，一般情况下，每级增加1%的原始属性，夹击塔增加5%，士兵塔增加5%，属性栏显示为 lv.\n' +
+            '  ②夹击比率和最高伤害：这两个属性为夹击塔独有，含义一目了然，这里主要说明叠加关系。两个塔夹击时，伤害取' +
+            '两个塔的平均值，两种属性均可叠加\n' +
+            '  ③地雷：这个是地雷塔特有的东西（废话），每个格子最多放4个地雷，引爆时逐个引爆，直至炸死该怪物为止。' +
+            '地雷塔升级时，现有地雷不会升级，但是在地雷放满以后，会从头开始逐个覆盖低级地雷\n' +
+            '  ④士兵塔：会不断出士兵，与怪物战斗时永远是怪物首先攻击\n\n' +
+            '2.怪物：包括生命值、攻击力、防御力、移速属性，其中防御力和攻击力仅在与勇士战斗时起效，防御塔攻击时怪物的防御力无效\n\n' +
+            '3.boss：一般情况下，每10波会出现一个boss，血量会在上方显示，如果boss死了以后血条仍长时间未消失，请存档后再读这个存档\n\n' +
+            '4.存档：你可以在任意时候暂停游戏来存档，也可以读档，注意，读档会很耗时间，请尽量不要频繁读档\n\n' +
+            '5.暂停：电脑端可以随时按空格暂停游戏，或者点击状态栏最上方的分数位置暂停游戏，手机端有专门的按钮可以暂停游戏。'
+        if (!core.domStyle.isVertical)
+            core.drawTextContent(canvas.getContext('2d'), text, { maxWidth: 553, fontSize: 14 });
+        else
+            core.drawTextContent(canvas.getContext('2d'), text, { maxWidth: 422, fontSize: 14 });
+        canvas.onclick = function () {
+            main.dom.gameGroup.removeChild(canvas);
+        }
+    }
+
+    main.dom.musicBtn.onclick = function () {
+        try {
+            if (main.core)
+                main.core.triggerBgm();
+        } catch (e) { main.log(e); }
+    }
+
+    main.dom.enlargeBtn.onclick = function () {
+        try {
+            if (main.core) {
+                main.core.setDisplayScale(1);
+                if (!main.core.isPlaying() && main.core.flags.enableHDCanvas) {
+                    main.core.domStyle.ratio = Math.max(window.devicePixelRatio || 1, main.core.domStyle.scale);
+                    main.core.resize();
+                }
+            }
+        } catch (e) { main.log(e) };
+    }
+
+    window.onblur = function () {
+        if (main.core && main.core.control) {
+            try {
+                main.core.control.checkAutosave();
+            } catch (e) { }
+        }
+    }
+
+    main.dom.inputYes.onclick = function () {
+        main.dom.inputDiv.style.display = 'none';
+        var func = core.platform.successCallback;
+        core.platform.successCallback = core.platform.errorCallback = null;
+        if (func) func(main.dom.inputBox.value);
+    }
+
+    main.dom.inputNo.onclick = function () {
+        main.dom.inputDiv.style.display = 'none';
+        var func = core.platform.errorCallback;
+        core.platform.successCallback = core.platform.errorCallback = null;
+        if (func) func(null);
+    }
+
+} //listen end
 
 var main = new main();

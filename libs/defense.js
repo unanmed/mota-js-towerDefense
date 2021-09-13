@@ -300,8 +300,9 @@ defense.prototype._action_doTower = function (x, y) {
     if (!core.status.towers) return false;
     // 查看详细信息时
     var fromCheck = false;
+    var id = core.status.event.id
     if (typeof core.status.event.data == 'string' && core.status.event.data.split(',').length == 2) {
-        if (core.status.event.id && (core.status.event.id == 'checkTower' || core.status.event.id.startsWith('confirm'))) {
+        if (id && (id == 'checkTower' || id.startsWith('confirm'))) {
             var loc = core.status.event.data;
             var nloc = loc.split(',');
             if (!(x == nloc[0] && y == nloc[1])) {
@@ -309,6 +310,7 @@ defense.prototype._action_doTower = function (x, y) {
                 core.status.event.data = null;
                 flags.upgrade = false;
                 flags.sell = false;
+                flags.maxUp = false;
                 core.unlockControl();
                 core.clearMap('damage');
                 core.updateStatusBar();
@@ -478,7 +480,7 @@ defense.prototype.initAttack = function () {
             if (tower.type != 'freeze' && tower.type != 'chain') {
                 tower.attackInterval -= 16.67;
                 if (tower.attackInterval <= 0) {
-                    core[tower.type + 'Attack'](loc.split(',')[0], loc.split(',')[1], tower, i);
+                    core.towers['_' + tower.type + 'Attack'](loc.split(',')[0], loc.split(',')[1], tower, i);
                     tower.attackInterval += tower.speed * 1000;
                 }
             } else {
@@ -487,6 +489,7 @@ defense.prototype.initAttack = function () {
                 var x = loc.split(',')[0],
                     y = loc.split(',')[1];
                 core.expLevelUp(x, y);
+                if (core.defense.speed > 10) continue;
                 // 旋转
                 if (i === 0) {
                     if (tower.type === 'freeze' && !main.replayChecking) {
@@ -508,6 +511,7 @@ defense.prototype.initAttack = function () {
 defense.prototype.deleteTowerEffect = function () {
     core.registerAnimationFrame('_deleteEffect', true, function () {
         if (main.replayChecking) return;
+        if (core.defense.speed > 25) return;
         if (flags.__pause__) return;
         for (var one in core.batchDict) {
             if (!one.startsWith('tower')) continue;
@@ -1026,7 +1030,7 @@ defense.prototype.drawAllEnemys = function (fromLoad) {
 defense.prototype._drawAllEnemys_drawEnemyAnimation = function (timestamp, i) {
     if (main.replayChecking) return;
     if (!core.status.thisMap) return;
-    if (timestamp !== -1 && i !== 0) return;
+    if (timestamp !== -1 && (i !== 0 || core.defense.speed > 1)) return;
     if ((core.domStyle.isVertical && core.defense.speed >= 100) ||
         (!core.domStyle.isVertical && core.defense.speed === 1000)) return;
     // 传入-1时强制进行绘制
@@ -1293,9 +1297,11 @@ defense.prototype._drawAllEnemys_drawHero = function (i, noDraw, length) {
         hero.x += speedX;
         hero.y += speedY;
         // boss血条半透明
-        if (length > 0) {
-            if (hero.y * 32 < this.bossList.length * 36 + 10) {
-                flags.__transparented__ = true;
+        if (i === 0 && !noDraw) {
+            if (length > 0) {
+                if (hero.y * 32 < this.bossList.length * 36 + 10) {
+                    flags.__transparented__ = true;
+                }
             }
         }
         // 如果还没有画过 进行绘制
@@ -1308,9 +1314,7 @@ defense.prototype._drawAllEnemys_drawHero = function (i, noDraw, length) {
                 }
                 core.drawBlock(icon, core.status.globalAnimateStatus, ctx);
                 // 血条
-                core.fillRect(hpctx, 1, 0, 28, 4, '#333333');
-                core.fillRect(hpctx, 1, 0, 28, 4, '#00ff00');
-                core.strokeRect(hpctx, 0, 0, 28, 4, '#000000', 2);
+                core.drawHealthBar(id);
             }
             if (!main.replayChecking) {
                 core.relocateCanvas(hpctx, hero.x * 32 + 2, hero.y * 32);
@@ -1407,7 +1411,7 @@ defense.prototype._drawMine = function (loc) {
 ////// 绘制血条 //////
 defense.prototype.drawHealthBar = function (enemy) {
     if (main.replayChecking) return;
-    if (this.speed > 8) return;
+    if (this.speed > 10) return;
     if (!enemy) {
         for (var one in core.status.enemys.enemys) {
             if (one.endsWith('boss')) {
@@ -1479,20 +1483,16 @@ defense.prototype.drawBossHealthBar = function (id) {
     core.strokeRect(borderCtx, 34, 2, 350, 14, '#eee', 2);
     var e = id.split('_')[0];
     var name = core.material.enemys[e].name;
-    core.fillPolygon(
-        borderCtx,
-        [
-            [1, 1],
-            [1, 30],
-            [50 + 14 * name.length, 30],
-            [66 + 14 * name.length, 17],
-            [385, 17],
-            [385, 15],
-            [35, 15],
-            [35, 1]
-        ],
-        '#eee'
-    );
+    core.fillPolygon(borderCtx, [
+        [1, 1],
+        [1, 30],
+        [50 + 14 * name.length, 30],
+        [66 + 14 * name.length, 17],
+        [385, 17],
+        [385, 15],
+        [35, 15],
+        [35, 1]
+    ], '#eee');
     core.drawIcon(borderCtx, e, 1, 0, 32, 32);
     core.fillBoldText(borderCtx, name, 38, 28, '#eee', '#333', '13px Arial');
     barCtx.canvas.className = 'bossHealthBar';
@@ -1692,6 +1692,14 @@ defense.prototype.upgradeTower = function (x, y) {
     return true;
 };
 
+////// 一键等级最大化 //////
+defense.prototype.levelToMax = function (x, y) {
+    while (true) {
+        if (!this.upgradeTower(x, y)) break;
+    }
+    core.drawTip('一键升级成功！');
+}
+
 ////// 经验升级 //////
 defense.prototype.expLevelUp = function (x, y) {
     var tower = core.status.towers[x + ',' + y];
@@ -1714,6 +1722,106 @@ defense.prototype.expLevelUp = function (x, y) {
         if (tower.type == 'chain') core.getChainLoc();
     }
 };
+
+////// 获得升级后的属性 //////
+defense.prototype.getNextLvStatus = function (x, y, fromDraw) {
+    var now = core.status.towers[x + ',' + y];
+    if (!now) return console.error('不存在防御塔！');
+    var level = now.level,
+        next = level + 1;
+    var toStatus = {};
+    var skipped = [
+        'level', 'type', 'damage', 'max',
+        'haveCost', 'killed', 'exp', 'expLevel',
+        'square', 'attackInterval', 'x', 'y', 'pauseBuild'
+    ];
+    for (var one in now) {
+        // 跳过属性
+        if (skipped.indexOf(one) > -1) {
+            toStatus[one] = now[one];
+            continue;
+        }
+        // 特殊处理属性
+        if (one == 'cnt' || one == 'chain' || one == 'rate') {
+            toStatus[one] = core.defense.upgrades[now.type](next, one);
+            continue;
+        }
+        // 特殊处理的塔
+        if (now.type == 'barrack' && one == 'hero') {
+            toStatus.hero = {};
+            for (var i in now.hero) {
+                toStatus.hero[i] = core.defense.upgrades[now.type](next, i, 'hero') * core.defense.towers[now.type].hero[i];
+            }
+            continue;
+        }
+        if (now.type == 'mine' && one == 'mine') {
+            toStatus.mine = {};
+            for (var i in now.mine) {
+                toStatus.mine[i] = core.defense.upgrades[now.type](next, i) * core.defense.towers[now.type].mine[i];
+            }
+            continue;
+        }
+        // 添加属性
+        if (one == 'speed')
+            toStatus[one] = core.defense.towers[now.type][one] / core.defense.upgrades[now.type](next, one);
+        else
+            toStatus[one] = core.defense.upgrades[now.type](next, one) * core.defense.towers[now.type][one];
+    }
+    // 获得真实属性
+    if (fromDraw) {
+        for (var one in toStatus) {
+            toStatus[one] = this.getTowerRealStatus(null, null, one, toStatus);
+        }
+    }
+    return toStatus;
+}
+
+////// 获得防御塔真实属性 //////
+defense.prototype.getTowerRealStatus = function (x, y, name, status) {
+    if (status) var tower = status;
+    else var tower = core.status.towers[x + ',' + y];
+    var skipped = [
+        'cost', 'level', 'type', 'damage',
+        'max', 'killed', 'exp', 'expLevel',
+        'square', 'haveCost', 'attackInterval',
+        'pauseBuild', 'x', 'y'
+    ];
+    if (skipped.indexOf(name) > -1)
+        return tower[name];
+    if (name == 'cnt' || name == 'chain') return Math.floor(tower.expLevel / 5) + tower[name];
+    if (name == 'hero' || name == 'mine') {
+        var s = {};
+        for (var one in tower[name]) {
+            s[one] = tower[name][one] * (1 + tower.expLevel / 100);
+        }
+        return s;
+    }
+    if (name == 'speed')
+        return tower[name] / (1 + tower.expLevel / 100);
+    if (name == 'rate' && tower.rate * (1 + tower.expLevel / 100) >= 80) return 80;
+    if (tower.type == 'chain') return tower[name] * (1 + tower.expLevel / 20);
+    if (tower.type == 'barrack') return tower[name] * (1 + tower.expLevel / 20);
+    return tower[name] * (1 + tower.expLevel / 100);
+}
+
+////// 将防御塔真实属性存入缓存及存档 //////
+defense.prototype.saveRealStatusInCache = function (x, y) {
+    x = parseInt(x);
+    y = parseInt(y);
+    if (typeof x == 'number' && typeof y == 'number') {
+        core.status.realTower[x + ',' + y] = {};
+        for (var one in core.status.towers[x + ',' + y]) {
+            core.status.realTower[x + ',' + y][one] = this.getTowerRealStatus(x, y, one);
+        }
+        core.status.realTower[x + ',' + y].attackInterval = core.status.realTower[x + ',' + y].speed * 1000;
+    } else {
+        core.status.realTower = {};
+        for (var loc in core.status.towers) {
+            core.status.realTower[loc] = {};
+            this.saveRealStatusInCache(loc.split(',')[0], loc.split(',')[1]);
+        }
+    }
+}
 
 ////// 卖出防御塔 //////
 defense.prototype.sellTower = function (x, y) {
@@ -1973,6 +2081,9 @@ defense.prototype._drawTowerDetail_drawHorizon = function (toDraw, tower, type, 
         core.fillBoldText(ctx, '卖出', 95, y + 71, '#fff', '#000', '16px Arial');
         if (!tower.max || tower.max > tower.level) core.fillText(ctx, Math.round(tower.cost), 35, y + 86, '#fff', '12px Arial');
         core.fillText(ctx, Math.round(tower.haveCost * (tower.pauseBuild ? 1 : 0.6)), 95, y + 86, '#fff', '12px Arial');
+        // 最大化等级
+        core.fillRect(ctx, 10, y + 90, 109, 20, flags.maxUp ? '#ffa' : '#ff0');
+        core.fillBoldText(ctx, '一键升级', 64, y + 106, '#fff', '#000', '16px Arial');
     }
     // 升级卖出的y坐标
     flags.upgradeY = y;
@@ -2053,14 +2164,16 @@ defense.prototype._drawTowerDetail_drawVertical = function (toDraw, tower, type,
             core.fillText(ctx, ((ori.damage / core.status.totalDamage || 0) * 100).toFixed(2) + '%', 410, 123, '#fcc', '12px Arial');
             core.fillText(ctx, ((ori.killed / core.status.totalKilled || 0) * 100).toFixed(2) + '%', 410, 157, '#fcc', '12px Arial');
         }
-        // 升级 卖出
-        if (!tower.max || tower.max > tower.level) core.fillRect(ctx, 10, 130, 130, 20, flags.upgrade ? '#dfd' : '#9f9');
-        core.fillRect(ctx, 150, 130, 130, 20, flags.sell ? '#fcc' : '#f77');
+        // 升级 卖出 等级最大化
+        if (!tower.max || tower.max > tower.level) core.fillRect(ctx, 10, 130, 80, 20, flags.upgrade ? '#dfd' : '#9f9');
+        core.fillRect(ctx, 100, 130, 80, 20, flags.sell ? '#fcc' : '#f77');
+        core.fillRect(ctx, 190, 130, 80, 20, flags.maxUp ? '#ffa' : '#ff0');
         core.setTextAlign(ctx, 'center');
-        if (!tower.max || tower.max > tower.level) core.fillBoldText(ctx, '升级', 75, 146, '#fff', '#000', '16px Arial');
-        core.fillBoldText(ctx, '卖出', 215, 146, '#fff', '#000', '16px Arial');
-        if (!tower.max || tower.max > tower.level) core.fillText(ctx, Math.round(tower.cost), 75, 165, '#fff', '16px Arial');
-        core.fillText(ctx, Math.round(tower.haveCost * (tower.pauseBuild ? 1 : 0.6)), 215, 165, '#fff', '16px Arial');
+        if (!tower.max || tower.max > tower.level) core.fillBoldText(ctx, '升级', 50, 146, '#fff', '#000', '16px Arial');
+        core.fillBoldText(ctx, '卖出', 140, 146, '#fff', '#000', '16px Arial');
+        if (!tower.max || tower.max > tower.level) core.fillText(ctx, Math.round(tower.cost), 50, 165, '#fff', '16px Arial');
+        core.fillText(ctx, Math.round(tower.haveCost * (tower.pauseBuild ? 1 : 0.6)), 140, 165, '#fff', '16px Arial');
+        core.fillBoldText(ctx, '一键升级', 230, 146, '#fff', '#000');
     }
 };
 
@@ -2397,9 +2510,9 @@ defense.prototype.getClosestEnemyInRange = function (x, y, range, ignore) {
 defense.prototype.getBarrackBlock = function (x, y) {
     // 检测四周
     var canLoc = [];
-    if (x - 1 > 0 && core.getBgNumber(x - 1, y) == '300') canLoc.push([x - 1, y]);
+    if (x - 1 >= 0 && core.getBgNumber(x - 1, y) == '300') canLoc.push([x - 1, y]);
     if (x + 1 < 13 && core.getBgNumber(x + 1, y) == '300') canLoc.push([x + 1, y]);
-    if (y - 1 > 0 && core.getBgNumber(x, y - 1) == '300') canLoc.push([x, y - 1]);
+    if (y - 1 >= 0 && core.getBgNumber(x, y - 1) == '300') canLoc.push([x, y - 1]);
     if (y + 1 < 13 && core.getBgNumber(x, y + 1) == '300') canLoc.push([x, y + 1]);
     if (canLoc.length == 0) return null;
     // 转换成索引形式

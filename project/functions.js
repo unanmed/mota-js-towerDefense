@@ -778,6 +778,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
             // 如果当前正在行走，则忽略；也可以使用 core.waitHeroToStop(callback) 来停止行走再回调执行脚本
             if (core.isMoving()) return;
 
+            var id = core.status.event.id;
             if (!_isVertical()) {
                 // 暂停
                 if (py < 21) {
@@ -789,31 +790,57 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                     if (!y) return;
                     if (px > 10 && px < 60 && py > y + 55 && py < y + 75) {
                         // 升级
-                        if (core.status.event.id == 'checkTower' || core.status.event.id == 'confirmSell') {
+                        if (id === 'checkTower' || id === 'confirmSell' || id === 'confirmMax') {
                             core.status.event.id = 'confirmUpgrade';
                             flags.upgrade = true;
                             flags.sell = false;
+                            flags.maxUp = false;
                             core.updateStatusBar();
-                        } else if (core.status.event.id == 'confirmUpgrade') {
+                            return;
+                        } else if (id === 'confirmUpgrade') {
                             var loc = core.status.event.data.split(',');
                             core.upgradeTower(loc[0], loc[1]);
                             core.updateStatusBar();
+                            return;
                         }
                     } else if (px > 70 && px < 120 && py > y + 55 && py < y + 75) {
                         // 卖出
-                        if (core.status.event.id == 'checkTower' || core.status.event.id == 'confirmUpgrade') {
+                        if (id === 'checkTower' || id === 'confirmUpgrade' || id === 'confirmMax') {
                             core.status.event.id = 'confirmSell';
                             flags.sell = true;
                             flags.upgrade = false;
+                            flags.maxUp = false;
                             core.updateStatusBar();
-                        } else if (core.status.event.id == 'confirmSell') {
+                            return;
+                        } else if (id === 'confirmSell') {
                             var loc = core.status.event.data.split(',');
                             core.sellTower(loc[0], loc[1]);
                             core.status.event.id = null;
                             core.status.event.data = null;
                             flags.sell = false;
                             flags.upgrade = false;
+                            flags.maxUp = false;
                             core.updateStatusBar();
+                            return;
+                        }
+                    } else if (py > y + 90 && py < y + 110) {
+                        // 最大化等级
+                        if (id === 'checkTower' || id === 'confirmUpgrade' || id === 'confirmSell') {
+                            core.status.event.id = 'confirmMax';
+                            flags.maxUp = true;
+                            flags.sell = false;
+                            flags.upgrade = false;
+                            core.updateStatusBar();
+                            return;
+                        } else if (id === 'confirmMax') {
+                            var loc = core.status.event.data.split(',');
+                            core.levelToMax(loc[0], loc[1]);
+                            core.status.event.id = 'checkTower';
+                            flags.sell = false;
+                            flags.upgrade = false;
+                            flags.maxUp = false;
+                            core.updateStatusBar();
+                            return;
                         }
                     } else {
                         // 取消操作
@@ -821,10 +848,11 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                             core.status.event.id = 'checkTower';
                             flags.sell = false;
                             flags.upgrade = false;
+                            flags.maxUp = false;
                             core.updateStatusBar();
                         }
                     }
-                } else if (core.status.event.id == 'enemyDetail') {
+                } else if (id == 'enemyDetail') {
                     if (py > 275 && py < 300 && px > 10 && px < 69) {
                         // 下一波
                         core.startMonster(core.status.floorId);
@@ -913,26 +941,28 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                 // 竖屏
                 // 升级 卖出
                 if (core.status.event.id && (core.status.event.id == 'checkTower' || core.status.event.id.startsWith('confirm'))) {
-                    if (px > 10 && px < 140 && py > 130 && py < 150) {
+                    if (px > 10 && px < 90 && py > 130 && py < 150) {
                         // 升级
-                        if (core.status.event.id == 'checkTower' || core.status.event.id == 'confirmSell') {
+                        if (id === 'checkTower' || id === 'confirmSell' || id === 'confirmMax') {
                             core.status.event.id = 'confirmUpgrade';
                             flags.upgrade = true;
                             flags.sell = false;
+                            flags.maxUp = false;
                             core.updateStatusBar();
-                        } else if (core.status.event.id == 'confirmUpgrade') {
+                        } else if (id === 'confirmUpgrade') {
                             var loc = core.status.event.data.split(',');
                             core.upgradeTower(loc[0], loc[1]);
                             core.updateStatusBar();
                         }
-                    } else if (px > 150 && px < 280 && py > 130 && py < 150) {
+                    } else if (px > 100 && px < 180 && py > 130 && py < 150) {
                         // 卖出
-                        if (core.status.event.id == 'checkTower' || core.status.event.id == 'confirmUpgrade') {
+                        if (id === 'checkTower' || id === 'confirmUpgrade' || id === 'confirmMax') {
                             core.status.event.id = 'confirmSell';
                             flags.sell = true;
                             flags.upgrade = false;
+                            flags.maxUp = false;
                             core.updateStatusBar();
-                        } else if (core.status.event.id == 'confirmSell') {
+                        } else if (id == 'confirmSell') {
                             var loc = core.status.event.data.split(',');
                             core.sellTower(loc[0], loc[1]);
                             core.status.event.id = null;
@@ -940,6 +970,25 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                             flags.sell = false;
                             flags.upgrade = false;
                             core.updateStatusBar();
+                        }
+                    } else if (px > 190 && px < 270 && py > 130 && py < 150) {
+                        if (id === 'checkTower' || id === 'confirmUpgrade' || id === 'confirmSell') {
+                            // 最大化等级
+                            core.status.event.id = 'confirmMax';
+                            flags.maxUp = true;
+                            flags.sell = false;
+                            flags.upgrade = false;
+                            core.updateStatusBar();
+                            return;
+                        } else if (id === 'confirmMax') {
+                            var loc = core.status.event.data.split(',');
+                            core.levelToMax(loc[0], loc[1]);
+                            core.status.event.id = 'checkTower';
+                            flags.sell = false;
+                            flags.upgrade = false;
+                            flags.maxUp = false;
+                            core.updateStatusBar();
+                            return;
                         }
                     } else {
                         // 取消操作

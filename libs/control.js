@@ -2924,6 +2924,7 @@ control.prototype.triggerBgm = function () {
 
 ////// 播放音频 //////
 control.prototype.playSound = function (sound, pitch, callback) {
+    if (core.defense.speed >= 50) return;
     sound = core.getMappedName(sound);
     if (main.mode != 'play' || !core.musicStatus.soundStatus || !core.material.sounds[sound]) return;
     try {
