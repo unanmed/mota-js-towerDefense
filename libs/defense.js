@@ -604,7 +604,7 @@ defense.prototype._randomMonster = function (start, number) {
     var now = [];
     var x = 0;
     for (var i = start; i < start + number; i++) {
-        if ((i + 1) % 10 != 0) {
+        if ((i + 1) % 10 !== 0 && !(core.status.floorId === 'L4' && (i + 1) % 5 === 0 && i > 14)) {
             x = 0;
             while (true) {
                 x++;
@@ -676,6 +676,22 @@ defense.prototype._randomMonster = function (start, number) {
                     if (i === 19) now.push(['bigBat', 1]);
                     if (i === 29) now.push(['greenGateKeeper', 1]);
                 }
+                if (floor === 'L3') {
+                    if (i === 19) now.push(['slimelord', 1]);
+                    if (i === 29) now.push(['demonPriest', 1]);
+                    if (i === 39) now.push(['goldSlimelord', 1]);
+                }
+                if (floor === 'L4') {
+                    if (i === 19) now.push(['slimelord', 1]);
+                    if (i === 24) now.push(['bigBat', 3]);
+                    if (i === 29) now.push(['bigBat', 4]);
+                    if (i === 34) now.push(['darkKnight', 1]);
+                    if (i === 39) now.push(['goldSlimelord', 1]);
+                    if (i === 44) now.push(['demonPriest', 1]);
+                    if (i === 49) now.push(['blackKing', 1]);
+                    if (i === 54) now.push(['redKing', 1]);
+                    if (i === 59) now.push(['greenKnight', 1]);
+                }
             } else now.push([all[next], n]);
             next = ((~(next * 82461) ^ 56290) & 45190) ^ start ^ ~~totalHp;
             next = Math.abs(~~next);
@@ -720,6 +736,8 @@ defense.prototype.startMonster = function (floorId, start, fromLoad) {
         if ((floor === 'L1' || floor === 'L2') && core.status.thisMap.enemys.length < 30) {
             this._randomMonster(12, 18);
         }
+        if (floor === 'L3' && core.status.thisMap.enemys.length < 40) this._randomMonster(12, 28);
+        if (floor === 'L4' && core.status.thisMap.enemys.length < 60) this._randomMonster(12, 48);
     } else {
         if (Object.keys(core.status.thisMap.enemys).length - flags.__waves__ <= 10) this._randomMonster(Object.keys(core.status.thisMap.enemys).length, 10);
     }
@@ -732,6 +750,7 @@ defense.prototype.startMonster = function (floorId, start, fromLoad) {
         if (flags.__waves__ != 0) {
             var forceMoney = (core.defense.forceInterval / 1000) * (1 + (flags.__waves__ * flags.__waves__) / 2250);
             core.status.hero.money += Math.floor(forceMoney);
+            core.status.score += ~~core.defense.forceInterval / 100;
         }
         if (!core.isReplaying()) core.pushActionToRoute('nextWave');
     }
@@ -824,6 +843,12 @@ defense.prototype._startMonster_addEnemy = function (enemy, total, now, startLoc
             }
         }
     }
+    if (core.status.floorId === 'L3') money *= 1.5;
+    if (core.status.floorId === 'MT0' || core.status.floorId === 'MT1') {
+        if (flags.hard === 1) {
+            hp *= 1.5;
+        }
+    }
     var id = core.getUnitId(enemy[0], core.status.enemys.enemys);
     // 添加怪物
     core.status.enemys.enemys[id] = {
@@ -868,7 +893,7 @@ defense.prototype._startMonster_addEnemy = function (enemy, total, now, startLoc
         core.registerAnimationFrame('_forceEnemy', true, function () {
             if (flags.__pause__) return;
             if (!core.defense.forceInterval) {
-                if (core.material.enemys[enemy[0]].notBomb) {
+                if (core.material.enemys[enemy[0]].notBomb && !(core.status.floorId === 'L4' && enemy[0] === 'bigBat')) {
                     core.defense.forceInterval = 60000;
                     core.defense.nowInterval = 60;
                 } else {
@@ -1008,10 +1033,10 @@ defense.prototype.drawAllEnemys = function (fromLoad) {
     core.registerAnimationFrame('globalAnimate', true, this._drawAllEnemys_drawEnemyAnimation);
 
     function draw (timestamp, i) {
-        delete core.defense.sortedEnemy;
         if (flags.__pause__) return;
         if (!core.status.thisMap) return;
         if (!core.status.enemys) return;
+        delete core.defense.sortedEnemy;
         if (!core.isReplaying()) core.pushActionToRoute('wait');
         if (!core.status.currTime) core.status.currTime = 0;
         core.status.currTime += 16.67;
@@ -1202,6 +1227,27 @@ defense.prototype._drawAllEnemys_reachBase = function (enemys, enemy, one) {
         }
         if (core.status.floorId.startsWith('L')) return core.lose('你死了');
         core.status.hero.hp = core.status.score;
+        win();
+        return;
+    }
+    // 归还画布
+    core.returnCanvas(one);
+    core.returnCanvas(one + '_healthBar', 'healthBar');
+    if (one.endsWith('boss')) core.defense._drawBossHealthBar_animate(one, 0);
+    delete enemys[one];
+    if (core.status.floorId.startsWith('L') && core.status.enemys.cnt === 0 &&
+        flags.__waves__ === Object.keys(core.status.thisMap.enemys).length) {
+        var all = this.getAllMaps(false);
+        core.status.hero.hp = ~~core.status.score;
+        // if (!core.isReplaying()) {
+        //     flags.__pause__ = true;
+        //     core.status.route[core.status.route.length - 1] = (parseInt(core.status.route[core.status.route.length - 1]) + 1000).toString();
+        // }
+        win();
+        return;
+    }
+    return true;
+    function win () {
         core.unregisterAnimationFrame('_drawCanvases');
         core.unregisterAnimationFrame('_startMonster');
         core.unregisterAnimationFrame('_forceEnemy');
@@ -1212,14 +1258,7 @@ defense.prototype._drawAllEnemys_reachBase = function (enemys, enemy, one) {
         core.win(all[core.status.floorId].split('_')[0] + '结束  v0.1.1版');
         core.initDrawEnemys();
         core.updateStatusBar();
-        return;
     }
-    // 归还画布
-    core.returnCanvas(one);
-    core.returnCanvas(one + '_healthBar', 'healthBar');
-    if (one.endsWith('boss')) core.defense._drawBossHealthBar_animate(one, 0);
-    delete enemys[one];
-    return true;
 };
 
 defense.prototype._drawAllEnemys_reachMine = function (enemys, enemy, one, mine, j, noDraw) {
@@ -1637,7 +1676,7 @@ defense.prototype.placeTower = function (x, y) {
 ////// 添加防御塔 //////
 defense.prototype._addTower = function (x, y, tower) {
     if (core.status.hero.money < core.defense.towers[tower].cost) {
-        if (!core.isReplaying()) core.drawTip('金钱不足却执行了添加防御塔！');
+        core.drawTip('金钱不足却执行了添加防御塔！');
         return false;
     }
     core.status.towers[x + ',' + y] = core.clone(core.defense.towers[tower]);
@@ -1679,7 +1718,7 @@ defense.prototype.upgradeTower = function (x, y) {
         return false;
     }
     if (now.cost > core.status.hero.money) {
-        core.drawTip('金钱不足！' + x + ',' + y + ',' + now.cost + ',' + core.status.hero.money);
+        core.drawTip('金钱不足！');
         return false;
     }
     core.status.hero.money -= now.cost;
@@ -1694,7 +1733,7 @@ defense.prototype.upgradeTower = function (x, y) {
     if (now.type == 'chain') core.getChainLoc();
     this.updateTowerSprite(now);
     core.drawRange(x, y, core.status.realTower[x + ',' + y].range || 0, core.status.realTower[x + ',' + y].square);
-    core.drawTip('升级成功！' + x + ',' + y);
+    core.drawTip('升级成功！');
     if (!core.isReplaying()) core.pushActionToRoute('upgrade:' + x + ':' + y);
     return true;
 };
@@ -2036,7 +2075,7 @@ defense.prototype._drawTowerDetail_drawHorizon = function (toDraw, tower, type, 
             core.fillText(ctx, one.name + '：', 5, y, '#fff', '14px Arial');
             y += 20;
             one.value.forEach(function (v) {
-                if (v.name != '生命' && v.name != '攻击' && v.name != '防御') v.value = v.value;
+                if (v.name != '生命' && !(v.name == '攻击' && name == '勇士塔') && v.name != '防御') v.value = v.value.toFixed(2);
                 else v.value = Math.round(v.value);
                 core.fillText(ctx, v.name + '：' + v.value, 15, y, flags.upgrade ? '#7f7' : '#fff', '14px Arial');
                 y += 20;
@@ -2047,8 +2086,8 @@ defense.prototype._drawTowerDetail_drawHorizon = function (toDraw, tower, type, 
         if (one.name) {
             if (one.name == '攻速') one.value = 1 / one.value;
             if (!one.name.endsWith('花费') && one.name != '链接数量' && one.name != '子弹数量' &&
-                !one.name.endsWith('比率') && !one.name.endsWith('等级') && !one.name.endsWith('数量')
-            ) one.value = one.value.toFixed(2);
+                !one.name.endsWith('比率') && !one.name.endsWith('等级') && !one.name.endsWith('数量'))
+                one.value = one.value.toFixed(2);
             else one.value = Math.round(one.value);
             if (type == 'barrack' && one.name == '攻速') one.name = '产速';
             core.fillText(ctx, one.name + '：' + one.value, 5, y, flags.upgrade ? '#7f7' : '#fff', '14px Arial');
@@ -2732,6 +2771,7 @@ defense.prototype._replay_wait = function (action) {
                 if (now === rounds + 1) {
                     clearInterval(interval);
                     core.replay();
+                    return true;
                 }
             } catch (e) {
                 main.log(e);
@@ -2751,8 +2791,8 @@ defense.prototype._replay_wait = function (action) {
             }
         }
         core.replay();
+        return true;
     }
-    return true;
 };
 
 defense.prototype._replay_doAnimationFrame = function (i) {
@@ -2850,7 +2890,11 @@ defense.prototype._drawAllMaps_drawText = function () {
         if (i == index) text = '<  ' + text + '  >';
         core.fillText('mapTextCtx', text, 208 + 150 * i, 27, '#fff', '20px Arial');
     });
+    var ctx = core.dymCanvas.mapCtx;
+    ctx.shadowBlur = 5;
+    ctx.shadowColor = '#fff';
     core.drawThumbnail(maps[index], null, { x: 5, y: 5, ctx: 'mapCtx', size: 306 });
+    ctx.shadowBlur = 0;
     var text = core.status.maps[maps[index]].description;
     core.drawTextContent('mapCtx', text, { left: 5, top: 315, maxWidth: 306, fontSize: 16 });
     core.fillText('modeCtx', '闯关模式', 50, 120, '#fff', '18px Arial');

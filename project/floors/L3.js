@@ -12,7 +12,7 @@ main.floors.L3=
     "images": [],
     "ratio": 1,
     "defaultGround": "grass",
-    "bgm": "Funky_Stars.mp3",
+    "bgm": "Starset.mp3",
     "firstArrive": [],
     "eachArrive": [],
     "parallelDo": "",

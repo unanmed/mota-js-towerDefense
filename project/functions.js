@@ -878,7 +878,6 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                 } else if (!core.status.event.id && !core.status.event.data) {
                     if (py > 275 && py < 300 && px > 10 && px < 69) {
                         // 下一波
-                        core.pushActionToRoute('nextWave');
                         core.startMonster(core.status.floorId);
                         core.updateStatusBar();
                         return;
@@ -1002,7 +1001,6 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                 } else if (core.status.event.id == 'enemyDetail') {
                     if (py > 145 && py < 165 && px > 120 && px < 180) {
                         // 下一波
-                        core.pushActionToRoute('nextWave');
                         core.startMonster(core.status.floorId);
                         core.updateStatusBar();
                         return;
@@ -1819,6 +1817,42 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                 core.status.maps[floorId].enemys = enemys;
                 return enemys;
             }
+            if (floorId == 'L3') {
+                var enemys = [
+                    ['greenSlime', 7],
+                    ['skeletonPriest', 8],
+                    ['greenSlime', 20],
+                    ['rock', 6],
+                    ['poisonBat', 7], // 5
+                    ['fairyEnemy', 10],
+                    ['rock', 12],
+                    ['skeleton', 10],
+                    ['goldSlime', 10],
+                    ['poisonBat', 13], // 10
+                    ['devilWarrior', 7],
+                    ['fairyEnemy', 16],
+                ];
+                core.status.maps[floorId].enemys = enemys;
+                return enemys;
+            }
+            if (floorId == 'L4') {
+                var enemys = [
+                    ['greenSlime', 7],
+                    ['skeletonPriest', 8],
+                    ['greenSlime', 20],
+                    ['rock', 7],
+                    ['bigBat', 1], // 5
+                    ['fairyEnemy', 10],
+                    ['rock', 12],
+                    ['skeleton', 10],
+                    ['goldSlime', 10],
+                    ['bigBat', 1], // 10
+                    ['ironRock', 9],
+                    ['bigBat', 2],
+                ];
+                core.status.maps[floorId].enemys = enemys;
+                return enemys;
+            }
         },
         "enemyDie": function (id) {
             "use strict";
@@ -1909,8 +1943,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                     'L1': '闯关第一关_0',
                     'L2': '闯关第二关_1',
                     'L3': '闯关第三关_2',
-                    'L4': '闯关第四关_3',
-                    'L5': '闯关第五关_4'
+                    'L4': '闯关第四关_3'
                 };
             }
         }
