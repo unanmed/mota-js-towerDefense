@@ -1,7 +1,7 @@
 /// <reference path="../runtime.d.ts" />
 
 /* 
-towerDefense.js: 负责对游戏中塔防内容相关的处理
+defense.js: 负责对游戏中塔防内容相关的处理
 包括但不限于 怪物移动 防御塔攻击 录像处理
 */
 'use strict';
@@ -672,6 +672,10 @@ defense.prototype._randomMonster = function (start, number) {
                     if (i === 19) now.push(['bigBat', 1]);
                     if (i === 29) now.push(['slimelord', 1]);
                 }
+                if (floor === 'L2') {
+                    if (i === 19) now.push(['bigBat', 1]);
+                    if (i === 29) now.push(['greenGateKeeper', 1]);
+                }
             } else now.push([all[next], n]);
             next = ((~(next * 82461) ^ 56290) & 45190) ^ start ^ ~~totalHp;
             next = Math.abs(~~next);
@@ -713,8 +717,8 @@ defense.prototype.startMonster = function (floorId, start, fromLoad) {
     }
     if (core.status.floorId.startsWith('L')) {
         var floor = core.status.floorId;
-        if (floor === 'L1' && core.status.thisMap.enemys.length < 30) {
-            this._randomMonster(12, 19);
+        if ((floor === 'L1' || floor === 'L2') && core.status.thisMap.enemys.length < 30) {
+            this._randomMonster(12, 18);
         }
     } else {
         if (Object.keys(core.status.thisMap.enemys).length - flags.__waves__ <= 10) this._randomMonster(Object.keys(core.status.thisMap.enemys).length, 10);
@@ -729,7 +733,7 @@ defense.prototype.startMonster = function (floorId, start, fromLoad) {
             var forceMoney = (core.defense.forceInterval / 1000) * (1 + (flags.__waves__ * flags.__waves__) / 2250);
             core.status.hero.money += Math.floor(forceMoney);
         }
-        if (!core.isReplaying() && !fromLoad) core.pushActionToRoute('nextWave');
+        if (!core.isReplaying()) core.pushActionToRoute('nextWave');
     }
     this._startMonster_doStart(enemy, startLoc, total, fromLoad);
     return true;
@@ -1022,8 +1026,10 @@ defense.prototype.drawAllEnemys = function (fromLoad) {
             core.defense._drawAllEnemys_drawEnemy(enemys, one, route, i, length, noDraw);
         });
         core.defense._drawAllEnemys_drawHero(i, noDraw, length);
-        if (!flags.__transparented__) core.defense._drawBossHealthBar_transparent('remove');
-        else core.defense._drawBossHealthBar_transparent('add');
+        if (core.defense.speed <= 50) {
+            if (!flags.__transparented__) core.defense._drawBossHealthBar_transparent('remove');
+            else core.defense._drawBossHealthBar_transparent('add');
+        }
     }
 };
 
@@ -1369,6 +1375,7 @@ defense.prototype.doBattle = function (enemyId, heroId) {
 
 defense.prototype._drawMine = function (loc) {
     if (main.replayChecking) return;
+    if (core.defense.speed >= 100) return;
     var mine = core.status.thisMap.mine || {};
     if (!loc) {
         for (var i in mine) {
@@ -1672,7 +1679,7 @@ defense.prototype.upgradeTower = function (x, y) {
         return false;
     }
     if (now.cost > core.status.hero.money) {
-        core.drawTip('金钱不足！');
+        core.drawTip('金钱不足！' + x + ',' + y + ',' + now.cost + ',' + core.status.hero.money);
         return false;
     }
     core.status.hero.money -= now.cost;
@@ -1687,7 +1694,7 @@ defense.prototype.upgradeTower = function (x, y) {
     if (now.type == 'chain') core.getChainLoc();
     this.updateTowerSprite(now);
     core.drawRange(x, y, core.status.realTower[x + ',' + y].range || 0, core.status.realTower[x + ',' + y].square);
-    core.drawTip('升级成功！');
+    core.drawTip('升级成功！' + x + ',' + y);
     if (!core.isReplaying()) core.pushActionToRoute('upgrade:' + x + ':' + y);
     return true;
 };
@@ -2584,13 +2591,15 @@ defense.prototype._replay_placeTower = function (action) {
     try {
         var success = place(x, y);
         if (!success) {
-            var x = 0;
+            var n = 0;
             while (true) {
-                x++;
+                if (!core.status.replay.errorFrame) core.status.replay.errorFrame = 0;
+                core.status.replay.errorFrame++;
+                n++;
                 core.defense._replay_doAnimationFrame();
                 success = place(x, y);
                 if (success) break;
-                if (x > 1000) break;
+                if (n > 60) { return false; }
             }
         }
 
@@ -2640,13 +2649,15 @@ defense.prototype._replay_upgradeTower = function (action) {
     try {
         var success = core.upgradeTower(x, y);
         if (!success) {
-            var x = 0;
+            var n = 0;
             while (true) {
-                x++;
+                if (!core.status.replay.errorFrame) core.status.replay.errorFrame = 0;
+                core.status.replay.errorFrame++;
+                n++;
                 core.defense._replay_doAnimationFrame();
                 success = core.upgradeTower(x, y);
                 if (success) break;
-                if (x > 1000) break;
+                if (n > 60) { return false; }
             }
         }
         core.replay();
@@ -2665,13 +2676,15 @@ defense.prototype._replay_sellTower = function (action) {
     try {
         var success = core.sellTower(x, y);
         if (!success) {
-            var x = 0;
+            var n = 0;
             while (true) {
-                x++;
+                if (!core.status.replay.errorFrame) core.status.replay.errorFrame = 0;
+                core.status.replay.errorFrame++;
+                n++;
                 core.defense._replay_doAnimationFrame();
                 success = core.sellTower(x, y);
                 if (success) break;
-                if (x > 1000) break;
+                if (n > 60) { return false; }
             }
         }
         core.replay();
@@ -2697,17 +2710,25 @@ defense.prototype._replay_nextWave = function (action) {
 defense.prototype._replay_wait = function (action) {
     if (!parseInt(action)) return false;
     var rounds = parseInt(action);
-    var fail = false;
     var now = 0;
     for (var one in core.status.towers) {
         core.status.towers[one].pauseBuild = false;
         core.status.realTower[one].pauseBuild = false;
     }
+    if (!core.status.replay.errorFrame) core.status.replay.errorFrame = 0;
+    if (rounds - core.status.replay.errorFrame > 0) {
+        rounds -= core.status.replay.errorFrame;
+        core.status.replay.errorFrame = 0;
+    } else {
+        core.status.replay.errorFrame -= rounds;
+        core.replay();
+        return true;
+    }
     if (!main.replayChecking) {
         var interval = window.setInterval(function () {
             now++;
             try {
-                core.defense._replay_doAnimationFrame();
+                core.defense._replay_doAnimationFrame(0);
                 if (now === rounds + 1) {
                     clearInterval(interval);
                     core.replay();
@@ -2715,14 +2736,14 @@ defense.prototype._replay_wait = function (action) {
             } catch (e) {
                 main.log(e);
                 clearInterval(interval);
-                fail = true;
+                return false;
             }
-        }, 16.6);
+        }, 1);
     } else {
         while (true) {
             now++;
             try {
-                core.defense._replay_doAnimationFrame();
+                core.defense._replay_doAnimationFrame(1);
                 if (now === rounds + 1) break;
             } catch (e) {
                 main.log(e);
@@ -2731,15 +2752,14 @@ defense.prototype._replay_wait = function (action) {
         }
         core.replay();
     }
-    if (fail) return false;
-    else return true;
+    return true;
 };
 
-defense.prototype._replay_doAnimationFrame = function () {
+defense.prototype._replay_doAnimationFrame = function (i) {
     core.control.renderFrameFuncs.forEach(function (b) {
         if (b.func) {
             try {
-                core.doFunc(b.func, core.control);
+                core.doFunc(b.func, core.control, 0, i);
             } catch (e) {
                 main.log(e);
                 flags.error = e;
@@ -2755,7 +2775,8 @@ defense.prototype.pushActionToRoute = function (action) {
     var last = core.status.route[core.status.route.length - 1];
     if (action == 'wait') {
         if (parseInt(last) && parseInt(last) < 30)
-            core.status.route[core.status.route.length - 1] = (parseInt(core.status.route[core.status.route.length - 1]) + 1).toString();
+            core.status.route[core.status.route.length - 1] =
+                (parseInt(core.status.route[core.status.route.length - 1]) + 1).toString();
         else core.status.route.push('1');
     } else {
         core.status.route.push(action);
@@ -2776,9 +2797,7 @@ defense.prototype.openAllMaps = function () {
             ]
         },
         {
-            type: 'function',
-            function:
-                "function () { core.deleteCanvas('back'); core.deleteCanvas('mapCtx');" +
+            type: 'function', function: "function () { core.deleteCanvas('back'); core.deleteCanvas('mapCtx');" +
                 " core.deleteCanvas('mapTextCtx'); core.deleteCanvas('modeCtx'); core.clearUIEventSelector();}"
         }
     ]);

@@ -12,7 +12,7 @@ main.floors.L2=
     "images": [],
     "ratio": 1,
     "defaultGround": "grass",
-    "bgm": "Lanterns.mp3",
+    "bgm": "Vlog.mp3",
     "firstArrive": [],
     "eachArrive": [],
     "parallelDo": "",

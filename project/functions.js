@@ -1813,6 +1813,8 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                     ['goldSlime', 10],
                     ['skeletonWarrior', 7],
                     ['devilWarrior', 7], // 10
+                    ['skeletonPriest', 16],
+                    ['rock', 12],
                 ];
                 core.status.maps[floorId].enemys = enemys;
                 return enemys;
@@ -1820,6 +1822,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
         },
         "enemyDie": function (id) {
             "use strict";
+
             var e = core.clone(core.status.enemys.enemys[id]);
             if (!e) return;
             core.returnCanvas(id, 'enemy');
@@ -1873,8 +1876,12 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                 };
             }
             if (core.status.floorId.startsWith('L') && core.status.enemys.cnt === 0 &&
-                flags.__waves__ === Object.keys(core.status.enemys.enemys).length - 1) {
+                flags.__waves__ === Object.keys(core.status.thisMap.enemys).length) {
                 core.status.hero.hp = ~~core.status.score;
+                if (!core.isReplaying()) {
+                    flags.__pause__ = true;
+                    core.status.route[core.status.route.length - 1] = (parseInt(core.status.route[core.status.route.length - 1]) + 1000).toString();
+                }
                 core.win(core.getAllMaps(false)[core.status.floorId].split('_')[0] + '结束  v0.1.1');
                 core.unregisterAnimationFrame('_drawCanvases');
                 core.unregisterAnimationFrame('_startMonster');
