@@ -1227,7 +1227,16 @@ defense.prototype._drawAllEnemys_reachBase = function (enemys, enemy, one) {
         }
         if (core.status.floorId.startsWith('L')) return core.lose('你死了');
         core.status.hero.hp = core.status.score;
-        win();
+        core.unregisterAnimationFrame('_drawCanvases');
+        core.unregisterAnimationFrame('_startMonster');
+        core.unregisterAnimationFrame('_forceEnemy');
+        core.unregisterAnimationFrame('_attack');
+        core.unregisterAnimationFrame('_deleteEffect');
+        core.unregisterAction('onclick', '_confirm');
+        core.unregisterAction('onclick', '_doTower');
+        core.initDrawEnemys();
+        core.updateStatusBar();
+        core.win(core.getAllMaps(false)[core.status.floorId].split('_')[0] + '结束  v0.1.1');
         return;
     }
     // 归还画布
@@ -1235,14 +1244,14 @@ defense.prototype._drawAllEnemys_reachBase = function (enemys, enemy, one) {
     core.returnCanvas(one + '_healthBar', 'healthBar');
     if (one.endsWith('boss')) core.defense._drawBossHealthBar_animate(one, 0);
     delete enemys[one];
-    if (core.status.floorId.startsWith('L') && core.status.enemys.cnt === 0 &&
+    if (core.status.floorId.startsWith('L') && Object.keys(core.status.enemys.enemys).length === 0 &&
         flags.__waves__ === Object.keys(core.status.thisMap.enemys).length) {
         var all = this.getAllMaps(false);
         core.status.hero.hp = ~~core.status.score;
-        // if (!core.isReplaying()) {
-        //     flags.__pause__ = true;
-        //     core.status.route[core.status.route.length - 1] = (parseInt(core.status.route[core.status.route.length - 1]) + 1000).toString();
-        // }
+        if (!core.isReplaying()) {
+            flags.__pause__ = true;
+            core.status.route[core.status.route.length - 1] = (parseInt(core.status.route[core.status.route.length - 1]) + 1000).toString();
+        }
         win();
         return;
     }
@@ -2635,7 +2644,7 @@ defense.prototype._replay_placeTower = function (action) {
                 if (!core.status.replay.errorFrame) core.status.replay.errorFrame = 0;
                 core.status.replay.errorFrame++;
                 n++;
-                core.defense._replay_doAnimationFrame();
+                core.defense._replay_doAnimationFrame(1);
                 success = place(x, y);
                 if (success) break;
                 if (n > 60) { return false; }
@@ -2693,7 +2702,7 @@ defense.prototype._replay_upgradeTower = function (action) {
                 if (!core.status.replay.errorFrame) core.status.replay.errorFrame = 0;
                 core.status.replay.errorFrame++;
                 n++;
-                core.defense._replay_doAnimationFrame();
+                core.defense._replay_doAnimationFrame(1);
                 success = core.upgradeTower(x, y);
                 if (success) break;
                 if (n > 60) { return false; }
@@ -2720,7 +2729,7 @@ defense.prototype._replay_sellTower = function (action) {
                 if (!core.status.replay.errorFrame) core.status.replay.errorFrame = 0;
                 core.status.replay.errorFrame++;
                 n++;
-                core.defense._replay_doAnimationFrame();
+                core.defense._replay_doAnimationFrame(1);
                 success = core.sellTower(x, y);
                 if (success) break;
                 if (n > 60) { return false; }
@@ -2828,16 +2837,16 @@ defense.prototype.openAllMaps = function () {
     this._drawAllMaps_draw();
     core.insertAction([
         {
-            type: 'while',
-            condition: 'true',
-            data: [
-                { type: 'function', function: 'function () { core.defense._drawAllMaps_drawText(); }' },
-                { type: 'wait' },
-                { type: 'function', function: 'function() { core.defense._drawAllMaps_actions(); }' }
+            'type': 'while',
+            'condition': 'true',
+            'data': [
+                { 'type': 'function', 'function': 'function() { core.defense._drawAllMaps_drawText(); }' },
+                { 'type': 'wait' },
+                { 'type': 'function', 'function': 'function() { core.defense._drawAllMaps_actions(); }' }
             ]
         },
         {
-            type: 'function', function: "function () { core.deleteCanvas('back'); core.deleteCanvas('mapCtx');" +
+            'type': 'function', 'function': "function () { core.deleteCanvas('back'); core.deleteCanvas('mapCtx');" +
                 " core.deleteCanvas('mapTextCtx'); core.deleteCanvas('modeCtx'); core.clearUIEventSelector();}"
         }
     ]);

@@ -179,8 +179,8 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                         todo = core.push(todo, '闯关模式下，计分方式为怪物初始生命值*怪物初始移速*怪物剩余路程百分比');
                     else todo = core.push(todo, '无尽模式下，计分方式为怪物初始生命值*怪物初始移速');
                     todo = core.push(todo, [
-                        { type: 'function', function: "function(){\ncore.startMonster('MT0', true);\n}" },
-                        { type: 'setValue', name: 'status:money', value: '200' }
+                        { "type": "function", "function": "function(){\ncore.startMonster('MT0', true);\n}" },
+                        { "type": 'setValue', "name": 'status:money', "value": '200' }
                     ]);
                     core.insertAction(todo, null, null, function () {
                         core.initGameStart();
@@ -1909,7 +1909,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                     special: core.clone(core.material.enemys[toEnemy].special) || []
                 };
             }
-            if (core.status.floorId.startsWith('L') && core.status.enemys.cnt === 0 &&
+            if (core.status.floorId.startsWith('L') && Object.keys(core.status.enemys.enemys).length === 0 &&
                 flags.__waves__ === Object.keys(core.status.thisMap.enemys).length) {
                 core.status.hero.hp = ~~core.status.score;
                 if (!core.isReplaying()) {
