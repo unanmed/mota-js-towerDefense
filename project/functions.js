@@ -928,7 +928,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                     core.unlockControl();
                     core.drawTip('取消放置');
                     core.clearMap('damage');
-                    core.unregisterAction('onclick', 'confirm');
+                    core.unregisterAction('onclick', '_confirm');
                     core.updateStatusBar();
                 } else if (typeof core.status.event.data == 'string' && core.status.event.data.split(',').length == 1) {
                     core.status.event.data = null;
@@ -1079,7 +1079,7 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                     core.status.event.id = null;
                     core.unlockControl();
                     core.drawTip('取消放置');
-                    core.unregisterAction('onclick', 'confirm');
+                    core.unregisterAction('onclick', '_confirm');
                     core.clearMap('damage');
                     core.updateStatusBar();
                 } else if (typeof core.status.event.data == 'string' && core.status.event.data.split(',').length == 1) {
