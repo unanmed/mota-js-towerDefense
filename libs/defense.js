@@ -847,6 +847,7 @@ defense.prototype._startMonster_addEnemy = function (enemy, total, now, startLoc
     if (core.status.floorId === 'MT0' || core.status.floorId === 'MT1') {
         if (flags.hard === 1) {
             hp *= 1.5;
+            money *= 1.5;
         }
     }
     var id = core.getUnitId(enemy[0], core.status.enemys.enemys);
@@ -2269,6 +2270,11 @@ defense.prototype._drawConstructor_drawHorizon = function (ctx, type) {
                 var hp = core.material.enemys[now[0]].hp * (1 + (i * i) / 225);
                 if (core.status.floorId == 'MT1') hp /= 4;
                 if (core.status.floorId == 'MT2') hp *= core.material.enemys[now[0]].notBomb ? 2 : 4;
+                if (core.status.floorId === 'MT0' || core.status.floorId === 'MT1') {
+                    if (flags.hard === 1) {
+                        hp *= 1.5;
+                    }
+                }
                 hp = core.formatBigNumber(hp);
                 core.fillText(ctx, hp, 90, 172 + 30 * (i - wave), '#fff', '13px Arial');
                 core.setTextAlign(ctx, 'left');
@@ -2293,6 +2299,13 @@ defense.prototype._drawConstructor_drawHorizon = function (ctx, type) {
                         money *= 4;
                         if (enemy.notBomb) speed /= 1.5;
                         if (!Number.isInteger(speed)) speed = speed.toFixed(2);
+                    }
+                    if (core.status.floorId === 'L3') money *= 1.5;
+                    if (core.status.floorId === 'MT0' || core.status.floorId === 'MT1') {
+                        if (flags.hard === 1) {
+                            hp *= 1.5;
+                            money *= 1.5;
+                        }
                     }
                     hp = core.formatBigNumber(hp);
                     core.setTextAlign(ctx, 'center');
@@ -2365,6 +2378,11 @@ defense.prototype._drawConstructor_drawVertical = function (ctx, type) {
             var hp = core.material.enemys[now[0]].hp * (1 + (i * i) / 225);
             if (core.status.floorId == 'MT1') hp /= 4;
             if (core.status.floorId == 'MT2') hp *= core.material.enemys[now[0]].notBomb ? 2 : 4;
+            if (core.status.floorId === 'MT0' || core.status.floorId === 'MT1') {
+                if (flags.hard === 1) {
+                    hp *= 1.5;
+                }
+            }
             hp = core.formatBigNumber(hp);
             core.fillText(ctx, hp, 90 + Math.floor((i - wave) / 2) * 120, 92 + 30 * ((i - wave) % 2), '#fff', '13px Arial');
             core.setTextAlign(ctx, 'left');
@@ -2389,6 +2407,13 @@ defense.prototype._drawConstructor_drawVertical = function (ctx, type) {
                     money *= 4;
                     if (enemy.notBomb) speed /= 1.5;
                     if (!Number.isInteger(speed)) speed = speed.toFixed(2);
+                }
+                if (core.status.floorId === 'L3') money *= 1.5;
+                if (core.status.floorId === 'MT0' || core.status.floorId === 'MT1') {
+                    if (flags.hard === 1) {
+                        hp *= 1.5;
+                        money *= 1.5;
+                    }
                 }
                 hp = core.formatBigNumber(hp);
                 core.setTextAlign(ctx, 'center');
