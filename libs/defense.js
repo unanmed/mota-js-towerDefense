@@ -1227,17 +1227,8 @@ defense.prototype._drawAllEnemys_reachBase = function (enemys, enemy, one) {
             core.status.route[core.status.route.length - 1] = (parseInt(core.status.route[core.status.route.length - 1]) + 1000).toString();
         }
         if (core.status.floorId.startsWith('L')) return core.lose('你死了');
-        core.status.hero.hp = core.status.score;
-        core.unregisterAnimationFrame('_drawCanvases');
-        core.unregisterAnimationFrame('_startMonster');
-        core.unregisterAnimationFrame('_forceEnemy');
-        core.unregisterAnimationFrame('_attack');
-        core.unregisterAnimationFrame('_deleteEffect');
-        core.unregisterAction('onclick', '_confirm');
-        core.unregisterAction('onclick', '_doTower');
-        core.initDrawEnemys();
-        core.updateStatusBar();
-        core.win(core.getAllMaps(false)[core.status.floorId].split('_')[0] + '结束  v0.1.1');
+        core.status.hero.hp = ~~core.status.score;
+        win();
         return;
     }
     // 归还画布
@@ -1253,7 +1244,16 @@ defense.prototype._drawAllEnemys_reachBase = function (enemys, enemy, one) {
             flags.__pause__ = true;
             core.status.route[core.status.route.length - 1] = (parseInt(core.status.route[core.status.route.length - 1]) + 1000).toString();
         }
-        win();
+        core.unregisterAnimationFrame('_drawCanvases');
+        core.unregisterAnimationFrame('_startMonster');
+        core.unregisterAnimationFrame('_forceEnemy');
+        core.unregisterAnimationFrame('_attack');
+        core.unregisterAnimationFrame('_deleteEffect');
+        core.unregisterAction('onclick', '_confirm');
+        core.unregisterAction('onclick', '_doTower');
+        core.initDrawEnemys();
+        core.updateStatusBar();
+        core.win(all[core.status.floorId].split('_')[0] + '结束  v0.1.1');
         return;
     }
     return true;

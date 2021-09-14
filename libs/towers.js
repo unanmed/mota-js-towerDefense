@@ -47,7 +47,7 @@ towers.prototype._basicAttack = function (x, y, tower, i) {
     if (i === 0 && core.defense.speed <= 10) {
         if (!main.replayChecking) {
             // 旋转炮塔
-            this.core.rotateWeapon(pos, enemy.x - x, enemy.y - y);
+            core.rotateWeapon(pos, enemy.x - x, enemy.y - y);
             var ctx = core.acquireCanvas('tower_' + x + '_' + y, 'tower');
             var color = [255, 255 - tower.level / tower.max * 255, 255 - tower.level / tower.max * 255, 0.5]
             core.drawLine(ctx, x * 32 + 16, y * 32 + 16, enemy.x * 32 + 16, enemy.y * 32 + 16, color, 2);
