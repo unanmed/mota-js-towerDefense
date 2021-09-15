@@ -2890,6 +2890,9 @@ declare class defense {
     /** 自动删除防御塔攻击动画 */
     deleteTowerEffect(): void
 
+    /** 设置某个防御塔的攻击特效 */
+    setTowerEffect(ctx: CanvasRenderingContext2D, speed: number): void
+
     /** 获得在范围内的距离基地最近的怪物
      * @param n 获得的怪物数量，不填视为1
      */
@@ -2920,12 +2923,6 @@ declare class defense {
 
     /** 勇士死亡 */
     heroDie(hero: string): void
-
-    /** 获得全地图每个格子的冰冻比率，保存在core.status.thisMap.freeze中 */
-    getFreezeLoc(): void
-
-    /** 获得全地图的所有夹击位点，保存在core.status.thisMap.chain中 */
-    getChainLoc(): void
 
     /** 向录像中添加操作 */
     pushActionToRoute(action: string): void
@@ -2958,7 +2955,17 @@ declare class defense {
 }
 
 declare class towers {
+    /** 获得全地图每个格子的冰冻比率，保存在core.status.thisMap.freeze中 */
+    getFreezeLoc(): void
 
+    /** 获得全地图的所有夹击位点，保存在core.status.thisMap.chain中 */
+    getChainLoc(): void
+
+    /** 旋转炮台 */
+    rotateWeapon(pos: string, dx: number, dy: number): void
+
+    /** 执行某个类型的动画 */
+    triggerAnimate(elm: HTMLCanvasElement, name: string): void
 }
 
 declare class plugin {
