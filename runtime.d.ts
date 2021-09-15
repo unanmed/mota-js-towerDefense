@@ -249,7 +249,6 @@ type AllMonster = {
 
     enemys: { [key: string]: Monster }
     hero: { cnt: number, [key: string]: Braver }
-    mine: { [key: number]: Mine }
 }
 
 type Monster = {

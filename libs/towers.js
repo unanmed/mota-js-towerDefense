@@ -492,18 +492,22 @@ towers.prototype._mineAttack = function (x, y, tower) {
             // 替换地雷
             if (mine[ii][1].atk < tower.mine.atk) {
                 mine[ii][1] = { atk: tower.mine.atk, level: tower.level };
+                index = ii;
                 break;
             }
             if (mine[ii][2].atk < tower.mine.atk) {
                 mine[ii][2] = { atk: tower.mine.atk, level: tower.level };
+                index = ii;
                 break;
             }
             if (mine[ii][3].atk < tower.mine.atk) {
                 mine[ii][3] = { atk: tower.mine.atk, level: tower.level };
+                index = ii;
                 break;
             }
             if (mine[ii][4].atk < tower.mine.atk) {
                 mine[ii][4] = { atk: tower.mine.atk, level: tower.level };
+                index = ii;
                 break;
             }
         }

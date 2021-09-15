@@ -1859,10 +1859,12 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
 
             var e = core.clone(core.status.enemys.enemys[id]);
             if (!e) return;
-            core.returnCanvas(id, 'enemy');
-            core.returnCanvas(id + '_healthBar', 'healthBar');
-            // boss血条要归零再消失
-            if (id.endsWith('boss')) core.defense._drawBossHealthBar_animate(id, 0);
+            if (!main.replayChecking) {
+                core.returnCanvas(id, 'enemy');
+                core.returnCanvas(id + '_healthBar', 'healthBar');
+                // boss血条要归零再消失
+                if (id.endsWith('boss')) core.defense._drawBossHealthBar_animate(id, 0);
+            }
             var enemyId = id.split('_')[0];
             var enemy = core.material.enemys[enemyId];
             core.status.hero.money += e.money;
@@ -1898,8 +1900,8 @@ var functions_d6ad677b_427a_4623_b50f_a445a3b0ef8a = {
                     speed: enemy.speed,
                     hp: hp,
                     total: hp,
-                    atk: enemy.atk * (1 + (e.wave * e.wave) / 900),
-                    def: enemy.def * (1 + (e.wave * e.wave) / 900),
+                    atk: enemy.atk,
+                    def: enemy.def,
                     to: Number.isInteger(e.x) && Number.isInteger(e.y) &&
                         core.same(core.status.thisMap.route[e.to], [e.x, e.y]) ? e.to + 1 : e.to,
                     drown: false,

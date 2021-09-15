@@ -1952,8 +1952,8 @@ defense.prototype.initTowerSprite = function (tower) {
 
 ////// 更新防御塔sprite //////
 defense.prototype.updateTowerSprite = function (tower) {
-    var eps = 1e-9;
     if (main.replayChecking) return;
+    var eps = 1e-9;
     var pos = tower.x + ',' + tower.y;
     var icon = this.towerIcons[tower.type];
     var basectx = core.batchDict['tower-base_' + pos];
@@ -2440,7 +2440,7 @@ defense.prototype._drawConstructor_drawVertical = function (ctx, type) {
     core.fillText(ctx, '→', 355, 157, '#fff', '18px Arial');
     core.setTextAlign(ctx, 'center');
     core.fillText(ctx, core.defense.speed + '倍速', 302, 159, '#fff', '15px Arial');
-    if (!flags.__starting__) core.fillRect(ctx, 120, 135, 60, 25, [100, 255, 100, 1]);
+    if (!flags.__starting__) core.fillRect(ctx, 120, 140, 60, 25, [100, 255, 100, 1]);
     else core.fillRect(ctx, 120, 140, 60, 25, [100, 100, 100, 1]);
     core.fillText(ctx, core.defense.forceInterval && core.defense.forceInterval > 0 ? Math.floor(core.defense.forceInterval / 1000) + 's' : '下一波', 150, 158, '#000', '14px Arial');
     // 自动
@@ -2659,8 +2659,8 @@ defense.prototype._replay_placeTower = function (action) {
     // 获得放置信息
     var detail = action.split(':');
     var tower = detail[3];
-    var x = detail[1],
-        y = detail[2];
+    var x = parseInt(detail[1]),
+        y = parseInt(detail[2]);
     try {
         var success = place(x, y);
         if (!success) {
@@ -2694,7 +2694,7 @@ defense.prototype._replay_placeTower = function (action) {
             now.expLevel = 0;
             now.exp = 0;
             now.type = tower;
-            now.haveCost = core.defense.towers[tower].cost;
+            now.haveCost = now.cost;
             now.pauseBuild = true;
             core.status.hero.money -= now.cost;
             core.status.event.data = null;
@@ -2717,8 +2717,8 @@ defense.prototype._replay_placeTower = function (action) {
 defense.prototype._replay_upgradeTower = function (action) {
     if (typeof action != 'string' || !action.includes('upgrade:')) return false;
     var detail = action.split(':');
-    var x = detail[1],
-        y = detail[2];
+    var x = parseInt(detail[1]),
+        y = parseInt(detail[2]);
     try {
         var success = core.upgradeTower(x, y);
         if (!success) {
@@ -2744,8 +2744,8 @@ defense.prototype._replay_upgradeTower = function (action) {
 defense.prototype._replay_sellTower = function (action) {
     if (typeof action != 'string' || !action.includes('sell:')) return false;
     var detail = action.split(':');
-    var x = detail[1],
-        y = detail[2];
+    var x = parseInt(detail[1]),
+        y = parseInt(detail[2]);
     try {
         var success = core.sellTower(x, y);
         if (!success) {
@@ -2784,6 +2784,8 @@ defense.prototype._replay_wait = function (action) {
     if (!parseInt(action)) return false;
     var rounds = parseInt(action);
     var now = 0;
+    var to = core.status.replay.toReplay[0];
+    rounds += parseInt(to) ? 0 : 1;
     for (var one in core.status.towers) {
         core.status.towers[one].pauseBuild = false;
         core.status.realTower[one].pauseBuild = false;
@@ -2802,10 +2804,9 @@ defense.prototype._replay_wait = function (action) {
             now++;
             try {
                 core.defense._replay_doAnimationFrame(0);
-                if (now === rounds + 1) {
+                if (now === rounds) {
                     clearInterval(interval);
                     core.replay();
-                    return true;
                 }
             } catch (e) {
                 main.log(e);
@@ -2818,7 +2819,7 @@ defense.prototype._replay_wait = function (action) {
             now++;
             try {
                 core.defense._replay_doAnimationFrame(1);
-                if (now === rounds + 1) break;
+                if (now === rounds) break;
             } catch (e) {
                 main.log(e);
                 return false;
@@ -2827,6 +2828,7 @@ defense.prototype._replay_wait = function (action) {
         core.replay();
         return true;
     }
+    return true;
 };
 
 defense.prototype._replay_doAnimationFrame = function (i) {
@@ -2848,7 +2850,7 @@ defense.prototype.pushActionToRoute = function (action) {
     // 检测当前录像最后一项的类型
     var last = core.status.route[core.status.route.length - 1];
     if (action == 'wait') {
-        if (parseInt(last) && parseInt(last) < 30)
+        if (parseInt(last))
             core.status.route[core.status.route.length - 1] =
                 (parseInt(core.status.route[core.status.route.length - 1]) + 1).toString();
         else core.status.route.push('1');
